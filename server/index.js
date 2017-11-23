@@ -1,10 +1,10 @@
 const express = require("express")
 
-const STATIC_PORT = 5000
-const API_PORT = 5050
+const STATIC_PORT = process.env.STATIC_PORT || 5000
+const API_PORT = process.env.API_PORT || 5050
 
 express()
-  .use(express.static("../webapp/build"))
+  .use(express.static(`${__dirname}/../webapp/build`))
 
   .listen(STATIC_PORT, () => {
     console.log(`Serving static files on port ${STATIC_PORT}`)
