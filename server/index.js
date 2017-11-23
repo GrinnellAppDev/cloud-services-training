@@ -3,8 +3,8 @@ const cors = require("cors")
 const { MongoClient } = require("mongodb")
 const bodyParser = require("body-parser")
 
-const STATIC_PORT = 5000
-const API_PORT = 5050
+const STATIC_PORT = process.env.STATIC_PORT || 5000
+const API_PORT = process.env.API_PORT || 5050
 
 express()
   .use(express.static(`${__dirname}/../webapp/build`))
