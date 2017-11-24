@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  web:
+    container_name: cst-web-prod
+    image: cst-web-prod
+    build: .
+    ports:
+      - "5000:5000"
+      - "5050:5050"
+    networks:
+      - cst-network
+    links:
+      - db
+    working_dir: /var/server
+
+  db:
+    container_name: cst-mongodb
+    image: mongo:3.4
+    networks:
+      - cst-network
+    expose:
+      - "27017"
+
+networks:
+  cst-network:
+    driver: bridge
