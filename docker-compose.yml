@@ -12,6 +12,10 @@ services:
       - cst-network
     links:
       - db
+    depends_on:
+      - db
+    environment:
+      - MONGO_URL=mongodb://db/cst
 
   db:
     container_name: cst-mongodb

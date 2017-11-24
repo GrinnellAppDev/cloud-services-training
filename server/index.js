@@ -1,5 +1,7 @@
 const express = require("express")
 const cors = require("cors")
+const { MongoClient } = require("mongodb")
+const bodyParser = require("body-parser")
 
 const STATIC_PORT = 5000
 const API_PORT = 5050
@@ -13,27 +15,51 @@ express()
 
 express()
   .use(cors())
+  .use(bodyParser.json())
 
-  .get("/tasks", (request, response) => {
-    response.status(200).send({
-      items: [
-        {
-          id: "sl2ei3hf3iw",
-          title: "Collect underpants",
-          isComplete: false
-        },
-        {
-          id: "tl2ei323xze",
-          title: "???",
-          isComplete: false
-        },
-        {
-          id: "uz2ei32cx7e",
-          title: "Profit!",
-          isComplete: false
-        }
-      ]
-    })
+  .get("/tasks", async (request, response) => {
+    let db
+    try {
+      db = await MongoClient.connect(process.env.MONGO_URL)
+
+      const tasksCollection = db.collection("tasks")
+      const allTasks = tasksCollection.find()
+
+      response.status(200).send({
+        items: await allTasks.toArray()
+      })
+    } catch (error) {
+      response.status(500).send({ error })
+      console.error(error)
+    } finally {
+      db.close()
+    }
+  })
+
+  .post("/tasks", async (request, response) => {
+    let db
+    try {
+      db = await MongoClient.connect(process.env.MONGO_URL)
+
+      const newTask = {
+        ...request.body,
+        completed: false
+      }
+
+      const tasksCollection = db.collection("tasks")
+      const insertResult = await tasksCollection.insertOne(newTask)
+
+      if (!insertResult.result.ok) {
+        throw new Error("Couldn't add to database")
+      }
+
+      response.status(201).send({ item: newTask })
+    } catch (error) {
+      response.status(500).send({ error })
+      console.error(error)
+    } finally {
+      db.close()
+    }
   })
 
   .listen(API_PORT, () => {
