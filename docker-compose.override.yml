@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  web:
+    container_name: cst-web-dev
+    image: cst-web-dev
+    volumes:
+      - ./server:/var/server
+    environment:
+      - NODE_ENV=development
+    command: yarn start
