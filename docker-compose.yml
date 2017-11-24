@@ -12,7 +12,6 @@ services:
       - cst-network
     links:
       - db
-    working_dir: /var/server
 
   db:
     container_name: cst-mongodb
