@@ -1,6 +1,6 @@
 FROM node:8.9
 
-ENV REACT_APP_API_HOST="localhost:5000"
+ENV REACT_APP_API_HOST="localhost:5050"
 EXPOSE 5000 5050
 
 COPY ./webapp /var/webapp
