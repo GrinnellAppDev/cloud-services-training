@@ -12,10 +12,13 @@ services:
       - local-bridge
     links:
       - db
+<<<<<<< HEAD
     depends_on:
       - db
     environment:
       - MONGO_URL=mongodb://db/cst
+=======
+>>>>>>> Remove working dir from docker compose
 
   db:
     container_name: cst-mongodb
