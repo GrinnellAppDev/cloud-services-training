@@ -1,16 +1,14 @@
-# AppDev Cloud Services Training: Day 2
+# AppDev Cloud Services Training: Day 3
 
-Day two is docker day. Docker can be a pretty tricky if you are new to
-programming. It might not even make sense why we need it. We will try to
-demystify it in class, but full mastery will take time.
+It is time to start saving our data somewhere. The piece of software responsible
+for storing data in a fast and organized fashion is called a database. We will
+be using a database tool called MongoDB. This will allow us to send real data
+from our api, and allow users to modify that data to add or check off tasks.
 
 ## Readings
 
-These readings are aimed more towards experienced developers, but they will help
-familiarize you with some of the concepts and terminology.
-
-* [Understanding and getting started with Docker](https://docs.docker.com/get-started/)
-* [Containerizing your app](https://lockmedown.com/docker-4-devs-containerizing-app/)
+* [MongoDB docker image documentation](https://docs.docker.com/samples/library/mongo/)
+* [MongoDB quick start](http://mongodb.github.io/node-mongodb-native/2.2/quick-start/quick-start/)
 
 ## Table of Contents
 
