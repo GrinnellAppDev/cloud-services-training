@@ -15,6 +15,7 @@ Do them if you have the time, but you should be okay if you can't.
 * [How does the internet work?](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/How_does_the_Internet_work)
 * [Getting started with Yarn](https://yarnpkg.com/en/docs/getting-started)
 * [Getting started with Express.js](https://expressjs.com/en/starter/hello-world.html)
+* [What is JavaScript?](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
 ## Table of Contents
 
