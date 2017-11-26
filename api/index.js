@@ -14,13 +14,14 @@ express()
     try {
       db = await MongoClient.connect(process.env.MONGO_URL)
 
+      throw new Error("Test error")
+
       const tasksCollection = db.collection("tasks")
       const allTasks = tasksCollection.find().sort("_id", -1)
 
       response.status(200).send({ items: await allTasks.toArray() })
     } catch (error) {
-      response.status(500).send({ error })
-      console.error(error)
+      throw error
     } finally {
       if (db) db.close()
     }
@@ -45,8 +46,7 @@ express()
 
       response.status(201).send({ item: newTask })
     } catch (error) {
-      response.status(500).send({ error })
-      console.error(error)
+      throw error
     } finally {
       if (db) db.close()
     }
@@ -71,8 +71,7 @@ express()
 
       response.sendStatus(204)
     } catch (error) {
-      response.status(500).send({ error })
-      console.error(error)
+      throw error
     } finally {
       if (db) db.close()
     }
@@ -97,10 +96,18 @@ express()
 
       response.status(200).send({ item: deleteResult.value })
     } catch (error) {
-      response.status(500).send({ error })
-      console.error(error)
+      throw error
     } finally {
       if (db) db.close()
+    }
+  })
+
+  .use((error, request, response, next) => {
+    console.error(error)
+    if (process.env.NODE_ENV === "production") {
+      response.status(500).send({ error: true })
+    } else {
+      response.status(500).send({ error })
     }
   })
 
