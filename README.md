@@ -1,14 +1,8 @@
-# AppDev Cloud Services Training: Day 3
-
-It is time to start saving our data somewhere. The piece of software responsible
-for storing data in a fast and organized fashion is called a database. We will
-be using a database tool called MongoDB. This will allow us to send real data
-from our api, and allow users to modify that data to add or check off tasks.
+# AppDev Cloud Services Training: Day 4
 
 ## Readings
 
-* [MongoDB docker image documentation](https://docs.docker.com/samples/library/mongo/)
-* [MongoDB quick start](http://mongodb.github.io/node-mongodb-native/2.2/quick-start/quick-start/)
+* [Higher order functions](https://eloquentjavascript.net/05_higher_order.html)
 
 ## Table of Contents
 
