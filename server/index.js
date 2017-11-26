@@ -50,7 +50,7 @@ express()
       const insertResult = await tasksCollection.insertOne(newTask)
 
       if (!insertResult.result.ok) {
-        throw new Error("Couldn't add to database")
+        throw Error("Couldn't add to database")
       }
 
       response.status(201).send({ item: newTask })
