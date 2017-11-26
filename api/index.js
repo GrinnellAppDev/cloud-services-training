@@ -64,7 +64,7 @@ express()
       )
 
       if (!updateResult.result.ok) {
-        throw new Error("Couldn't update database")
+        throw Error("Couldn't update database")
       }
 
       response.sendStatus(204)
@@ -81,7 +81,7 @@ express()
       })
 
       if (!deleteResult.ok) {
-        throw new Error("Couldn't update database")
+        throw Error("Couldn't update database")
       }
 
       response.status(200).send({ item: deleteResult.value })
