@@ -52,7 +52,7 @@ express()
     }
   })
 
-  .put("/tasks/:taskId", async (request, response) => {
+  .patch("/tasks/:taskId", async (request, response) => {
     let db
     try {
       db = await MongoClient.connect(process.env.MONGO_URL)
@@ -60,14 +60,12 @@ express()
       const tasksCollection = db.collection("tasks")
 
       const { taskId } = request.params
-      const newTask = request.body
-
-      const replaceResult = await tasksCollection.replaceOne(
+      const updateResult = await tasksCollection.updateOne(
         { _id: ObjectId(taskId) },
-        newTask
+        { $set: request.body }
       )
 
-      if (!replaceResult.result.ok) {
+      if (!updateResult.result.ok) {
         throw new Error("Couldn't update database")
       }
 
@@ -96,8 +94,6 @@ express()
       if (!deleteResult.ok) {
         throw new Error("Couldn't update database")
       }
-
-      console.log(deleteResult.value)
 
       response.status(200).send({ item: deleteResult.value })
     } catch (error) {
