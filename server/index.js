@@ -1,11 +1,16 @@
 const express = require("express")
 const { MongoClient, ObjectId } = require("mongodb")
 const bodyParser = require("body-parser")
+const { Buffer } = require("buffer")
 
 require("express-async-errors")
 
 const STATIC_PORT = 5000
 const API_PORT = 5050
+
+const idToBase64 = id => Buffer.from(id.toString(), "hex").toString("base64")
+const base64ToId = base64 =>
+  ObjectId(Buffer.from(base64, "base64").toString("hex"))
 
 const runWithDB = async run => {
   let db
@@ -38,13 +43,15 @@ express()
       const pageToken = request.query.pageToken || null
 
       const allTasks = pageToken
-        ? tasksCollection.find({ _id: { $gte: ObjectId(pageToken) } })
+        ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
         : tasksCollection.find()
 
       const readTasks = await allTasks.limit(pageSize + 1).toArray()
       const items = readTasks.slice(0, pageSize)
       const nextPageFirstTask = readTasks[pageSize]
-      const nextPageToken = nextPageFirstTask ? nextPageFirstTask._id : null
+      const nextPageToken = nextPageFirstTask
+        ? idToBase64(nextPageFirstTask._id)
+        : null
 
       response.status(200).send({ items, nextPageToken })
     })
