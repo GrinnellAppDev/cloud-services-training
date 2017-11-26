@@ -3,6 +3,8 @@ const cors = require("cors")
 const { MongoClient } = require("mongodb")
 const bodyParser = require("body-parser")
 
+require("express-async-errors")
+
 const STATIC_PORT = 5000
 const API_PORT = 5050
 
@@ -21,8 +23,6 @@ express()
     let db
     try {
       db = await MongoClient.connect(process.env.MONGO_URL)
-
-      throw new Error("Test error")
 
       const tasksCollection = db.collection("tasks")
       const allTasks = tasksCollection.find()
@@ -117,7 +117,13 @@ express()
     if (process.env.NODE_ENV === "production") {
       response.status(500).send({ error: true })
     } else {
-      response.status(500).send({ error })
+      response.status(500).send({
+        error: {
+          code: error.code,
+          message: error.message,
+          stack: error.stack
+        }
+      })
     }
   })
 
