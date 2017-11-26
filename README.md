@@ -15,7 +15,10 @@ Do them if you have the time, but you should be okay if you can't.
 * [How does the internet work?](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/How_does_the_Internet_work)
 * [Getting started with Yarn](https://yarnpkg.com/en/docs/getting-started)
 * [Getting started with Express.js](https://expressjs.com/en/starter/hello-world.html)
-* [What is JavaScript?](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+* [Eloquent JavaScript](https://eloquentjavascript.net/index.html)
+  * This is an excellent, beginner-friendly book for JavaScript. It is a lot to
+    read all at once. Consider skimming it for concepts you are confused on as
+    we move through the course, if you don't have time to read the whole thing.
 
 ## Table of Contents
 
