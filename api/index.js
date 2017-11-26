@@ -76,7 +76,6 @@ express()
       const tasksCollection = db.collection("tasks")
 
       const { taskId } = request.params
-
       const deleteResult = await tasksCollection.findOneAndDelete({
         _id: ObjectId(taskId)
       })
