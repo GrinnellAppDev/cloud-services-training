@@ -90,6 +90,34 @@ express()
     }
   })
 
+  .delete("/tasks/:taskId", async (request, response) => {
+    let db
+    try {
+      db = await MongoClient.connect(process.env.MONGO_URL)
+
+      const tasksCollection = db.collection("tasks")
+
+      const { taskId } = request.params
+
+      const deleteResult = await tasksCollection.findOneAndDelete({
+        _id: ObjectId(taskId)
+      })
+
+      if (!deleteResult.ok) {
+        throw new Error("Couldn't update database")
+      }
+
+      console.log(deleteResult.value)
+
+      response.status(200).send({ item: deleteResult.value })
+    } catch (error) {
+      response.status(500).send({ error })
+      console.error(error)
+    } finally {
+      if (db) db.close()
+    }
+  })
+
   .listen(API_PORT, () => {
     console.log(`Serving API on port ${API_PORT}`)
   })
