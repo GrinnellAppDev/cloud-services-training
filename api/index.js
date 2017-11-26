@@ -14,8 +14,6 @@ express()
     try {
       db = await MongoClient.connect(process.env.MONGO_URL)
 
-      throw new Error("Test error")
-
       const tasksCollection = db.collection("tasks")
       const allTasks = tasksCollection.find().sort("_id", -1)
 
@@ -107,10 +105,16 @@ express()
     if (process.env.NODE_ENV === "production") {
       response.status(500).send({ error: true })
     } else {
-      response.status(500).send({ error })
+      response.status(500).send({
+        error: {
+          code: error.code,
+          message: error.message,
+          stack: error.stack
+        }
+      })
     }
   })
 
-  .listen(API_PORT, () => {
+  .listen(PORT, () => {
     console.log("Serving API.")
   })
