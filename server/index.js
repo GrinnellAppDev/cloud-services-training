@@ -33,11 +33,20 @@ express()
   .get("/tasks", (request, response) =>
     runWithDB(async db => {
       const tasksCollection = db.collection("tasks")
-      const allTasks = tasksCollection.find()
 
-      response.status(200).send({
-        items: await allTasks.toArray()
-      })
+      const pageSize = +request.query.pageSize || 10
+      const pageToken = request.query.pageToken || null
+
+      const allTasks = pageToken
+        ? tasksCollection.find({ _id: { $gte: ObjectId(pageToken) } })
+        : tasksCollection.find()
+
+      const readTasks = await allTasks.limit(pageSize + 1).toArray()
+      const items = readTasks.slice(0, pageSize)
+      const nextPageFirstTask = readTasks[pageSize]
+      const nextPageToken = nextPageFirstTask ? nextPageFirstTask._id : null
+
+      response.status(200).send({ items, nextPageToken })
     })
   )
 
