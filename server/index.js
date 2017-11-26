@@ -7,6 +7,19 @@ require("express-async-errors")
 const STATIC_PORT = 5000
 const API_PORT = 5050
 
+const runWithDB = async run => {
+  let db
+  try {
+    db = await MongoClient.connect(process.env.MONGO_URL)
+
+    await run(db)
+  } catch (error) {
+    throw error
+  } finally {
+    if (db) db.close()
+  }
+}
+
 express()
   .use(express.static(`${__dirname}/../webapp/build`))
 
@@ -17,29 +30,19 @@ express()
 express()
   .use(bodyParser.json())
 
-  .get("/tasks", async (request, response) => {
-    let db
-    try {
-      db = await MongoClient.connect(process.env.MONGO_URL)
-
+  .get("/tasks", (request, response) =>
+    runWithDB(async db => {
       const tasksCollection = db.collection("tasks")
       const allTasks = tasksCollection.find()
 
       response.status(200).send({
         items: await allTasks.toArray()
       })
-    } catch (error) {
-      throw error
-    } finally {
-      if (db) db.close()
-    }
-  })
+    })
+  )
 
-  .post("/tasks", async (request, response) => {
-    let db
-    try {
-      db = await MongoClient.connect(process.env.MONGO_URL)
-
+  .post("/tasks", (request, response) =>
+    runWithDB(async db => {
       const newTask = {
         ...request.body,
         completed: false
@@ -53,18 +56,11 @@ express()
       }
 
       response.status(201).send({ item: newTask })
-    } catch (error) {
-      throw error
-    } finally {
-      if (db) db.close()
-    }
-  })
+    })
+  )
 
-  .patch("/tasks/:taskId", async (request, response) => {
-    let db
-    try {
-      db = await MongoClient.connect(process.env.MONGO_URL)
-
+  .patch("/tasks/:taskId", (request, response) =>
+    runWithDB(async db => {
       const tasksCollection = db.collection("tasks")
 
       const { taskId } = request.params
@@ -78,18 +74,11 @@ express()
       }
 
       response.sendStatus(204)
-    } catch (error) {
-      throw error
-    } finally {
-      if (db) db.close()
-    }
-  })
+    })
+  )
 
-  .delete("/tasks/:taskId", async (request, response) => {
-    let db
-    try {
-      db = await MongoClient.connect(process.env.MONGO_URL)
-
+  .delete("/tasks/:taskId", (request, response) =>
+    runWithDB(async db => {
       const tasksCollection = db.collection("tasks")
 
       const { taskId } = request.params
@@ -103,15 +92,12 @@ express()
       }
 
       response.status(200).send({ item: deleteResult.value })
-    } catch (error) {
-      throw error
-    } finally {
-      if (db) db.close()
-    }
-  })
+    })
+  )
 
   .use((error, request, response, next) => {
     console.error(error)
+
     if (process.env.NODE_ENV === "production") {
       response.status(500).send({ error: true })
     } else {
