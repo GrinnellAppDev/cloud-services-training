@@ -85,11 +85,18 @@ express()
         { $set: request.body }
       )
 
-      if (!updateResult.result.ok) {
+      if (updateResult.matchedCount < 1) {
+        response.status(404).send({
+          error: {
+            status: 404,
+            message: `No task with id "${taskId}"`
+          }
+        })
+      } else if (!updateResult.result.ok) {
         throw Error("Couldn't update database")
+      } else {
+        response.status(204).send()
       }
-
-      response.sendStatus(204)
     })
   )
 
@@ -102,22 +109,44 @@ express()
         _id: ObjectId(taskId)
       })
 
-      if (!deleteResult.ok) {
+      if (!deleteResult.value) {
+        response.status(404).send({
+          error: {
+            status: 404,
+            message: `No task with id "${taskId}"`
+          }
+        })
+      } else if (!deleteResult.ok) {
         throw Error("Couldn't update database")
+      } else {
+        response.status(200).send({ item: deleteResult.value })
       }
-
-      response.status(200).send({ item: deleteResult.value })
     })
   )
+
+  .all("/*", (request, response) => {
+    response.status(404).send({
+      error: {
+        status: 404,
+        message: "Not found"
+      }
+    })
+  })
 
   .use((error, request, response, next) => {
     console.error(error)
 
     if (process.env.NODE_ENV === "production") {
-      response.status(500).send({ error: true })
+      response.status(500).send({
+        error: {
+          status: 500,
+          message: "Server error"
+        }
+      })
     } else {
       response.status(500).send({
         error: {
+          status: 500,
           code: error.code,
           message: error.message,
           stack: error.stack
