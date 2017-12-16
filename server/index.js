@@ -1,5 +1,7 @@
+// @ts-check
+
 const express = require("express")
-const { MongoClient, ObjectId } = require("mongodb")
+const { MongoClient, ObjectID, Db } = require("mongodb")
 const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
@@ -9,10 +11,20 @@ require("express-async-errors")
 const STATIC_PORT = 5000
 const API_PORT = 5050
 
+/**
+ * @param {ObjectID} id
+ */
 const idToBase64 = id => urlsafeBase64.encode(Buffer.from(id.toString(), "hex"))
-const base64ToId = base64 =>
-  ObjectId(urlsafeBase64.decode(base64).toString("hex"))
 
+/**
+ * @param {string} base64
+ */
+const base64ToId = base64 =>
+  new ObjectID(urlsafeBase64.decode(base64).toString("hex"))
+
+/**
+ * @param {function(Db): void} run
+ */
 const runWithDB = async run => {
   let db
   try {
@@ -40,8 +52,8 @@ express()
     runWithDB(async db => {
       const tasksCollection = db.collection("tasks")
 
-      const pageSize = +request.query.pageSize || 10
-      const pageToken = request.query.pageToken || null
+      /** @type {number} */ const pageSize = +request.query.pageSize || 10
+      /** @type {string} */ const pageToken = request.query.pageToken || null
 
       const allTasks = pageToken
         ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
@@ -82,7 +94,7 @@ express()
 
       const { taskId } = request.params
       const updateResult = await tasksCollection.updateOne(
-        { _id: ObjectId(taskId) },
+        { _id: new ObjectID(taskId) },
         { $set: request.body }
       )
 
@@ -107,7 +119,7 @@ express()
 
       const { taskId } = request.params
       const deleteResult = await tasksCollection.findOneAndDelete({
-        _id: ObjectId(taskId)
+        _id: new ObjectID(taskId)
       })
 
       if (!deleteResult.value) {
