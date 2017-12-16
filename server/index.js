@@ -23,7 +23,7 @@ const base64ToId = base64 =>
   new ObjectID(urlsafeBase64.decode(base64).toString("hex"))
 
 /**
- * @param {function(Db): void} run
+ * @param {function(Db): Promise<void>} run
  */
 const runWithDB = async run => {
   let db
