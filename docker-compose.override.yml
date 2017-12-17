@@ -8,4 +8,6 @@ services:
       - ./server:/var/server
     environment:
       - NODE_ENV=development
-    command: yarn start
+    command: yarn debug
+    ports:
+      - "9222:9222"
