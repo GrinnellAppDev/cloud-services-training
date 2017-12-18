@@ -9,7 +9,7 @@ services:
       - "5000:5000"
       - "5050:5050"
     networks:
-      - cst-network
+      - local-bridge
     links:
       - db
     depends_on:
@@ -21,10 +21,15 @@ services:
     container_name: cst-mongodb
     image: mongo:3.4
     networks:
-      - cst-network
+      - local-bridge
+    volumes:
+      - db-data:/data/db
     expose:
       - "27017"
 
 networks:
-  cst-network:
+  local-bridge:
     driver: bridge
+
+volumes:
+  db-data: {}
