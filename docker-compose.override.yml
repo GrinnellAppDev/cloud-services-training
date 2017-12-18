@@ -9,7 +9,3 @@ services:
     environment:
       - NODE_ENV=development
     command: yarn start
-
-  db:
-    volumes:
-      - ./.tmp/data/db:/data/db
