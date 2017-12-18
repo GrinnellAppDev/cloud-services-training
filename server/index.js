@@ -1,11 +1,10 @@
-// @ts-check
-
 const express = require("express")
 const { MongoClient, ObjectID, Db } = require("mongodb")
 const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
 
+// @ts-ignore
 require("express-async-errors")
 
 const STATIC_PORT = 5000
