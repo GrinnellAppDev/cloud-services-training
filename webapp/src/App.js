@@ -1,6 +1,6 @@
 import React from "react"
 import "./App.css"
-import EditableTask from "./EditableTask"
+import Task from "./Task"
 
 export const App = ({ tasks }) => (
   <div className="App">
@@ -14,7 +14,12 @@ export const App = ({ tasks }) => (
       <ul className="App-taskList">
         {tasks.map(task => (
           <li className="App-taskListItem" key={task._id}>
-            <EditableTask isComplete={task.isComplete} text={task.text} />
+            <Task
+              isComplete={task.isComplete}
+              text={task.text}
+              onIsCompleteChange={() => {}}
+              onTextChange={() => {}}
+            />
           </li>
         ))}
       </ul>

@@ -6,14 +6,20 @@ describe("Task", () => {
   it("handles checkbox click", () => {
     const onIsCompleteChange = jest.fn()
     const incompleteWrapper = shallow(
-      <Task isComplete={false} onIsCompleteChange={onIsCompleteChange}>
-        foo
-      </Task>
+      <Task
+        isComplete={false}
+        text="foo"
+        onIsCompleteChange={onIsCompleteChange}
+        onTextChange={() => {}}
+      />
     )
     const completeWrapper = shallow(
-      <Task isComplete={true} onIsCompleteChange={onIsCompleteChange}>
-        foo
-      </Task>
+      <Task
+        isComplete={true}
+        text="foo"
+        onIsCompleteChange={onIsCompleteChange}
+        onTextChange={() => {}}
+      />
     )
 
     incompleteWrapper.find(".Task-checkbox").simulate("click")
@@ -26,18 +32,24 @@ describe("Task", () => {
   it("checkbox reflects isComplete prop", () => {
     expect(
       shallow(
-        <Task isComplete={true} onIsCompleteChange={() => {}}>
-          foo
-        </Task>
+        <Task
+          isComplete={true}
+          text="foo"
+          onIsCompleteChange={() => {}}
+          onTextChange={() => {}}
+        />
       )
         .find(".Task-checkbox")
         .prop("checked")
     ).toBe(true)
     expect(
       shallow(
-        <Task isComplete={false} onIsCompleteChange={() => {}}>
-          foo
-        </Task>
+        <Task
+          isComplete={false}
+          text="foo"
+          onIsCompleteChange={() => {}}
+          onTextChange={() => {}}
+        />
       )
         .find(".Task-checkbox")
         .prop("checked")
@@ -47,12 +59,34 @@ describe("Task", () => {
   it("displays its text", () => {
     expect(
       shallow(
-        <Task isComplete={false} onIsCompleteChange={() => {}}>
-          foo
-        </Task>
+        <Task
+          isComplete={false}
+          text="foo"
+          onIsCompleteChange={() => {}}
+          onTextChange={() => {}}
+        />
       )
         .find(".Task-text")
-        .contains("foo")
-    ).toBe(true)
+        .prop("value")
+    ).toBe("foo")
+  })
+
+  it("sends out text change events", () => {
+    const onTextChange = jest.fn()
+    const wrapper = shallow(
+      <Task
+        text="foo"
+        isComplete={false}
+        onTextChange={onTextChange}
+        onIsCompleteChange={() => {}}
+      />
+    )
+
+    wrapper.find(".Task-text").simulate("change", {
+      currentTarget: {
+        value: "foot"
+      }
+    })
+    expect(onTextChange).toBeCalledWith("foot")
   })
 })

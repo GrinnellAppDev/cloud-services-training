@@ -1,7 +1,7 @@
 import React from "react"
 import { shallow } from "enzyme"
 import App from "./App"
-import { EditableTask } from "./EditableTask"
+import { Task } from "./Task"
 
 describe("App", () => {
   it("renders a single incomplete task", () => {
@@ -11,7 +11,7 @@ describe("App", () => {
     const firstTask = wrapper
       .find(".App-taskList")
       .childAt(0)
-      .find(EditableTask)
+      .find(Task)
 
     expect(wrapper.find(".App-taskList").children()).toHaveLength(1)
     expect(firstTask.prop("text")).toBe("foo")
@@ -25,7 +25,7 @@ describe("App", () => {
     const firstTask = wrapper
       .find(".App-taskList")
       .childAt(0)
-      .find(EditableTask)
+      .find(Task)
 
     expect(wrapper.find(".App-taskList").children()).toHaveLength(1)
     expect(firstTask.prop("text")).toBe("bar")
@@ -48,19 +48,19 @@ describe("App", () => {
     expect(
       children
         .at(0)
-        .find(EditableTask)
+        .find(Task)
         .prop("text")
     ).toBe("foo")
     expect(
       children
         .at(1)
-        .find(EditableTask)
+        .find(Task)
         .prop("text")
     ).toBe("bar")
     expect(
       children
         .at(2)
-        .find(EditableTask)
+        .find(Task)
         .prop("text")
     ).toBe("baz")
   })

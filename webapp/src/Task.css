@@ -40,9 +40,21 @@
 }
 
 .Task-text {
+  font: inherit;
   font-size: 16px;
   margin: 0 20px 0 10px;
   flex: 1;
+  color: inherit;
+  padding: 0;
+  outline: none;
+  border: none;
+  border-top: 2px solid rgba(0, 0, 0, 0);
+  border-bottom: 2px solid rgba(0, 0, 0, 0);
+  min-width: 0px;
+}
+
+.Task-text:focus {
+  border-bottom: 2px solid #999;
 }
 
 .Task-isComplete .Task-text {

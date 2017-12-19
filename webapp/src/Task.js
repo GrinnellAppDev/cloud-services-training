@@ -4,7 +4,12 @@ import classnames from "classnames"
 import Ripples from "react-ripples"
 import "./Task.css"
 
-export const Task = ({ isComplete, onIsCompleteChange, children }) => (
+export const Task = ({
+  isComplete,
+  text,
+  onIsCompleteChange,
+  onTextChange
+}) => (
   <article className={classnames("Task", isComplete && "Task-isComplete")}>
     <Ripples
       className="Task-checkboxRipple"
@@ -18,7 +23,12 @@ export const Task = ({ isComplete, onIsCompleteChange, children }) => (
       />
     </Ripples>
 
-    <p className="Task-text">{children}</p>
+    <input
+      className="Task-text"
+      type="text"
+      value={text}
+      onChange={ev => onTextChange(ev.currentTarget.value)}
+    />
   </article>
 )
 
