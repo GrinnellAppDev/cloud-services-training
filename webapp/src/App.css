@@ -18,7 +18,8 @@
 }
 
 .App-main {
-  width: 50%;
+  width: 100%;
+  max-width: 500px;
 }
 
 .App-addTask {
@@ -30,6 +31,16 @@
 }
 
 .App-taskList {
+  padding: 0;
   margin: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  list-style: none;
+}
+
+.App-taskListItem {
+  border-bottom: 1px solid #eee;
+}
+
+.App-taskListItem:last-child {
+  border-bottom: none;
 }

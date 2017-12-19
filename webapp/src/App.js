@@ -1,7 +1,8 @@
 import React from "react"
 import "./App.css"
+import EditableTask from "./EditableTask"
 
-export const App = () => (
+export const App = ({ tasks }) => (
   <div className="App">
     <header className="App-header">todo</header>
     <main className="App-main">
@@ -11,9 +12,11 @@ export const App = () => (
         placeholder="What needs to be done?"
       />
       <ul className="App-taskList">
-        <li>Get coffee</li>
-        <li>Pick up leaves</li>
-        <li>Finish novel</li>
+        {tasks.map(task => (
+          <li className="App-taskListItem" key={task._id}>
+            <EditableTask isComplete={task.isComplete} text={task.text} />
+          </li>
+        ))}
       </ul>
     </main>
   </div>
