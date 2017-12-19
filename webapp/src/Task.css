@@ -1,0 +1,50 @@
+.Task {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: white;
+}
+
+.Task-checkboxRipple {
+  margin: 10px;
+  border-radius: 50%;
+  height: 40px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.Task-checkbox {
+  appearance: none;
+  outline: none;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+}
+
+.Task-checkbox::after {
+  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -10 120 120"><circle cx="50" cy="50" r="50" fill="none" stroke="#ededed" stroke-width="3"/></svg>');
+}
+
+.Task-checkbox:focus::after {
+  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -10 120 120"><circle cx="50" cy="50" r="50" fill="none" stroke="#ededed" stroke-width="10"/></svg>');
+}
+
+.Task-checkbox:checked::after {
+  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -10 120 120"><circle cx="50" cy="50" r="50" fill="none" stroke="#bddad5" stroke-width="3"/><path fill="#5dc2af" d="M72 25L42 71 27 56l-4 4 20 20 34-52z"/></svg>');
+}
+
+.Task-checkbox:checked:focus::after {
+  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -10 120 120"><circle cx="50" cy="50" r="50" fill="none" stroke="#bddad5" stroke-width="10"/><path fill="#5dc2af" d="M72 25L42 71 27 56l-4 4 20 20 34-52z"/></svg>');
+}
+
+.Task-text {
+  font-size: 16px;
+  margin: 10px;
+}
+
+.Task-isComplete .Task-text {
+  color: #999;
+  text-decoration: line-through;
+}

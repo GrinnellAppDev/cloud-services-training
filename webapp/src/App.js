@@ -1,16 +1,21 @@
-import React, { Component } from "react"
-import logo from "./logo.svg"
+import React from "react"
 import "./App.css"
 
 export const App = () => (
   <div className="App">
-    <header className="App-header">
-      <img src={logo} className="App-logo" alt="logo" />
-      <h1 className="App-title">Welcome to React</h1>
-    </header>
-    <p className="App-intro">
-      To get started, edit <code>src/App.js</code> and save to reload.
-    </p>
+    <header className="App-header">todo</header>
+    <main className="App-main">
+      <input
+        className="App-addTask"
+        type="text"
+        placeholder="What needs to be done?"
+      />
+      <ul className="App-taskList">
+        <li>Get coffee</li>
+        <li>Pick up leaves</li>
+        <li>Finish novel</li>
+      </ul>
+    </main>
   </div>
 )
 

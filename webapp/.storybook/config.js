@@ -1,8 +1,10 @@
 import { configure } from "@storybook/react"
+import "../src/index.css"
+import "./style.css"
 
 function loadStories() {
-  require("../stories/index.js")
-  // You can require as many stories as you need.
+  require("../stories/app-story.js")
+  require("../stories/task-story.js")
 }
 
 configure(loadStories, module)
