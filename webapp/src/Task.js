@@ -1,8 +1,13 @@
 import React from "react"
 import classnames from "classnames"
-// @ts-ignore
 import Ripples from "react-ripples"
 import "./Task.css"
+import { connect } from "react-redux"
+import { getTaskById } from "./store"
+
+export const withEnhancers = connect((state, { id }) => ({
+  ...getTaskById(state, id)
+}))
 
 export const Task = ({
   isComplete,
@@ -32,4 +37,4 @@ export const Task = ({
   </article>
 )
 
-export default Task
+export default withEnhancers(Task)

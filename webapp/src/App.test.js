@@ -2,7 +2,7 @@ import React from "react"
 import { render } from "react-dom"
 import { shallow } from "enzyme"
 import { App, withEnhancers } from "./App"
-import { Task } from "./Task"
+import Task from "./Task"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
 
@@ -57,7 +57,7 @@ describe("withEnhancers", () => {
 })
 
 describe("App", () => {
-  it("renders a single incomplete task", () => {
+  it("renders a single task", () => {
     const wrapper = shallow(
       <App tasks={[{ _id: "a", isComplete: false, text: "foo" }]} />
     )
@@ -67,22 +67,7 @@ describe("App", () => {
       .find(Task)
 
     expect(wrapper.find(".App-taskList").children()).toHaveLength(1)
-    expect(firstTask.prop("text")).toBe("foo")
-    expect(firstTask.prop("isComplete")).toBe(false)
-  })
-
-  it("renders a single complete task", () => {
-    const wrapper = shallow(
-      <App tasks={[{ _id: "a", isComplete: true, text: "bar" }]} />
-    )
-    const firstTask = wrapper
-      .find(".App-taskList")
-      .childAt(0)
-      .find(Task)
-
-    expect(wrapper.find(".App-taskList").children()).toHaveLength(1)
-    expect(firstTask.prop("text")).toBe("bar")
-    expect(firstTask.prop("isComplete")).toBe(true)
+    expect(firstTask.prop("id")).toBe("a")
   })
 
   it("renders a few tasks in order", () => {
@@ -102,19 +87,27 @@ describe("App", () => {
       children
         .at(0)
         .find(Task)
-        .prop("text")
-    ).toBe("foo")
+        .prop("id")
+    ).toBe("a")
     expect(
       children
         .at(1)
         .find(Task)
-        .prop("text")
-    ).toBe("bar")
+        .prop("id")
+    ).toBe("b")
     expect(
       children
         .at(2)
         .find(Task)
-        .prop("text")
-    ).toBe("baz")
+        .prop("id")
+    ).toBe("c")
+  })
+
+  it("displays changes to the new task", () => {
+    expect(
+      shallow(<App tasks={[]} newTaskText="foo" />)
+        .find(".App-addTask")
+        .prop("value")
+    ).toBe("foo")
   })
 })

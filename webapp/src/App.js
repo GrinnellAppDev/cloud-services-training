@@ -11,7 +11,7 @@ export const withEnhancers = connect(() => {
   })
 })
 
-export const App = ({ tasks }) => (
+export const App = ({ tasks, newTaskText }) => (
   <div className="App">
     <header className="App-header">todo</header>
     <main className="App-main">
@@ -19,17 +19,13 @@ export const App = ({ tasks }) => (
         className="App-addTask"
         type="text"
         placeholder="What needs to be done?"
+        value={newTaskText}
       />
 
       <ul className="App-taskList">
-        {tasks.map(task => (
-          <li className="App-taskListItem" key={task._id}>
-            <Task
-              isComplete={task.isComplete}
-              text={task.text}
-              onIsCompleteChange={() => {}}
-              onTextChange={() => {}}
-            />
+        {tasks.map(({ _id }) => (
+          <li className="App-taskListItem" key={_id}>
+            <Task id={_id} />
           </li>
         ))}
       </ul>

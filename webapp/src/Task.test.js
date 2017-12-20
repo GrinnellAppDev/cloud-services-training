@@ -1,6 +1,37 @@
 import React from "react"
-import { Task } from "./Task"
+import { Task, withEnhancers } from "./Task"
 import { shallow } from "enzyme"
+import configureMockStore from "redux-mock-store"
+import { Provider } from "react-redux"
+import { render } from "react-dom"
+
+describe("withEnhancers", () => {
+  const createMockStore = configureMockStore()
+
+  it("pulls data from state", () => {
+    const store = createMockStore({
+      tasks: {
+        items: {
+          a: { _id: "a", isComplete: false, text: "foo" }
+        }
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped id="a" />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].isComplete).toBe(false)
+    expect(Component.mock.calls[0][0].text).toBe("foo")
+  })
+})
 
 describe("Task", () => {
   it("handles checkbox click", () => {

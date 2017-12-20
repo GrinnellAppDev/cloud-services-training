@@ -4,6 +4,8 @@ import { createEpicMiddleware } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
 import { createSelector } from "reselect"
 
+export const getTaskById = (state, id) => state.tasks.items[id]
+
 export const makeGetTasks = () =>
   createSelector(
     state => state.tasks.items,

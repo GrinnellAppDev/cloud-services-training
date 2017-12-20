@@ -1,5 +1,11 @@
 import { ActionsObservable } from "redux-observable"
-import { configureStore, reducer, rootEpic, makeGetTasks } from "./store"
+import {
+  configureStore,
+  reducer,
+  rootEpic,
+  makeGetTasks,
+  getTaskById
+} from "./store"
 
 describe("configureStore", () => {
   it("makes a store without a default state", () => {
@@ -7,33 +13,65 @@ describe("configureStore", () => {
   })
 })
 
-describe("getTasks", () => {
-  const getTasks = makeGetTasks()
+describe("selectors", () => {
+  describe("getTaskById", () => {
+    it("gets the task when it is there", () => {
+      expect(
+        getTaskById(
+          {
+            tasks: {
+              items: {
+                a: { _id: "a", isComplete: false, text: "foo" }
+              }
+            }
+          },
+          "a"
+        )
+      ).toEqual({ _id: "a", isComplete: false, text: "foo" })
+    })
 
-  it("gets a list from a loaded state in order", () => {
-    expect(
-      getTasks({
-        tasks: {
-          items: {
-            a: { _id: "a", isComplete: false, text: "foo" },
-            b: { _id: "b", isComplete: true, text: "bar" }
-          }
-        }
-      })
-    ).toEqual([
-      { _id: "a", isComplete: false, text: "foo" },
-      { _id: "b", isComplete: true, text: "bar" }
-    ])
+    it("returns undefined when there is no task", () => {
+      expect(
+        getTaskById(
+          {
+            tasks: {
+              items: {}
+            }
+          },
+          "a"
+        )
+      ).toBe(undefined)
+    })
   })
 
-  it("gets an empty list from an empty loaded state", () => {
-    expect(
-      getTasks({
-        tasks: {
-          items: {}
-        }
-      })
-    ).toEqual([])
+  describe("getTasks", () => {
+    const getTasks = makeGetTasks()
+
+    it("gets a list from a loaded state in order", () => {
+      expect(
+        getTasks({
+          tasks: {
+            items: {
+              a: { _id: "a", isComplete: false, text: "foo" },
+              b: { _id: "b", isComplete: true, text: "bar" }
+            }
+          }
+        })
+      ).toEqual([
+        { _id: "a", isComplete: false, text: "foo" },
+        { _id: "b", isComplete: true, text: "bar" }
+      ])
+    })
+
+    it("gets an empty list from an empty loaded state", () => {
+      expect(
+        getTasks({
+          tasks: {
+            items: {}
+          }
+        })
+      ).toEqual([])
+    })
   })
 })
 
