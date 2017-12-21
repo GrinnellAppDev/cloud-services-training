@@ -4,6 +4,7 @@ import { createEpicMiddleware } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
 import { createSelector } from "reselect"
 
+export const getNewTaskText = state => state.newTask.text
 export const getTaskById = (state, id) => state.tasks.items[id]
 
 export const makeGetTasks = () =>
@@ -14,6 +15,16 @@ export const makeGetTasks = () =>
         .sort()
         .map(key => items[key])
   )
+
+export const editNewTask = text => ({
+  type: "EDIT_NEW_TASK",
+  text
+})
+export const editTask = (id, edits) => ({
+  type: "EDIT_TASK",
+  id,
+  edits
+})
 
 export const reducer = (
   state = { tasks: { status: "UNLOADED", items: {} } },
@@ -54,7 +65,7 @@ export const reducer = (
           }
         }
       }
-    case "EDIT":
+    case "EDIT_TASK":
       return {
         ...state,
         tasks: {

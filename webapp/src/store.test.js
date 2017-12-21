@@ -4,7 +4,8 @@ import {
   reducer,
   rootEpic,
   makeGetTasks,
-  getTaskById
+  getTaskById,
+  editTask
 } from "./store"
 
 describe("configureStore", () => {
@@ -182,13 +183,7 @@ describe("reducer", () => {
 
   it("can edit tasks", () => {
     expect(
-      reducer(stateWithTaskA, {
-        type: "EDIT",
-        id: "a",
-        edits: {
-          isComplete: true
-        }
-      })
+      reducer(stateWithTaskA, editTask("a", { isComplete: true }))
     ).toEqual({
       ...stateWithTaskA,
       tasks: {

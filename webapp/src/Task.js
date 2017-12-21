@@ -3,11 +3,17 @@ import classnames from "classnames"
 import Ripples from "react-ripples"
 import "./Task.css"
 import { connect } from "react-redux"
-import { getTaskById } from "./store"
+import { getTaskById, editTask } from "./store"
 
-export const withEnhancers = connect((state, { id }) => ({
-  ...getTaskById(state, id)
-}))
+export const withEnhancers = connect(
+  (state, { id }) => ({
+    ...getTaskById(state, id)
+  }),
+  (dispatch, { id }) => ({
+    onIsCompleteChange: isComplete => dispatch(editTask(id, { isComplete })),
+    onTextChange: text => dispatch(editTask(id, { text }))
+  })
+)
 
 export const Task = ({
   isComplete,

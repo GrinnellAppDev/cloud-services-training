@@ -4,6 +4,7 @@ import { shallow } from "enzyme"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
 import { render } from "react-dom"
+import { editTask } from "./store"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -30,6 +31,36 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls).toHaveLength(1)
     expect(Component.mock.calls[0][0].isComplete).toBe(false)
     expect(Component.mock.calls[0][0].text).toBe("foo")
+  })
+
+  it("sends edit actions", () => {
+    const store = createMockStore({
+      tasks: {
+        items: {
+          a: { _id: "a", isComplete: false, text: "foo" }
+        }
+      }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onIsCompleteChange(true)
+      props.onTextChange("bar")
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped id="a" />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component).toBeCalled()
+    expect(store.getActions()).toEqual([
+      editTask("a", { isComplete: true }),
+      editTask("a", { text: "bar" })
+    ])
   })
 })
 
