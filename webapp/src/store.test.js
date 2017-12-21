@@ -5,7 +5,11 @@ import {
   rootEpic,
   makeGetTasks,
   getTaskById,
-  editTask
+  editTask,
+  tasksReceived,
+  reloadTasks,
+  deleteTask,
+  editNewTaskText
 } from "./store"
 
 describe("configureStore", () => {
@@ -123,37 +127,19 @@ describe("reducer", () => {
       }
     }
 
+    expect(reducer(initialState, tasksReceived([itemA], pageToken1))).toEqual(
+      stateAfterPage1
+    )
     expect(
-      reducer(initialState, {
-        type: "LOAD",
-        items: [itemA],
-        nextPageToken: pageToken1
-      })
-    ).toEqual(stateAfterPage1)
-
-    expect(
-      reducer(stateAfterPage1, {
-        type: "LOAD",
-        items: [itemB],
-        nextPageToken: pageToken2
-      })
+      reducer(stateAfterPage1, tasksReceived([itemB], pageToken2))
     ).toEqual(stateAfterPage2)
-
-    expect(
-      reducer(stateAfterPage2, {
-        type: "LOAD",
-        items: [],
-        nextPageToken: null
-      })
-    ).toEqual(stateAfterPage2)
+    expect(reducer(stateAfterPage2, tasksReceived([], pageToken2))).toEqual(
+      stateAfterPage2
+    )
   })
 
   it("removes all items on refresh", () => {
-    expect(
-      reducer(stateWithTaskA, {
-        type: "RELOAD"
-      })
-    ).toEqual({
+    expect(reducer(stateWithTaskA, reloadTasks())).toEqual({
       ...initialState,
       tasks: {
         status: "LOADING",
@@ -163,20 +149,21 @@ describe("reducer", () => {
     })
   })
 
-  it("can add new tasks", () => {
+  it("can edit the new task", () => {
     expect(
-      reducer(initialState, {
-        type: "ADD",
-        item: { _id: "a", isComplete: false, text: "foo" }
-      })
+      reducer(
+        {
+          ...initialState,
+          newTask: {
+            text: "foo"
+          }
+        },
+        editNewTaskText("bar")
+      )
     ).toEqual({
       ...initialState,
-      tasks: {
-        ...initialState.tasks,
-        items: {
-          ...initialState.items,
-          a: { _id: "a", isComplete: false, text: "foo" }
-        }
+      newTask: {
+        text: "bar"
       }
     })
   })
@@ -197,12 +184,7 @@ describe("reducer", () => {
   })
 
   it("can delete tasks", () => {
-    expect(
-      reducer(stateWithTaskA, {
-        type: "DELETE",
-        id: "a"
-      })
-    ).toEqual({
+    expect(reducer(stateWithTaskA, deleteTask("a"))).toEqual({
       ...stateWithTaskA,
       tasks: {
         ...stateWithTaskA.tasks,

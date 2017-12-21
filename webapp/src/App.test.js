@@ -5,7 +5,7 @@ import { App, withEnhancers } from "./App"
 import Task from "./Task"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
-import { editNewTask } from "./store"
+import { editNewTaskText } from "./store"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -133,7 +133,7 @@ describe("withEnhancers", () => {
       document.createElement("div")
     )
 
-    expect(store.getActions()).toEqual([editNewTask("foo")])
+    expect(store.getActions()).toEqual([editNewTaskText("foo")])
   })
 })
 

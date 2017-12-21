@@ -2,7 +2,7 @@ import React from "react"
 import "./App.css"
 import Task from "./Task"
 import { connect } from "react-redux"
-import { makeGetTasks, getNewTaskText, editNewTask } from "./store"
+import { makeGetTasks, getNewTaskText, editNewTaskText } from "./store"
 
 export const withEnhancers = connect(
   () => {
@@ -13,7 +13,7 @@ export const withEnhancers = connect(
     })
   },
   {
-    onNewTaskTextChange: editNewTask
+    onNewTaskTextChange: editNewTaskText
   }
 )
 

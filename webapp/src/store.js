@@ -16,22 +16,26 @@ export const makeGetTasks = () =>
         .map(key => items[key])
   )
 
-export const editNewTask = text => ({
-  type: "EDIT_NEW_TASK",
-  text
+// Action Creators
+
+export const reloadTasks = () => ({ type: "RELOAD_TASKS" })
+export const tasksReceived = (items, nextPageToken) => ({
+  type: "TASKS_RECEIVED",
+  items,
+  nextPageToken
 })
-export const editTask = (id, edits) => ({
-  type: "EDIT_TASK",
-  id,
-  edits
-})
+export const editNewTaskText = text => ({ type: "EDIT_NEW_TASK_TEXT", text })
+export const editTask = (id, edits) => ({ type: "EDIT_TASK", id, edits })
+export const deleteTask = id => ({ type: "DELETE_TASK", id })
+
+// Reducers
 
 export const reducer = (
   state = { tasks: { status: "UNLOADED", items: {} } },
   { type, ...payload }
 ) => {
   switch (type) {
-    case "LOAD":
+    case "TASKS_RECEIVED":
       const items = { ...state.tasks.items }
       for (const item of payload.items) {
         items[item._id] = item
@@ -45,24 +49,13 @@ export const reducer = (
           nextPageToken: payload.nextPageToken
         }
       }
-    case "RELOAD":
+    case "RELOAD_TASKS":
       return {
         ...state,
         tasks: {
           status: "LOADING",
           items: {},
           nextPageToken: null
-        }
-      }
-    case "ADD":
-      return {
-        ...state,
-        tasks: {
-          ...state.tasks,
-          items: {
-            ...state.tasks.items,
-            [payload.item._id]: payload.item
-          }
         }
       }
     case "EDIT_TASK":
@@ -79,7 +72,14 @@ export const reducer = (
           }
         }
       }
-    case "DELETE":
+    case "EDIT_NEW_TASK_TEXT":
+      return {
+        ...state,
+        newTask: {
+          text: payload.text
+        }
+      }
+    case "DELETE_TASK":
       const { [payload.id]: deletedItem, ...otherItems } = state.tasks.items
       return {
         ...state,
@@ -93,7 +93,11 @@ export const reducer = (
   }
 }
 
+// Epics
+
 export const rootEpic = actionsObservable => emptyObservable()
+
+// Store
 
 export const configureStore = () => {
   return createStore(
