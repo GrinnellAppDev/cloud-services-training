@@ -251,7 +251,8 @@ describe("reducer", () => {
         items: {
           abc: {
             ...stateWithTaskA.tasks.items.a,
-            _id: "abc"
+            _id: "abc",
+            isCreating: false
           }
         }
       }
@@ -354,6 +355,64 @@ describe("epics", () => {
           .pipe(toArray())
           .toPromise()
       ).toEqual([clearNewTask(), taskCreated("abc", "def")])
+    })
+
+    it("handles missing id in the response", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      expect(
+        await newTaskEpic(
+          ActionsObservable.of(createNewTask("abc")),
+          { getState: () => ({ newTask: { text: "foo" } }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ item: {} })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([clearNewTask(), reloadTasks()])
+
+      expect(console.error).toBeCalledWith(
+        "Couldn't find '_id' field in the API response"
+      )
+      expect(console.error).toBeCalledWith(
+        "Reloading to get correct task id..."
+      )
+      console.error = consoleError
+    })
+
+    it("handles missing item field in the response", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      expect(
+        await newTaskEpic(
+          ActionsObservable.of(createNewTask("abc")),
+          { getState: () => ({ newTask: { text: "foo" } }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({})
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([clearNewTask(), reloadTasks()])
+
+      expect(console.error).toBeCalledWith(
+        "Couldn't find 'item' field in the API response"
+      )
+      expect(console.error).toBeCalledWith(
+        "Reloading to get correct task id..."
+      )
+      console.error = consoleError
     })
   })
 })

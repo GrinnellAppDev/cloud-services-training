@@ -143,6 +143,7 @@ export const reducer = (
         [payload.temporaryId]: localTask,
         ...otherItems
       } = state.tasks.items
+
       return {
         ...state,
         tasks: {
@@ -151,7 +152,8 @@ export const reducer = (
             ...otherItems,
             [payload.realId]: {
               ...localTask,
-              _id: payload.realId
+              _id: payload.realId,
+              isCreating: false
             }
           }
         }
@@ -196,7 +198,18 @@ export const newTaskEpic = (
                 ? response.json()
                 : Promise.reject(Error("HTTP Error"))
           )
-          .then(({ item }) => taskCreated(temporaryId, item._id))
+          .then(({ item }) => {
+            if (!item) {
+              console.error("Couldn't find 'item' field in the API response")
+            } else if (!item._id) {
+              console.error("Couldn't find '_id' field in the API response")
+            } else {
+              return taskCreated(temporaryId, item._id)
+            }
+
+            console.error("Reloading to get correct task id...")
+            return reloadTasks()
+          })
           .catch(err => taskCreateFailed(temporaryId, err.message))
       )
     )
