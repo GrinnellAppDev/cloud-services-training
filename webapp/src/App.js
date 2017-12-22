@@ -20,8 +20,7 @@ export const withEnhancers = connect(
   },
   {
     onNewTaskTextChange: editNewTaskText,
-    onNewTaskSubmit: () =>
-      createNewTask(`~${Date.now()}-${Math.floor(Math.random() * 100000)}`),
+    onNewTaskSubmit: () => createNewTask(`~${Date.now()}`),
     onRefresh: reloadTasks
   }
 )
