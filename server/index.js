@@ -57,10 +57,13 @@ express()
       /** @type {string} */ const pageToken = request.query.pageToken || null
 
       const allTasks = pageToken
-        ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
+        ? tasksCollection.find({ _id: { $lte: base64ToId(pageToken) } })
         : tasksCollection.find()
 
-      const readTasks = await allTasks.limit(pageSize + 1).toArray()
+      const readTasks = await allTasks
+        .sort("_id", -1)
+        .limit(pageSize + 1)
+        .toArray()
       const items = readTasks.slice(0, pageSize)
       const nextPageFirstTask = readTasks[pageSize]
       const nextPageToken = nextPageFirstTask

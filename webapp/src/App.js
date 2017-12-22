@@ -9,7 +9,6 @@ import {
   createNewTask,
   reloadTasks
 } from "./store"
-import { v4 as uuid } from "uuid"
 
 export const withEnhancers = connect(
   () => {
@@ -21,7 +20,8 @@ export const withEnhancers = connect(
   },
   {
     onNewTaskTextChange: editNewTaskText,
-    onNewTaskSubmit: () => createNewTask("_" + uuid()),
+    onNewTaskSubmit: () =>
+      createNewTask(`~${Date.now()}-${Math.floor(Math.random() * 100000)}`),
     onRefresh: reloadTasks
   }
 )

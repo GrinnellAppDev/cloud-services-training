@@ -73,8 +73,8 @@ describe("selectors", () => {
           }
         })
       ).toEqual([
-        { _id: "a", isComplete: false, text: "foo" },
-        { _id: "b", isComplete: true, text: "bar" }
+        { _id: "b", isComplete: true, text: "bar" },
+        { _id: "a", isComplete: false, text: "foo" }
       ])
     })
 

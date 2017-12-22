@@ -160,7 +160,7 @@ describe("withEnhancers", () => {
     )
 
     expect(store.getActions()[0].type).toBe(createNewTask("").type)
-    expect(store.getActions()[0].temporaryId.substring(0, 1)).toBe("_")
+    expect(store.getActions()[0].temporaryId.substring(0, 1)).toBe("~")
   })
 
   it("dispatches a refresh action onRefresh", () => {

@@ -15,7 +15,7 @@ export const makeGetTasks = () =>
     state => state.tasks.items,
     items =>
       Object.keys(items)
-        .sort()
+        .sort((a, b) => b.localeCompare(a))
         .map(key => items[key])
   )
 
