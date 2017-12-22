@@ -13,7 +13,7 @@ describe("withEnhancers", () => {
     const store = createMockStore({
       tasks: {
         items: {
-          a: { _id: "a", isComplete: false, text: "foo" }
+          a: { _id: "a", isComplete: false, text: "foo", isCreating: true }
         }
       }
     })
@@ -31,6 +31,7 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls).toHaveLength(1)
     expect(Component.mock.calls[0][0].isComplete).toBe(false)
     expect(Component.mock.calls[0][0].text).toBe("foo")
+    expect(Component.mock.calls[0][0].isCreating).toBe(true)
   })
 
   it("sends edit actions", () => {
@@ -67,7 +68,8 @@ describe("withEnhancers", () => {
 describe("Task", () => {
   it("handles checkbox click", () => {
     const onIsCompleteChange = jest.fn()
-    const incompleteWrapper = shallow(
+
+    shallow(
       <Task
         isComplete={false}
         text="foo"
@@ -75,7 +77,11 @@ describe("Task", () => {
         onTextChange={() => {}}
       />
     )
-    const completeWrapper = shallow(
+      .find(".Task-checkbox")
+      .simulate("click")
+    expect(onIsCompleteChange).lastCalledWith(true)
+
+    shallow(
       <Task
         isComplete={true}
         text="foo"
@@ -83,12 +89,9 @@ describe("Task", () => {
         onTextChange={() => {}}
       />
     )
-
-    incompleteWrapper.find(".Task-checkbox").simulate("click")
-    expect(onIsCompleteChange).toBeCalledWith(true)
-
-    completeWrapper.find(".Task-checkbox").simulate("click")
-    expect(onIsCompleteChange).toBeCalledWith(false)
+      .find(".Task-checkbox")
+      .simulate("click")
+    expect(onIsCompleteChange).lastCalledWith(false)
   })
 
   it("checkbox reflects isComplete prop", () => {
@@ -150,5 +153,20 @@ describe("Task", () => {
       }
     })
     expect(onTextChange).toBeCalledWith("foot")
+  })
+
+  it("disables inputs when isCreating is true", () => {
+    const wrapper = shallow(
+      <Task
+        isCreating={true}
+        isComplete={false}
+        text="foo"
+        onIsCompleteChange={() => {}}
+        onTextChange={() => {}}
+      />
+    )
+
+    expect(wrapper.find(".Task-checkbox").prop("disabled")).toBe(true)
+    expect(wrapper.find(".Task-text").prop("disabled")).toBe(true)
   })
 })

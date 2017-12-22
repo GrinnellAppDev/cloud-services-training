@@ -19,7 +19,8 @@ export const Task = ({
   isComplete,
   text,
   onIsCompleteChange,
-  onTextChange
+  onTextChange,
+  isCreating = false
 }) => (
   <article className={classnames("Task", isComplete && "Task-isComplete")}>
     <Ripples
@@ -31,6 +32,7 @@ export const Task = ({
         type="checkbox"
         onClick={() => onIsCompleteChange(!isComplete)}
         checked={isComplete}
+        disabled={isCreating}
       />
     </Ripples>
 
@@ -39,6 +41,7 @@ export const Task = ({
       type="text"
       value={text}
       onChange={ev => onTextChange(ev.currentTarget.value)}
+      disabled={isCreating}
     />
   </article>
 )

@@ -20,3 +20,12 @@ storiesOf("Task", module)
       onTextChange={action("text change")}
     />
   ))
+  .add("creating task", () => (
+    <Task
+      isCreating={true}
+      isComplete={false}
+      text="Write novel"
+      onIsCompleteChange={action("isComplete change")}
+      onTextChange={action("text change")}
+    />
+  ))

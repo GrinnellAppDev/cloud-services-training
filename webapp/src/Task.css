@@ -57,6 +57,10 @@
   border-bottom: 2px solid #999;
 }
 
+.Task-text:disabled {
+  color: #999;
+}
+
 .Task-isComplete .Task-text {
   color: #999;
   text-decoration: line-through;
