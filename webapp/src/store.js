@@ -1,5 +1,4 @@
 import { createStore, applyMiddleware } from "redux"
-import { empty as emptyObservable } from "rxjs/observable/empty"
 import { merge as mergeObservables } from "rxjs/observable/merge"
 import { mergeMap } from "rxjs/operators"
 import { createEpicMiddleware, combineEpics } from "redux-observable"
@@ -184,6 +183,9 @@ export const newTaskEpic = (
         Promise.resolve(clearNewTask()),
         fetchFromAPI("/tasks", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             text: getNewTaskText(getState())
           })
@@ -194,13 +196,13 @@ export const newTaskEpic = (
                 ? response.json()
                 : Promise.reject(Error("HTTP Error"))
           )
-          .then(({ _id }) => taskCreated(temporaryId, _id))
+          .then(({ item }) => taskCreated(temporaryId, item._id))
           .catch(err => taskCreateFailed(temporaryId, err.message))
       )
     )
   )
 
-export const rootEpic = combineEpics(() => emptyObservable())
+export const rootEpic = combineEpics(newTaskEpic)
 
 // Store
 

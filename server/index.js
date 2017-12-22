@@ -3,6 +3,7 @@ const { MongoClient, ObjectID, Db } = require("mongodb")
 const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
+const cors = require("cors")
 
 // @ts-ignore
 require("express-async-errors")
@@ -46,6 +47,7 @@ express()
 
 express()
   .use(bodyParser.json())
+  .use(cors())
 
   .get("/tasks", (request, response) =>
     runWithDB(async db => {

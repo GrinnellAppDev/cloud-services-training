@@ -6,7 +6,9 @@ import registerServiceWorker from "./registerServiceWorker"
 import { configureStore } from "./store"
 import { Provider } from "react-redux"
 
-const store = configureStore()
+const store = configureStore({
+  fetchFromAPI: (uri, init) => fetch(process.env.REACT_APP_API_ROOT + uri, init)
+})
 
 ReactDOM.render(
   <Provider store={store}>

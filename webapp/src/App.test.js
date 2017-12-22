@@ -5,7 +5,7 @@ import { App, withEnhancers } from "./App"
 import Task from "./Task"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
-import { editNewTaskText } from "./store"
+import { editNewTaskText, createNewTask } from "./store"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -135,24 +135,48 @@ describe("withEnhancers", () => {
 
     expect(store.getActions()).toEqual([editNewTaskText("foo")])
   })
+
+  it("dispatches a create action onNewTaskSubmit", () => {
+    const store = createMockStore({
+      newTask: {
+        text: "foo"
+      },
+      tasks: {
+        items: {}
+      }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onNewTaskSubmit()
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(store.getActions()[0].type).toBe(createNewTask("").type)
+    expect(store.getActions()[0].temporaryId.substring(0, 1)).toBe("_")
+  })
 })
 
 describe("App", () => {
   it("renders a single task", () => {
-    const wrapper = shallow(
+    const taskListWrapper = shallow(
       <App tasks={[{ _id: "a", isComplete: false, text: "foo" }]} />
-    )
-    const firstTask = wrapper
-      .find(".App-taskList")
-      .childAt(0)
-      .find(Task)
+    ).find(".App-taskList")
+    const firstTask = taskListWrapper.childAt(0).find(Task)
 
-    expect(wrapper.find(".App-taskList").children()).toHaveLength(1)
+    expect(taskListWrapper.children()).toHaveLength(1)
     expect(firstTask.prop("id")).toBe("a")
   })
 
   it("renders a few tasks in order", () => {
-    const wrapper = shallow(
+    const tasksWrapper = shallow(
       <App
         tasks={[
           { _id: "a", isComplete: false, text: "foo" },
@@ -161,23 +185,24 @@ describe("App", () => {
         ]}
       />
     )
-    const children = wrapper.find(".App-taskList").children()
+      .find(".App-taskList")
+      .children()
 
-    expect(children).toHaveLength(3)
+    expect(tasksWrapper).toHaveLength(3)
     expect(
-      children
+      tasksWrapper
         .at(0)
         .find(Task)
         .prop("id")
     ).toBe("a")
     expect(
-      children
+      tasksWrapper
         .at(1)
         .find(Task)
         .prop("id")
     ).toBe("b")
     expect(
-      children
+      tasksWrapper
         .at(2)
         .find(Task)
         .prop("id")
@@ -194,18 +219,29 @@ describe("App", () => {
 
   it("signals changes to the new task", () => {
     const onNewTaskTextChange = jest.fn()
-    const wrapper = shallow(
+
+    shallow(
       <App
         tasks={[]}
         newTaskText="foo"
         onNewTaskTextChange={onNewTaskTextChange}
       />
     )
-
-    wrapper
       .find(".App-addTask")
       .simulate("change", { currentTarget: { value: "foot" } })
 
     expect(onNewTaskTextChange).toBeCalledWith("foot")
+  })
+
+  it("signals when the new task is submitted", () => {
+    const onNewTaskSubmit = jest.fn()
+
+    shallow(
+      <App tasks={[]} newTaskText="foo" onNewTaskSubmit={onNewTaskSubmit} />
+    )
+      .find(".App-addTask")
+      .simulate("keyPress", { key: "Enter" })
+
+    expect(onNewTaskSubmit).toBeCalledWith()
   })
 })

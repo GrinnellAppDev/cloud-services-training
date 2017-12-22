@@ -2,7 +2,13 @@ import React from "react"
 import "./App.css"
 import Task from "./Task"
 import { connect } from "react-redux"
-import { makeGetTasks, getNewTaskText, editNewTaskText } from "./store"
+import {
+  makeGetTasks,
+  getNewTaskText,
+  editNewTaskText,
+  createNewTask
+} from "./store"
+import { v4 as uuid } from "uuid"
 
 export const withEnhancers = connect(
   () => {
@@ -13,11 +19,17 @@ export const withEnhancers = connect(
     })
   },
   {
-    onNewTaskTextChange: editNewTaskText
+    onNewTaskTextChange: editNewTaskText,
+    onNewTaskSubmit: () => createNewTask("_" + uuid())
   }
 )
 
-export const App = ({ tasks, newTaskText, onNewTaskTextChange }) => (
+export const App = ({
+  tasks,
+  newTaskText,
+  onNewTaskTextChange,
+  onNewTaskSubmit
+}) => (
   <div className="App">
     <header className="App-header">todo</header>
     <main className="App-main">
@@ -27,6 +39,9 @@ export const App = ({ tasks, newTaskText, onNewTaskTextChange }) => (
         placeholder="What needs to be done?"
         value={newTaskText}
         onChange={ev => onNewTaskTextChange(ev.currentTarget.value)}
+        onKeyPress={ev => {
+          if (ev.key === "Enter") onNewTaskSubmit()
+        }}
       />
 
       <ul className="App-taskList">

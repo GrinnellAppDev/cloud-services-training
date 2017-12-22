@@ -21,7 +21,7 @@ import { toArray } from "rxjs/operators"
 
 describe("configureStore", () => {
   it("makes a store without a default state", () => {
-    expect(configureStore().getState()).toBeTruthy()
+    expect(configureStore({}).getState()).toBeTruthy()
   })
 })
 
@@ -284,7 +284,11 @@ describe("epics", () => {
   describe("rootEpic", () => {
     it("ignores unknown actions", async () => {
       expect(
-        await rootEpic(ActionsObservable.of({ type: "UNKNOWN" })).toPromise()
+        await rootEpic(
+          ActionsObservable.of({ type: "UNKNOWN" }),
+          {},
+          {}
+        ).toPromise()
       ).toBe(undefined)
     })
   })
@@ -301,6 +305,9 @@ describe("epics", () => {
 
       expect(fetchFromAPI).toBeCalledWith("/tasks", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           text: "foo"
         })
@@ -340,7 +347,7 @@ describe("epics", () => {
             fetchFromAPI: () =>
               Promise.resolve({
                 ok: true,
-                json: () => Promise.resolve({ _id: "def" })
+                json: () => Promise.resolve({ item: { _id: "def" } })
               })
           }
         )
