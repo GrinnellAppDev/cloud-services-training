@@ -1,6 +1,8 @@
 import { createStore, applyMiddleware } from "redux"
 import { empty as emptyObservable } from "rxjs/observable/empty"
-import { createEpicMiddleware } from "redux-observable"
+import { merge as mergeObservables } from "rxjs/observable/merge"
+import { mergeMap } from "rxjs/operators"
+import { createEpicMiddleware, combineEpics } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
 import { createSelector } from "reselect"
 
@@ -27,15 +29,33 @@ export const tasksReceived = (items, nextPageToken) => ({
 export const editNewTaskText = text => ({ type: "EDIT_NEW_TASK_TEXT", text })
 export const editTask = (id, edits) => ({ type: "EDIT_TASK", id, edits })
 export const deleteTask = id => ({ type: "DELETE_TASK", id })
+export const createNewTask = temporaryId => ({
+  type: "CREATE_NEW_TASK",
+  temporaryId
+})
+export const taskCreateFailed = (temporaryId, message = null) => ({
+  type: "TASK_CREATE_FAILED",
+  temporaryId,
+  message
+})
+export const taskCreated = (temporaryId, realId) => ({
+  type: "TASK_CREATED",
+  temporaryId,
+  realId
+})
+export const clearNewTask = () => ({ type: "CLEAR_NEW_TASK" })
 
 // Reducers
 
 export const reducer = (
-  state = { tasks: { status: "UNLOADED", items: {} } },
+  state = {
+    newTask: { text: "" },
+    tasks: { status: "UNLOADED", items: {} }
+  },
   { type, ...payload }
 ) => {
   switch (type) {
-    case "TASKS_RECEIVED":
+    case "TASKS_RECEIVED": {
       const items = { ...state.tasks.items }
       for (const item of payload.items) {
         items[item._id] = item
@@ -49,6 +69,7 @@ export const reducer = (
           nextPageToken: payload.nextPageToken
         }
       }
+    }
     case "RELOAD_TASKS":
       return {
         ...state,
@@ -79,13 +100,70 @@ export const reducer = (
           text: payload.text
         }
       }
-    case "DELETE_TASK":
+    case "DELETE_TASK": {
       const { [payload.id]: deletedItem, ...otherItems } = state.tasks.items
       return {
         ...state,
         tasks: {
           ...state.tasks,
           items: otherItems
+        }
+      }
+    }
+    case "CREATE_NEW_TASK":
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          items: {
+            ...state.tasks.items,
+            [payload.temporaryId]: {
+              _id: payload.temporaryId,
+              isComplete: false,
+              text: state.newTask.text,
+              isCreating: true
+            }
+          }
+        }
+      }
+    case "TASK_CREATE_FAILED": {
+      const {
+        [payload.temporaryId]: deletedItem,
+        ...otherItems
+      } = state.tasks.items
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          items: otherItems
+        }
+      }
+    }
+    case "TASK_CREATED": {
+      const {
+        [payload.temporaryId]: localTask,
+        ...otherItems
+      } = state.tasks.items
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          items: {
+            ...otherItems,
+            [payload.realId]: {
+              ...localTask,
+              _id: payload.realId
+            }
+          }
+        }
+      }
+    }
+    case "CLEAR_NEW_TASK":
+      return {
+        ...state,
+        newTask: {
+          ...state.newTask,
+          text: ""
         }
       }
     default:
@@ -95,13 +173,42 @@ export const reducer = (
 
 // Epics
 
-export const rootEpic = actionsObservable => emptyObservable()
+export const newTaskEpic = (
+  actionsObservable,
+  { getState },
+  { fetchFromAPI }
+) =>
+  actionsObservable.ofType("CREATE_NEW_TASK").pipe(
+    mergeMap(({ temporaryId }) =>
+      mergeObservables(
+        Promise.resolve(clearNewTask()),
+        fetchFromAPI("/tasks", {
+          method: "POST",
+          body: JSON.stringify({
+            text: getNewTaskText(getState())
+          })
+        })
+          .then(
+            response =>
+              response.ok
+                ? response.json()
+                : Promise.reject(Error("HTTP Error"))
+          )
+          .then(({ _id }) => taskCreated(temporaryId, _id))
+          .catch(err => taskCreateFailed(temporaryId, err.message))
+      )
+    )
+  )
+
+export const rootEpic = combineEpics(() => emptyObservable())
 
 // Store
 
-export const configureStore = () => {
+export const configureStore = dependencies => {
   return createStore(
     reducer,
-    composeWithDevTools(applyMiddleware(createEpicMiddleware(rootEpic)))
+    composeWithDevTools(
+      applyMiddleware(createEpicMiddleware(rootEpic, { dependencies }))
+    )
   )
 }
