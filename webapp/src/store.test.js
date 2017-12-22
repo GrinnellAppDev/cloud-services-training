@@ -14,7 +14,9 @@ import {
   createNewTask,
   taskCreateFailed,
   taskCreated,
-  clearNewTask
+  clearNewTask,
+  loadTasksEpic,
+  tasksLoadingFailed
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { toArray } from "rxjs/operators"
@@ -285,12 +287,10 @@ describe("epics", () => {
   describe("rootEpic", () => {
     it("ignores unknown actions", async () => {
       expect(
-        await rootEpic(
-          ActionsObservable.of({ type: "UNKNOWN" }),
-          {},
-          {}
-        ).toPromise()
-      ).toBe(undefined)
+        await rootEpic(ActionsObservable.of({ type: "UNKNOWN" }), {}, {})
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([])
     })
   })
 
@@ -332,11 +332,21 @@ describe("epics", () => {
         await newTaskEpic(
           ActionsObservable.of(createNewTask("abc")),
           { getState: () => ({ newTask: { text: "foo" } }) },
-          { fetchFromAPI: () => Promise.resolve({ ok: false }) }
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: false,
+                status: 401,
+                statusText: "Unauthorized"
+              })
+          }
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([clearNewTask(), taskCreateFailed("abc", "HTTP Error")])
+      ).toEqual([
+        clearNewTask(),
+        taskCreateFailed("abc", "HTTP Error: Unauthorized (401)")
+      ])
     })
 
     it("indicates success with a new id", async () => {
@@ -378,7 +388,7 @@ describe("epics", () => {
       ).toEqual([clearNewTask(), reloadTasks()])
 
       expect(console.error).toBeCalledWith(
-        "Couldn't find '_id' field in the API response"
+        "Missing '_id' field in the API response"
       )
       expect(console.error).toBeCalledWith(
         "Reloading to get correct task id..."
@@ -407,10 +417,231 @@ describe("epics", () => {
       ).toEqual([clearNewTask(), reloadTasks()])
 
       expect(console.error).toBeCalledWith(
-        "Couldn't find 'item' field in the API response"
+        "Missing 'item' field in the API response"
       )
       expect(console.error).toBeCalledWith(
         "Reloading to get correct task id..."
+      )
+      console.error = consoleError
+    })
+  })
+
+  describe("loadTasksEpic", () => {
+    it("calls fetch when given a reload action", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await loadTasksEpic(
+        ActionsObservable.of(reloadTasks()),
+        { getState: () => ({ tasks: {} }) },
+        { fetchFromAPI }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalledWith("/tasks")
+    })
+
+    it("doesn't call fetch and sends nothing when already loading", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: { status: "LOADING" } }) },
+          { fetchFromAPI }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([])
+
+      expect(fetchFromAPI).not.toBeCalled()
+    })
+
+    it("handles fetch errors gracefully", async () => {
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: {} }) },
+          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([tasksLoadingFailed("Failed to fetch")])
+    })
+
+    it("handles http errors gracefully", async () => {
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: {} }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: false,
+                status: 401,
+                statusText: "Unauthorized"
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([tasksLoadingFailed("HTTP Error: Unauthorized (401)")])
+    })
+
+    it("loads tasks and next page token", async () => {
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: {} }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () =>
+                  Promise.resolve({
+                    items: [
+                      { _id: "a", isComplete: false, text: "foo" },
+                      { _id: "b", isComplete: true, text: "bar" }
+                    ],
+                    nextPageToken: "abc"
+                  })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([
+        tasksReceived(
+          [
+            { _id: "a", isComplete: false, text: "foo" },
+            { _id: "b", isComplete: true, text: "bar" }
+          ],
+          "abc"
+        )
+      ])
+    })
+
+    it("handles empty tasks and null next page token", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: {} }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () =>
+                  Promise.resolve({
+                    items: [],
+                    nextPageToken: null
+                  })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([tasksReceived([], null)])
+
+      expect(console.error).not.toBeCalled()
+      console.error = consoleError
+    })
+
+    it("complains when items is missing in the response", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: {} }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () =>
+                  Promise.resolve({
+                    nextPageToken: null
+                  })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([tasksReceived([], null)])
+
+      expect(console.error).toBeCalledWith(
+        "Missing or invalid 'items' field in the API response"
+      )
+      console.error = consoleError
+    })
+
+    it("complains when items is not an array in the response", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: {} }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () =>
+                  Promise.resolve({
+                    items: "foo",
+                    nextPageToken: null
+                  })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([tasksReceived([], null)])
+
+      expect(console.error).toBeCalledWith(
+        "Missing or invalid 'items' field in the API response"
+      )
+      console.error = consoleError
+    })
+
+    it("complains when nextPageToken is missing, but still shows items", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      expect(
+        await loadTasksEpic(
+          ActionsObservable.of(reloadTasks()),
+          { getState: () => ({ tasks: {} }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () =>
+                  Promise.resolve({
+                    items: [
+                      { _id: "a", isComplete: false, text: "foo" },
+                      { _id: "b", isComplete: true, text: "bar" }
+                    ]
+                  })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([
+        tasksReceived(
+          [
+            { _id: "a", isComplete: false, text: "foo" },
+            { _id: "b", isComplete: true, text: "bar" }
+          ],
+          null
+        )
+      ])
+
+      expect(console.error).toBeCalledWith(
+        "Missing 'nextPageToken' field in the API response"
       )
       console.error = consoleError
     })

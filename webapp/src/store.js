@@ -1,5 +1,6 @@
 import { createStore, applyMiddleware } from "redux"
 import { merge as mergeObservables } from "rxjs/observable/merge"
+import { empty as emptyObservable } from "rxjs/observable/empty"
 import { mergeMap } from "rxjs/operators"
 import { createEpicMiddleware, combineEpics } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
@@ -7,6 +8,7 @@ import { createSelector } from "reselect"
 
 export const getNewTaskText = state => state.newTask.text
 export const getTaskById = (state, id) => state.tasks.items[id]
+export const getTasksStatus = state => state.tasks.status
 
 export const makeGetTasks = () =>
   createSelector(
@@ -20,6 +22,10 @@ export const makeGetTasks = () =>
 // Action Creators
 
 export const reloadTasks = () => ({ type: "RELOAD_TASKS" })
+export const tasksLoadingFailed = (message = null) => ({
+  type: "TASKS_LOADING_FAILED",
+  message
+})
 export const tasksReceived = (items, nextPageToken) => ({
   type: "TASKS_RECEIVED",
   items,
@@ -196,13 +202,17 @@ export const newTaskEpic = (
             response =>
               response.ok
                 ? response.json()
-                : Promise.reject(Error("HTTP Error"))
+                : Promise.reject(
+                    Error(
+                      `HTTP Error: ${response.statusText} (${response.status})`
+                    )
+                  )
           )
           .then(({ item }) => {
             if (!item) {
-              console.error("Couldn't find 'item' field in the API response")
+              console.error("Missing 'item' field in the API response")
             } else if (!item._id) {
-              console.error("Couldn't find '_id' field in the API response")
+              console.error("Missing '_id' field in the API response")
             } else {
               return taskCreated(temporaryId, item._id)
             }
@@ -215,7 +225,49 @@ export const newTaskEpic = (
     )
   )
 
-export const rootEpic = combineEpics(newTaskEpic)
+export const loadTasksEpic = (
+  actionsObservable,
+  { getState },
+  { fetchFromAPI }
+) =>
+  actionsObservable.ofType("RELOAD_TASKS").pipe(
+    mergeMap(
+      () =>
+        getTasksStatus(getState()) === "LOADING"
+          ? emptyObservable()
+          : fetchFromAPI("/tasks")
+              .then(
+                response =>
+                  response.ok
+                    ? response.json()
+                    : Promise.reject(
+                        Error(
+                          `HTTP Error: ${response.statusText} (${
+                            response.status
+                          })`
+                        )
+                      )
+              )
+              .then(body => {
+                if (!Array.isArray(body.items)) {
+                  console.error(
+                    "Missing or invalid 'items' field in the API response"
+                  )
+                  return tasksReceived([], null)
+                } else if (body.nextPageToken === undefined) {
+                  console.error(
+                    "Missing 'nextPageToken' field in the API response"
+                  )
+                  return tasksReceived(body.items, null)
+                } else {
+                  return tasksReceived(body.items, body.nextPageToken)
+                }
+              })
+              .catch(err => tasksLoadingFailed(err.message))
+    )
+  )
+
+export const rootEpic = combineEpics(newTaskEpic, loadTasksEpic)
 
 // Store
 
