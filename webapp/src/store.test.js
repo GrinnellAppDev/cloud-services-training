@@ -16,7 +16,8 @@ import {
   taskCreated,
   clearNewTask,
   loadTasksEpic,
-  tasksLoadingFailed
+  tasksLoadingFailed,
+  tasksLoadingStarted
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { toArray } from "rxjs/operators"
@@ -156,14 +157,23 @@ describe("reducer", () => {
       ...stateWithTaskA,
       tasks: {
         ...stateWithTaskA.tasks,
-        status: "LOADING",
         items: {},
         nextPageToken: null
       }
     })
   })
 
-  it("indicates errors when loading tasks", () => {
+  it("sets the status to loading once loading starts", () => {
+    expect(reducer(stateWithTaskA, tasksLoadingStarted())).toEqual({
+      ...stateWithTaskA,
+      tasks: {
+        ...stateWithTaskA.tasks,
+        status: "LOADING"
+      }
+    })
+  })
+
+  it("indicates errors when loading tasks fails", () => {
     expect(reducer(stateWithTaskA, tasksLoadingFailed("foo error"))).toEqual({
       ...stateWithTaskA,
       tasks: {
@@ -475,7 +485,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksLoadingFailed("Failed to fetch")])
+      ).toEqual([tasksLoadingStarted(), tasksLoadingFailed("Failed to fetch")])
     })
 
     it("handles http errors gracefully", async () => {
@@ -494,7 +504,10 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksLoadingFailed("HTTP Error: Unauthorized (401)")])
+      ).toEqual([
+        tasksLoadingStarted(),
+        tasksLoadingFailed("HTTP Error: Unauthorized (401)")
+      ])
     })
 
     it("loads tasks and next page token", async () => {
@@ -520,6 +533,7 @@ describe("epics", () => {
           .pipe(toArray())
           .toPromise()
       ).toEqual([
+        tasksLoadingStarted(),
         tasksReceived(
           [
             { _id: "a", isComplete: false, text: "foo" },
@@ -552,7 +566,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksReceived([], null)])
+      ).toEqual([tasksLoadingStarted(), tasksReceived([], null)])
 
       expect(console.error).not.toBeCalled()
       console.error = consoleError
@@ -579,7 +593,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksReceived([], null)])
+      ).toEqual([tasksLoadingStarted(), tasksReceived([], null)])
 
       expect(console.error).toBeCalledWith(
         "Missing or invalid 'items' field in the API response"
@@ -609,7 +623,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksReceived([], null)])
+      ).toEqual([tasksLoadingStarted(), tasksReceived([], null)])
 
       expect(console.error).toBeCalledWith(
         "Missing or invalid 'items' field in the API response"
@@ -642,6 +656,7 @@ describe("epics", () => {
           .pipe(toArray())
           .toPromise()
       ).toEqual([
+        tasksLoadingStarted(),
         tasksReceived(
           [
             { _id: "a", isComplete: false, text: "foo" },

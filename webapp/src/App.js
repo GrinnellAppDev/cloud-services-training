@@ -6,7 +6,8 @@ import {
   makeGetTasks,
   getNewTaskText,
   editNewTaskText,
-  createNewTask
+  createNewTask,
+  reloadTasks
 } from "./store"
 import { v4 as uuid } from "uuid"
 
@@ -20,7 +21,8 @@ export const withEnhancers = connect(
   },
   {
     onNewTaskTextChange: editNewTaskText,
-    onNewTaskSubmit: () => createNewTask("_" + uuid())
+    onNewTaskSubmit: () => createNewTask("_" + uuid()),
+    onRefresh: reloadTasks
   }
 )
 
@@ -28,10 +30,15 @@ export const App = ({
   tasks,
   newTaskText,
   onNewTaskTextChange,
-  onNewTaskSubmit
+  onNewTaskSubmit,
+  onRefresh
 }) => (
   <div className="App">
-    <header className="App-header">todo</header>
+    <header className="App-header">
+      <button className="App-refresh" onClick={() => onRefresh()}>
+        todo
+      </button>
+    </header>
     <main className="App-main">
       <input
         className="App-addTask"

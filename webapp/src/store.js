@@ -22,6 +22,7 @@ export const makeGetTasks = () =>
 // Action Creators
 
 export const reloadTasks = () => ({ type: "RELOAD_TASKS" })
+export const tasksLoadingStarted = () => ({ type: "TASKS_LOADING_STARTED" })
 export const tasksReceived = (items, nextPageToken) => ({
   type: "TASKS_RECEIVED",
   items,
@@ -66,9 +67,17 @@ export const reducer = (
       return {
         ...state,
         tasks: {
-          status: "LOADING",
+          ...state.tasks,
           items: {},
           nextPageToken: null
+        }
+      }
+    case "TASKS_LOADING_STARTED":
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          status: "LOADING"
         }
       }
     case "TASKS_RECEIVED": {
@@ -201,34 +210,37 @@ export const loadTasksEpic = (
       () =>
         getTasksStatus(getState()) === "LOADING"
           ? emptyObservable()
-          : fetchFromAPI("/tasks")
-              .then(
-                response =>
-                  response.ok
-                    ? response.json()
-                    : Promise.reject(
-                        Error(
-                          `HTTP Error: ${response.statusText} ` +
-                            `(${response.status})`
+          : mergeObservables(
+              Promise.resolve(tasksLoadingStarted()),
+              fetchFromAPI("/tasks")
+                .then(
+                  response =>
+                    response.ok
+                      ? response.json()
+                      : Promise.reject(
+                          Error(
+                            `HTTP Error: ${response.statusText} ` +
+                              `(${response.status})`
+                          )
                         )
-                      )
-              )
-              .then(body => {
-                if (!Array.isArray(body.items)) {
-                  console.error(
-                    "Missing or invalid 'items' field in the API response"
-                  )
-                  return tasksReceived([], null)
-                } else if (body.nextPageToken === undefined) {
-                  console.error(
-                    "Missing 'nextPageToken' field in the API response"
-                  )
-                  return tasksReceived(body.items, null)
-                } else {
-                  return tasksReceived(body.items, body.nextPageToken)
-                }
-              })
-              .catch(err => tasksLoadingFailed(err.message))
+                )
+                .then(body => {
+                  if (!Array.isArray(body.items)) {
+                    console.error(
+                      "Missing or invalid 'items' field in the API response"
+                    )
+                    return tasksReceived([], null)
+                  } else if (body.nextPageToken === undefined) {
+                    console.error(
+                      "Missing 'nextPageToken' field in the API response"
+                    )
+                    return tasksReceived(body.items, null)
+                  } else {
+                    return tasksReceived(body.items, body.nextPageToken)
+                  }
+                })
+                .catch(err => tasksLoadingFailed(err.message))
+            )
     )
   )
 

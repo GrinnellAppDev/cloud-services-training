@@ -5,7 +5,7 @@ import { App, withEnhancers } from "./App"
 import Task from "./Task"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
-import { editNewTaskText, createNewTask } from "./store"
+import { editNewTaskText, createNewTask, reloadTasks } from "./store"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -162,6 +162,32 @@ describe("withEnhancers", () => {
     expect(store.getActions()[0].type).toBe(createNewTask("").type)
     expect(store.getActions()[0].temporaryId.substring(0, 1)).toBe("_")
   })
+
+  it("dispatches a refresh action onRefresh", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: {}
+      }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onRefresh()
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(store.getActions()).toEqual([reloadTasks()])
+  })
 })
 
 describe("App", () => {
@@ -243,5 +269,15 @@ describe("App", () => {
       .simulate("keyPress", { key: "Enter" })
 
     expect(onNewTaskSubmit).toBeCalledWith()
+  })
+
+  it("handles clicks on the refresh button", () => {
+    const onRefresh = jest.fn()
+
+    shallow(<App tasks={[]} onRefresh={onRefresh} />)
+      .find(".App-refresh")
+      .simulate("click")
+
+    expect(onRefresh).toBeCalledWith()
   })
 })
