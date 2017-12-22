@@ -34,11 +34,10 @@ export const App = ({
 }) => (
   <div className="App">
     <header className="App-header">
-      <button className="App-refresh" onClick={() => onRefresh()}>
+      <button className="App-title App-refresh" onClick={() => onRefresh()}>
         todo
       </button>
-    </header>
-    <main className="App-main">
+
       <input
         className="App-addTask"
         type="text"
@@ -49,7 +48,8 @@ export const App = ({
           if (ev.key === "Enter") onNewTaskSubmit()
         }}
       />
-
+    </header>
+    <main className="App-main">
       <ul className="App-taskList">
         {tasks.map(({ _id }) => (
           <li className="App-taskListItem" key={_id}>

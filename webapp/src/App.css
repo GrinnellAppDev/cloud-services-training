@@ -7,13 +7,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #eee;
 }
 
 .App-header {
-  font-size: 40px;
-  font-weight: 100;
-  padding: 40px 0;
+  text-align: center;
+}
+
+.App-header,
+.App-main {
+  width: 100%;
+  max-width: 500px;
 }
 
 .App-refresh {
@@ -24,9 +27,10 @@
   cursor: pointer;
 }
 
-.App-main {
-  width: 100%;
-  max-width: 500px;
+.App-title {
+  margin: 40px 0;
+  font-size: 40px;
+  font-weight: 100;
 }
 
 .App-addTask {
@@ -35,6 +39,12 @@
   padding: 20px;
   border: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 2;
+}
+
+.App-main {
+  overflow: auto;
 }
 
 .App-taskList {
