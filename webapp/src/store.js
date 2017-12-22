@@ -22,33 +22,35 @@ export const makeGetTasks = () =>
 // Action Creators
 
 export const reloadTasks = () => ({ type: "RELOAD_TASKS" })
-export const tasksLoadingFailed = (message = null) => ({
-  type: "TASKS_LOADING_FAILED",
-  message
-})
 export const tasksReceived = (items, nextPageToken) => ({
   type: "TASKS_RECEIVED",
   items,
   nextPageToken
 })
+export const tasksLoadingFailed = (message = null) => ({
+  type: "TASKS_LOADING_FAILED",
+  message
+})
+
+export const clearNewTask = () => ({ type: "CLEAR_NEW_TASK" })
 export const editNewTaskText = text => ({ type: "EDIT_NEW_TASK_TEXT", text })
-export const editTask = (id, edits) => ({ type: "EDIT_TASK", id, edits })
-export const deleteTask = id => ({ type: "DELETE_TASK", id })
 export const createNewTask = temporaryId => ({
   type: "CREATE_NEW_TASK",
   temporaryId
-})
-export const taskCreateFailed = (temporaryId, message = null) => ({
-  type: "TASK_CREATE_FAILED",
-  temporaryId,
-  message
 })
 export const taskCreated = (temporaryId, realId) => ({
   type: "TASK_CREATED",
   temporaryId,
   realId
 })
-export const clearNewTask = () => ({ type: "CLEAR_NEW_TASK" })
+export const taskCreateFailed = (temporaryId, message = null) => ({
+  type: "TASK_CREATE_FAILED",
+  temporaryId,
+  message
+})
+
+export const editTask = (id, edits) => ({ type: "EDIT_TASK", id, edits })
+export const deleteTask = id => ({ type: "DELETE_TASK", id })
 
 // Reducers
 
@@ -60,6 +62,15 @@ export const reducer = (
   { type, ...payload }
 ) => {
   switch (type) {
+    case "RELOAD_TASKS":
+      return {
+        ...state,
+        tasks: {
+          status: "LOADING",
+          items: {},
+          nextPageToken: null
+        }
+      }
     case "TASKS_RECEIVED": {
       const items = { ...state.tasks.items }
       for (const item of payload.items) {
@@ -75,27 +86,21 @@ export const reducer = (
         }
       }
     }
-    case "RELOAD_TASKS":
-      return {
-        ...state,
-        tasks: {
-          status: "LOADING",
-          items: {},
-          nextPageToken: null
-        }
-      }
-    case "EDIT_TASK":
+    case "TASKS_LOADING_FAILED":
       return {
         ...state,
         tasks: {
           ...state.tasks,
-          items: {
-            ...state.tasks.items,
-            [payload.id]: {
-              ...state.tasks.items[payload.id],
-              ...payload.edits
-            }
-          }
+          status: "ERROR",
+          lastErrorMessage: payload.message
+        }
+      }
+    case "CLEAR_NEW_TASK":
+      return {
+        ...state,
+        newTask: {
+          ...state.newTask,
+          text: ""
         }
       }
     case "EDIT_NEW_TASK_TEXT":
@@ -105,16 +110,6 @@ export const reducer = (
           text: payload.text
         }
       }
-    case "DELETE_TASK": {
-      const { [payload.id]: deletedItem, ...otherItems } = state.tasks.items
-      return {
-        ...state,
-        tasks: {
-          ...state.tasks,
-          items: otherItems
-        }
-      }
-    }
     case "CREATE_NEW_TASK":
       return {
         ...state,
@@ -131,19 +126,6 @@ export const reducer = (
           }
         }
       }
-    case "TASK_CREATE_FAILED": {
-      const {
-        [payload.temporaryId]: deletedItem,
-        ...otherItems
-      } = state.tasks.items
-      return {
-        ...state,
-        tasks: {
-          ...state.tasks,
-          items: otherItems
-        }
-      }
-    }
     case "TASK_CREATED": {
       const {
         [payload.temporaryId]: localTask,
@@ -165,20 +147,90 @@ export const reducer = (
         }
       }
     }
-    case "CLEAR_NEW_TASK":
+    case "TASK_CREATE_FAILED": {
+      const {
+        [payload.temporaryId]: deletedItem,
+        ...otherItems
+      } = state.tasks.items
       return {
         ...state,
-        newTask: {
-          ...state.newTask,
-          text: ""
+        tasks: {
+          ...state.tasks,
+          items: otherItems
         }
       }
+    }
+    case "EDIT_TASK":
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          items: {
+            ...state.tasks.items,
+            [payload.id]: {
+              ...state.tasks.items[payload.id],
+              ...payload.edits
+            }
+          }
+        }
+      }
+    case "DELETE_TASK": {
+      const { [payload.id]: deletedItem, ...otherItems } = state.tasks.items
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          items: otherItems
+        }
+      }
+    }
     default:
       return state
   }
 }
 
 // Epics
+
+export const loadTasksEpic = (
+  actionsObservable,
+  { getState },
+  { fetchFromAPI }
+) =>
+  actionsObservable.ofType("RELOAD_TASKS").pipe(
+    mergeMap(
+      () =>
+        getTasksStatus(getState()) === "LOADING"
+          ? emptyObservable()
+          : fetchFromAPI("/tasks")
+              .then(
+                response =>
+                  response.ok
+                    ? response.json()
+                    : Promise.reject(
+                        Error(
+                          `HTTP Error: ${response.statusText} ` +
+                            `(${response.status})`
+                        )
+                      )
+              )
+              .then(body => {
+                if (!Array.isArray(body.items)) {
+                  console.error(
+                    "Missing or invalid 'items' field in the API response"
+                  )
+                  return tasksReceived([], null)
+                } else if (body.nextPageToken === undefined) {
+                  console.error(
+                    "Missing 'nextPageToken' field in the API response"
+                  )
+                  return tasksReceived(body.items, null)
+                } else {
+                  return tasksReceived(body.items, body.nextPageToken)
+                }
+              })
+              .catch(err => tasksLoadingFailed(err.message))
+    )
+  )
 
 export const newTaskEpic = (
   actionsObservable,
@@ -225,49 +277,7 @@ export const newTaskEpic = (
     )
   )
 
-export const loadTasksEpic = (
-  actionsObservable,
-  { getState },
-  { fetchFromAPI }
-) =>
-  actionsObservable.ofType("RELOAD_TASKS").pipe(
-    mergeMap(
-      () =>
-        getTasksStatus(getState()) === "LOADING"
-          ? emptyObservable()
-          : fetchFromAPI("/tasks")
-              .then(
-                response =>
-                  response.ok
-                    ? response.json()
-                    : Promise.reject(
-                        Error(
-                          `HTTP Error: ${response.statusText} (${
-                            response.status
-                          })`
-                        )
-                      )
-              )
-              .then(body => {
-                if (!Array.isArray(body.items)) {
-                  console.error(
-                    "Missing or invalid 'items' field in the API response"
-                  )
-                  return tasksReceived([], null)
-                } else if (body.nextPageToken === undefined) {
-                  console.error(
-                    "Missing 'nextPageToken' field in the API response"
-                  )
-                  return tasksReceived(body.items, null)
-                } else {
-                  return tasksReceived(body.items, body.nextPageToken)
-                }
-              })
-              .catch(err => tasksLoadingFailed(err.message))
-    )
-  )
-
-export const rootEpic = combineEpics(newTaskEpic, loadTasksEpic)
+export const rootEpic = combineEpics(loadTasksEpic, newTaskEpic)
 
 // Store
 

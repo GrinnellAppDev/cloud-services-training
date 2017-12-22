@@ -153,12 +153,23 @@ describe("reducer", () => {
 
   it("removes all items on refresh", () => {
     expect(reducer(stateWithTaskA, reloadTasks())).toEqual({
-      ...initialState,
+      ...stateWithTaskA,
       tasks: {
-        ...initialState.tasks,
+        ...stateWithTaskA.tasks,
         status: "LOADING",
         items: {},
         nextPageToken: null
+      }
+    })
+  })
+
+  it("indicates errors when loading tasks", () => {
+    expect(reducer(stateWithTaskA, tasksLoadingFailed("foo error"))).toEqual({
+      ...stateWithTaskA,
+      tasks: {
+        ...stateWithTaskA.tasks,
+        status: "ERROR",
+        lastErrorMessage: "foo error"
       }
     })
   })
