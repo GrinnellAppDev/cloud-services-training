@@ -10,8 +10,10 @@ export const withEnhancers = connect(
     ...getTaskById(state, id)
   }),
   (dispatch, { id }) => ({
-    onIsCompleteChange: isComplete => dispatch(editTask(id, { isComplete })),
-    onTextChange: text => dispatch(editTask(id, { text }))
+    onIsCompleteChange: (isComplete, oldVal) =>
+      dispatch(editTask(id, { isComplete }, { isComplete: oldVal })),
+    onTextChange: (text, oldVal) =>
+      dispatch(editTask(id, { text }, { text: oldVal }))
   })
 )
 
@@ -30,7 +32,7 @@ export const Task = ({
       <input
         className="Task-checkbox"
         type="checkbox"
-        onChange={() => onIsCompleteChange(!isComplete)}
+        onChange={() => onIsCompleteChange(!isComplete, isComplete)}
         checked={isComplete}
         disabled={isCreating}
       />
@@ -40,7 +42,7 @@ export const Task = ({
       className="Task-text"
       type="text"
       value={text}
-      onChange={ev => onTextChange(ev.currentTarget.value)}
+      onChange={ev => onTextChange(ev.currentTarget.value, text)}
       disabled={isCreating}
     />
   </article>

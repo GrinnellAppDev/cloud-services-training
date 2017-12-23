@@ -467,6 +467,8 @@ describe("epics", () => {
   })
 
   describe("loadTasksEpic", () => {
+    // TODO: validate tasks against a schema and give helpful errors when it fails
+
     it("calls fetch when given a reload action", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
 

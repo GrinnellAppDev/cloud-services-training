@@ -44,8 +44,8 @@ describe("withEnhancers", () => {
     })
 
     const Component = jest.fn().mockImplementation(props => {
-      props.onIsCompleteChange(true)
-      props.onTextChange("bar")
+      props.onIsCompleteChange(true, false)
+      props.onTextChange("bar", "foo")
       return <div />
     })
     const Wrapped = withEnhancers(Component)
@@ -59,8 +59,8 @@ describe("withEnhancers", () => {
 
     expect(Component).toBeCalled()
     expect(store.getActions()).toEqual([
-      editTask("a", { isComplete: true }),
-      editTask("a", { text: "bar" })
+      editTask("a", { isComplete: true }, { isComplete: false }),
+      editTask("a", { text: "bar" }, { text: "foo" })
     ])
   })
 })
@@ -79,7 +79,7 @@ describe("Task", () => {
     )
       .find(".Task-checkbox")
       .simulate("change")
-    expect(onIsCompleteChange).lastCalledWith(true)
+    expect(onIsCompleteChange).lastCalledWith(true, false)
 
     shallow(
       <Task
@@ -91,7 +91,7 @@ describe("Task", () => {
     )
       .find(".Task-checkbox")
       .simulate("change")
-    expect(onIsCompleteChange).lastCalledWith(false)
+    expect(onIsCompleteChange).lastCalledWith(false, true)
   })
 
   it("checkbox reflects isComplete prop", () => {
@@ -152,7 +152,7 @@ describe("Task", () => {
         value: "foot"
       }
     })
-    expect(onTextChange).toBeCalledWith("foot")
+    expect(onTextChange).toBeCalledWith("foot", "foo")
   })
 
   it("disables inputs when isCreating is true", () => {
