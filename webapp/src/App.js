@@ -7,34 +7,48 @@ import {
   getNewTaskText,
   editNewTaskText,
   createNewTask,
-  reloadTasks
+  reloadTasks,
+  loadNextTasks,
+  getNextPageToken,
+  getTasksStatus
 } from "./store"
+import InfiniteScroll from "react-infinite-scroller"
+import LoadingSpinner from "./LoadingSpinner"
 
 export const withEnhancers = connect(
   () => {
     const getTasks = makeGetTasks()
     return state => ({
       tasks: getTasks(state),
-      newTaskText: getNewTaskText(state)
+      newTaskText: getNewTaskText(state),
+      hasNextPage:
+        !!getNextPageToken(state) || getTasksStatus(state) === "UNLOADED"
     })
   },
   {
     onNewTaskTextChange: editNewTaskText,
     onNewTaskSubmit: () => createNewTask(`~${Date.now()}`),
-    onRefresh: reloadTasks
+    onRefresh: reloadTasks,
+    onLoadNextPage: loadNextTasks
   }
 )
 
 export const App = ({
   tasks,
   newTaskText,
+  hasNextPage,
   onNewTaskTextChange,
   onNewTaskSubmit,
-  onRefresh
+  onRefresh,
+  onLoadNextPage
 }) => (
   <div className="App">
     <header className="App-header">
-      <button className="App-title App-refresh" onClick={() => onRefresh()}>
+      <button
+        className="App-title App-refresh"
+        onClick={() => onRefresh()}
+        title="Refresh"
+      >
         todo
       </button>
 
@@ -50,13 +64,20 @@ export const App = ({
       />
     </header>
     <main className="App-main">
-      <ul className="App-taskList">
+      <InfiniteScroll
+        element="ul"
+        className="App-taskList"
+        loadMore={onLoadNextPage}
+        hasMore={hasNextPage}
+        useWindow={false}
+        loader={<LoadingSpinner className="App-loading" title="Loading..." />}
+      >
         {tasks.map(({ _id }) => (
           <li className="App-taskListItem" key={_id}>
             <Task id={_id} />
           </li>
         ))}
-      </ul>
+      </InfiniteScroll>
     </main>
   </div>
 )

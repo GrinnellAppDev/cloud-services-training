@@ -5,7 +5,12 @@ import { App, withEnhancers } from "./App"
 import Task from "./Task"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
-import { editNewTaskText, createNewTask, reloadTasks } from "./store"
+import {
+  editNewTaskText,
+  createNewTask,
+  reloadTasks,
+  loadNextTasks
+} from "./store"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -110,6 +115,82 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].newTaskText).toBe("foo")
   })
 
+  it("signals that there are more tasks if there is a nextPageToken", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: {},
+        nextPageToken: "abc"
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].hasNextPage).toBe(true)
+  })
+
+  it("signals that there are no more tasks if next page token is null", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: {},
+        nextPageToken: null
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].hasNextPage).toBe(false)
+  })
+
+  it("signals that there are more tasks if tasks are unloaded regardless of nextPageToken", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        status: "UNLOADED",
+        items: {},
+        nextPageToken: null
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].hasNextPage).toBe(true)
+  })
+
   it("dispatches an edit action onNewTaskTextChange", () => {
     const store = createMockStore({
       newTask: {
@@ -191,12 +272,57 @@ describe("withEnhancers", () => {
 
     expect(store.getActions()).toEqual([reloadTasks()])
   })
+
+  it("dispatches a load action onLoadNextPage", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: {}
+      }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onLoadNextPage()
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(store.getActions()).toEqual([loadNextTasks()])
+  })
 })
 
 describe("App", () => {
+  it("displays a title for the refresh button", () => {
+    expect(
+      shallow(
+        <App
+          hasNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+        />
+      )
+        .find(".App-refresh")
+        .prop("title")
+    ).toBe("Refresh")
+  })
+
   it("renders a single task", () => {
     const taskListWrapper = shallow(
-      <App tasks={[{ _id: "a", isComplete: false, text: "foo" }]} />
+      <App
+        hasNextPage={false}
+        onLoadNextPage={() => {}}
+        tasks={[{ _id: "a", isComplete: false, text: "foo" }]}
+      />
     ).find(".App-taskList")
     const firstTask = taskListWrapper.childAt(0).find(Task)
 
@@ -207,6 +333,8 @@ describe("App", () => {
   it("renders a few tasks in order", () => {
     const tasksWrapper = shallow(
       <App
+        hasNextPage={false}
+        onLoadNextPage={() => {}}
         tasks={[
           { _id: "a", isComplete: false, text: "foo" },
           { _id: "b", isComplete: true, text: "bar" },
@@ -240,7 +368,14 @@ describe("App", () => {
 
   it("displays changes to the new task", () => {
     expect(
-      shallow(<App tasks={[]} newTaskText="foo" />)
+      shallow(
+        <App
+          hasNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText="foo"
+        />
+      )
         .find(".App-addTask")
         .prop("value")
     ).toBe("foo")
@@ -251,6 +386,8 @@ describe("App", () => {
 
     shallow(
       <App
+        hasNextPage={false}
+        onLoadNextPage={() => {}}
         tasks={[]}
         newTaskText="foo"
         onNewTaskTextChange={onNewTaskTextChange}
@@ -266,7 +403,13 @@ describe("App", () => {
     const onNewTaskSubmit = jest.fn()
 
     shallow(
-      <App tasks={[]} newTaskText="foo" onNewTaskSubmit={onNewTaskSubmit} />
+      <App
+        hasNextPage={false}
+        onLoadNextPage={() => {}}
+        tasks={[]}
+        newTaskText="foo"
+        onNewTaskSubmit={onNewTaskSubmit}
+      />
     )
       .find(".App-addTask")
       .simulate("keyPress", { key: "Enter" })
@@ -277,7 +420,14 @@ describe("App", () => {
   it("handles clicks on the refresh button", () => {
     const onRefresh = jest.fn()
 
-    shallow(<App tasks={[]} onRefresh={onRefresh} />)
+    shallow(
+      <App
+        hasNextPage={false}
+        onLoadNextPage={() => {}}
+        tasks={[]}
+        onRefresh={onRefresh}
+      />
+    )
       .find(".App-refresh")
       .simulate("click")
 

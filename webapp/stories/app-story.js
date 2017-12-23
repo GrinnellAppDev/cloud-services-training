@@ -45,3 +45,18 @@ storiesOf("App", module)
       <App />
     </Provider>
   ))
+  .add("loading", () => (
+    <Provider
+      store={createStore({
+        newTask: {
+          text: ""
+        },
+        tasks: {
+          status: "UNLOADED",
+          items: {}
+        }
+      })}
+    >
+      <App />
+    </Provider>
+  ))

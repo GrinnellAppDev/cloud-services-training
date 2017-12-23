@@ -5,10 +5,12 @@ import { mergeMap } from "rxjs/operators"
 import { createEpicMiddleware, combineEpics } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
 import { createSelector } from "reselect"
+import querystring from "querystring"
 
 export const getNewTaskText = state => state.newTask.text
 export const getTaskById = (state, id) => state.tasks.items[id]
 export const getTasksStatus = state => state.tasks.status
+export const getNextPageToken = state => state.tasks.nextPageToken
 
 export const makeGetTasks = () =>
   createSelector(
@@ -21,6 +23,7 @@ export const makeGetTasks = () =>
 
 // Action Creators
 
+export const loadNextTasks = () => ({ type: "LOAD_NEXT_TASKS" })
 export const reloadTasks = () => ({ type: "RELOAD_TASKS" })
 export const tasksLoadingStarted = () => ({ type: "TASKS_LOADING_STARTED" })
 export const tasksReceived = (items, nextPageToken) => ({
@@ -205,14 +208,21 @@ export const loadTasksEpic = (
   { getState },
   { fetchFromAPI }
 ) =>
-  actionsObservable.ofType("RELOAD_TASKS").pipe(
+  actionsObservable.ofType("RELOAD_TASKS", "LOAD_NEXT_TASKS").pipe(
     mergeMap(
-      () =>
-        getTasksStatus(getState()) === "LOADING"
+      ({ type }) =>
+        getTasksStatus(getState()) === "LOADING" ||
+        (type === "LOAD_NEXT_TASKS" &&
+          getTasksStatus(getState()) !== "UNLOADED" &&
+          !getNextPageToken(getState()))
           ? emptyObservable()
           : mergeObservables(
               Promise.resolve(tasksLoadingStarted()),
-              fetchFromAPI("/tasks")
+              fetchFromAPI(
+                `/tasks?${querystring.stringify({
+                  pageToken: getNextPageToken(getState())
+                })}`
+              )
                 .then(
                   response =>
                     response.ok

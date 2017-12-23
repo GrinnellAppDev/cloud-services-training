@@ -17,7 +17,8 @@ import {
   clearNewTask,
   loadTasksEpic,
   tasksLoadingFailed,
-  tasksLoadingStarted
+  tasksLoadingStarted,
+  loadNextTasks
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { toArray } from "rxjs/operators"
@@ -457,7 +458,7 @@ describe("epics", () => {
         { fetchFromAPI }
       ).toPromise()
 
-      expect(fetchFromAPI).toBeCalledWith("/tasks")
+      expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=")
     })
 
     it("doesn't call fetch and sends nothing when already loading", async () => {
@@ -474,6 +475,54 @@ describe("epics", () => {
       ).toEqual([])
 
       expect(fetchFromAPI).not.toBeCalled()
+    })
+
+    it("calls fetch when given a load page action if tasks are unloaded", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await loadTasksEpic(
+        ActionsObservable.of(loadNextTasks()),
+        {
+          getState: () => ({
+            tasks: { status: "UNLOADED", nextPageToken: null }
+          })
+        },
+        { fetchFromAPI }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=")
+    })
+
+    it("does not call fetch when given a load page action if tasks are loaded and there is no next page token", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await loadTasksEpic(
+        ActionsObservable.of(loadNextTasks()),
+        {
+          getState: () => ({
+            tasks: { nextPageToken: null }
+          })
+        },
+        { fetchFromAPI }
+      ).toPromise()
+
+      expect(fetchFromAPI).not.toBeCalled()
+    })
+
+    it("calls fetch when given a load page action with the next page token", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await loadTasksEpic(
+        ActionsObservable.of(loadNextTasks()),
+        {
+          getState: () => ({
+            tasks: { nextPageToken: "abc" }
+          })
+        },
+        { fetchFromAPI }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=abc")
     })
 
     it("handles fetch errors gracefully", async () => {
