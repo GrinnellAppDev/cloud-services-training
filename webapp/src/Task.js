@@ -30,7 +30,7 @@ export const Task = ({
       <input
         className="Task-checkbox"
         type="checkbox"
-        onClick={() => onIsCompleteChange(!isComplete)}
+        onChange={() => onIsCompleteChange(!isComplete)}
         checked={isComplete}
         disabled={isCreating}
       />

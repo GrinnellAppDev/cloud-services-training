@@ -18,7 +18,10 @@ import {
   loadTasksEpic,
   tasksLoadingFailed,
   tasksLoadingStarted,
-  loadNextTasks
+  loadNextTasks,
+  editTaskEpic,
+  taskEditFailed,
+  taskEditSucceeded
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { toArray } from "rxjs/operators"
@@ -215,7 +218,22 @@ describe("reducer", () => {
         ...stateWithTaskA.tasks,
         items: {
           ...stateWithTaskA.tasks.items,
-          a: { _id: "a", isComplete: true, text: "foo" }
+          a: { ...stateWithTaskA.tasks.items.a, isComplete: true }
+        }
+      }
+    })
+  })
+
+  it("reverts back to the original when edit fails", () => {
+    expect(
+      reducer(stateWithTaskA, taskEditFailed("a", { isComplete: true }))
+    ).toEqual({
+      ...stateWithTaskA,
+      tasks: {
+        ...stateWithTaskA.tasks,
+        items: {
+          ...stateWithTaskA.tasks.items,
+          a: { ...stateWithTaskA.tasks.items.a, isComplete: true }
         }
       }
     })
@@ -358,8 +376,8 @@ describe("epics", () => {
             fetchFromAPI: () =>
               Promise.resolve({
                 ok: false,
-                status: 401,
-                statusText: "Unauthorized"
+                status: 500,
+                statusText: "Server error"
               })
           }
         )
@@ -367,7 +385,7 @@ describe("epics", () => {
           .toPromise()
       ).toEqual([
         clearNewTask(),
-        taskCreateFailed("abc", "HTTP Error: Unauthorized (401)")
+        taskCreateFailed("abc", "HTTP Error: Server error (500)")
       ])
     })
 
@@ -546,8 +564,8 @@ describe("epics", () => {
             fetchFromAPI: () =>
               Promise.resolve({
                 ok: false,
-                status: 401,
-                statusText: "Unauthorized"
+                status: 500,
+                statusText: "Server error"
               })
           }
         )
@@ -555,7 +573,7 @@ describe("epics", () => {
           .toPromise()
       ).toEqual([
         tasksLoadingStarted(),
-        tasksLoadingFailed("HTTP Error: Unauthorized (401)")
+        tasksLoadingFailed("HTTP Error: Server error (500)")
       ])
     })
 
@@ -719,6 +737,105 @@ describe("epics", () => {
         "Missing 'nextPageToken' field in the API response"
       )
       console.error = consoleError
+    })
+  })
+
+  describe("editTaskEpic", () => {
+    it("calls fetch when it gets an edit action", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await editTaskEpic(
+        ActionsObservable.of(
+          editTask(
+            "a",
+            { isComplete: true, text: "foo" },
+            { isComplete: false, text: "bar" }
+          )
+        ),
+        {},
+        { fetchFromAPI }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalledWith("/tasks/a", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ isComplete: true, text: "foo" })
+      })
+    })
+
+    it("handles fetch errors gracefully", async () => {
+      expect(
+        await editTaskEpic(
+          ActionsObservable.of(
+            editTask(
+              "a",
+              { isComplete: true, text: "foo" },
+              { isComplete: false, text: "bar" }
+            )
+          ),
+          {},
+          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([
+        taskEditFailed(
+          "a",
+          { isComplete: false, text: "bar" },
+          "Failed to fetch"
+        )
+      ])
+    })
+
+    it("handles http errors gracefully", async () => {
+      expect(
+        await editTaskEpic(
+          ActionsObservable.of(
+            editTask(
+              "a",
+              { isComplete: true, text: "foo" },
+              { isComplete: false, text: "bar" }
+            )
+          ),
+          {},
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: false,
+                status: 500,
+                statusText: "Server error"
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([
+        taskEditFailed(
+          "a",
+          { isComplete: false, text: "bar" },
+          "HTTP Error: Server error (500)"
+        )
+      ])
+    })
+
+    it("indicates success when the request goes through", async () => {
+      expect(
+        await editTaskEpic(
+          ActionsObservable.of(
+            editTask(
+              "a",
+              { isComplete: true, text: "foo" },
+              { isComplete: false, text: "bar" }
+            )
+          ),
+          {},
+          { fetchFromAPI: () => Promise.resolve({ ok: true }) }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([taskEditSucceeded("a")])
     })
   })
 })

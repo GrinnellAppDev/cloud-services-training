@@ -53,7 +53,19 @@ export const taskCreateFailed = (temporaryId, message = null) => ({
   message
 })
 
-export const editTask = (id, edits) => ({ type: "EDIT_TASK", id, edits })
+export const editTask = (id, edits, original) => ({
+  type: "EDIT_TASK",
+  id,
+  edits,
+  original
+})
+export const taskEditSucceeded = id => ({ type: "TASK_EDIT_SUCCEEDED", id })
+export const taskEditFailed = (id, original, message = null) => ({
+  type: "TASK_EDIT_FAILED",
+  id,
+  original,
+  message
+})
 export const deleteTask = id => ({ type: "DELETE_TASK", id })
 
 // Reducers
@@ -173,6 +185,7 @@ export const reducer = (
       }
     }
     case "EDIT_TASK":
+    case "TASK_EDIT_FAILED":
       return {
         ...state,
         tasks: {
@@ -181,7 +194,7 @@ export const reducer = (
             ...state.tasks.items,
             [payload.id]: {
               ...state.tasks.items[payload.id],
-              ...payload.edits
+              ...(type === "EDIT_TASK" ? payload.edits : payload.original)
             }
           }
         }
@@ -299,7 +312,35 @@ export const newTaskEpic = (
     )
   )
 
-export const rootEpic = combineEpics(loadTasksEpic, newTaskEpic)
+export const editTaskEpic = (
+  actionsObservable,
+  { getState },
+  { fetchFromAPI }
+) =>
+  actionsObservable.ofType("EDIT_TASK").pipe(
+    mergeMap(({ id, edits, original }) =>
+      fetchFromAPI(`/tasks/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(edits)
+      })
+        .then(
+          response =>
+            response.ok
+              ? taskEditSucceeded(id)
+              : Promise.reject(
+                  Error(
+                    `HTTP Error: ${response.statusText} (${response.status})`
+                  )
+                )
+        )
+        .catch(err => taskEditFailed(id, original, err.message))
+    )
+  )
+
+export const rootEpic = combineEpics(loadTasksEpic, newTaskEpic, editTaskEpic)
 
 // Store
 

@@ -78,7 +78,7 @@ describe("Task", () => {
       />
     )
       .find(".Task-checkbox")
-      .simulate("click")
+      .simulate("change")
     expect(onIsCompleteChange).lastCalledWith(true)
 
     shallow(
@@ -90,7 +90,7 @@ describe("Task", () => {
       />
     )
       .find(".Task-checkbox")
-      .simulate("click")
+      .simulate("change")
     expect(onIsCompleteChange).lastCalledWith(false)
   })
 
