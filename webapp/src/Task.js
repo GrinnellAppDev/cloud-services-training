@@ -3,7 +3,7 @@ import classnames from "classnames"
 import Ripples from "react-ripples"
 import "./Task.css"
 import { connect } from "react-redux"
-import { getTaskById, editTask } from "./store"
+import { getTaskById, editTask, deleteTask } from "./store"
 
 export const withEnhancers = connect(
   (state, { id }) => ({
@@ -13,7 +13,8 @@ export const withEnhancers = connect(
     onIsCompleteChange: (isComplete, oldVal) =>
       dispatch(editTask(id, { isComplete }, { isComplete: oldVal })),
     onTextChange: (text, oldVal) =>
-      dispatch(editTask(id, { text }, { text: oldVal }))
+      dispatch(editTask(id, { text }, { text: oldVal })),
+    onDelete: original => dispatch(deleteTask(id, original))
   })
 )
 
@@ -22,6 +23,7 @@ export const Task = ({
   text,
   onIsCompleteChange,
   onTextChange,
+  onDelete,
   isCreating = false
 }) => (
   <article className={classnames("Task", isComplete && "Task-isComplete")}>
@@ -45,6 +47,14 @@ export const Task = ({
       onChange={ev => onTextChange(ev.currentTarget.value, text)}
       disabled={isCreating}
     />
+
+    <button
+      className="Task-delete"
+      onClick={() => onDelete({ text, isComplete })}
+      title="Delete"
+    >
+      ×
+    </button>
   </article>
 )
 

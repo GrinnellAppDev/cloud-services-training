@@ -21,7 +21,10 @@ import {
   loadNextTasks,
   editTaskEpic,
   taskEditFailed,
-  taskEditSucceeded
+  taskEditSucceeded,
+  deleteTaskEpic,
+  taskDeleteFailed,
+  taskDeleteSucceeded
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { toArray } from "rxjs/operators"
@@ -245,6 +248,24 @@ describe("reducer", () => {
       tasks: {
         ...stateWithTaskA.tasks,
         items: {}
+      }
+    })
+  })
+
+  it("puts a task back if it failed to delete", () => {
+    expect(
+      reducer(
+        stateWithTaskA,
+        taskDeleteFailed("b", { isComplete: true, text: "bar" })
+      )
+    ).toEqual({
+      ...stateWithTaskA,
+      tasks: {
+        ...stateWithTaskA.tasks,
+        items: {
+          ...stateWithTaskA.tasks.items,
+          b: { _id: "b", isComplete: true, text: "bar" }
+        }
       }
     })
   })
@@ -838,6 +859,83 @@ describe("epics", () => {
           .pipe(toArray())
           .toPromise()
       ).toEqual([taskEditSucceeded("a")])
+    })
+  })
+
+  describe("deleteTaskEpic", () => {
+    it("calls fetch when it gets a delete action", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await deleteTaskEpic(
+        ActionsObservable.of(deleteTask("a")),
+        {},
+        { fetchFromAPI }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalledWith("/tasks/a", {
+        method: "DELETE"
+      })
+    })
+
+    it("handles fetch errors gracefully", async () => {
+      expect(
+        await deleteTaskEpic(
+          ActionsObservable.of(
+            deleteTask("a", { isComplete: true, text: "foo" })
+          ),
+          {},
+          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([
+        taskDeleteFailed(
+          "a",
+          { isComplete: true, text: "foo" },
+          "Failed to fetch"
+        )
+      ])
+    })
+
+    it("handles http errors gracefully", async () => {
+      expect(
+        await deleteTaskEpic(
+          ActionsObservable.of(
+            deleteTask("a", { isComplete: true, text: "foo" })
+          ),
+          {},
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: false,
+                status: 500,
+                statusText: "Server error"
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([
+        taskDeleteFailed(
+          "a",
+          { isComplete: true, text: "foo" },
+          "HTTP Error: Server error (500)"
+        )
+      ])
+    })
+
+    it("indicates success when the request goes through", async () => {
+      expect(
+        await deleteTaskEpic(
+          ActionsObservable.of(
+            deleteTask("a", { isComplete: true, text: "foo" })
+          ),
+          {},
+          { fetchFromAPI: () => Promise.resolve({ ok: true }) }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([taskDeleteSucceeded("a")])
     })
   })
 })

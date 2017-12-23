@@ -4,7 +4,7 @@ import { shallow } from "enzyme"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
 import { render } from "react-dom"
-import { editTask } from "./store"
+import { editTask, deleteTask } from "./store"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -61,6 +61,34 @@ describe("withEnhancers", () => {
     expect(store.getActions()).toEqual([
       editTask("a", { isComplete: true }, { isComplete: false }),
       editTask("a", { text: "bar" }, { text: "foo" })
+    ])
+  })
+
+  it("sends the delete action onDelete", () => {
+    const store = createMockStore({
+      tasks: {
+        items: {
+          a: { _id: "a", isComplete: false, text: "foo" }
+        }
+      }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onDelete({ isComplete: false, text: "foo" })
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped id="a" />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component).toBeCalled()
+    expect(store.getActions()).toEqual([
+      deleteTask("a", { isComplete: false, text: "foo" })
     ])
   })
 })
@@ -168,5 +196,20 @@ describe("Task", () => {
 
     expect(wrapper.find(".Task-checkbox").prop("disabled")).toBe(true)
     expect(wrapper.find(".Task-text").prop("disabled")).toBe(true)
+  })
+
+  it("sends a deletion event", () => {
+    const onDelete = jest.fn()
+    const wrapper = shallow(
+      <Task
+        text=""
+        isComplete={false}
+        onIsCompleteChange={() => {}}
+        onDelete={onDelete}
+      />
+    )
+
+    wrapper.find(".Task-delete").simulate("click")
+    expect(onDelete).toBeCalledWith({ isComplete: false, text: "" })
   })
 })

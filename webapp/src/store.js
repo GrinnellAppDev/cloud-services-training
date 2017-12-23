@@ -66,7 +66,18 @@ export const taskEditFailed = (id, original, message = null) => ({
   original,
   message
 })
-export const deleteTask = id => ({ type: "DELETE_TASK", id })
+
+export const deleteTask = (id, original) => ({
+  type: "DELETE_TASK",
+  id,
+  original
+})
+export const taskDeleteSucceeded = id => ({ type: "TASK_DELETE_SUCCEEDED", id })
+export const taskDeleteFailed = (id, original) => ({
+  type: "TASK_DELETE_FAILED",
+  id,
+  original
+})
 
 // Reducers
 
@@ -209,6 +220,20 @@ export const reducer = (
         }
       }
     }
+    case "TASK_DELETE_FAILED":
+      return {
+        ...state,
+        tasks: {
+          ...state.tasks,
+          items: {
+            ...state.tasks.items,
+            [payload.id]: {
+              ...payload.original,
+              _id: payload.id
+            }
+          }
+        }
+      }
     default:
       return state
   }
@@ -340,7 +365,36 @@ export const editTaskEpic = (
     )
   )
 
-export const rootEpic = combineEpics(loadTasksEpic, newTaskEpic, editTaskEpic)
+export const deleteTaskEpic = (
+  actionsObservable,
+  { getState },
+  { fetchFromAPI }
+) =>
+  actionsObservable.ofType("DELETE_TASK").pipe(
+    mergeMap(({ id, original }) =>
+      fetchFromAPI(`/tasks/${id}`, {
+        method: "DELETE"
+      })
+        .then(
+          response =>
+            response.ok
+              ? taskDeleteSucceeded(id)
+              : Promise.reject(
+                  Error(
+                    `HTTP Error: ${response.statusText} (${response.status})`
+                  )
+                )
+        )
+        .catch(err => taskDeleteFailed(id, original, err.message))
+    )
+  )
+
+export const rootEpic = combineEpics(
+  loadTasksEpic,
+  newTaskEpic,
+  editTaskEpic,
+  deleteTaskEpic
+)
 
 // Store
 
