@@ -5,6 +5,7 @@
   background: white;
   padding: 10px;
   position: relative;
+  contain: paint;
 }
 
 .Task-loading {
