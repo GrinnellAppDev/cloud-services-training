@@ -6,6 +6,8 @@ import { createEpicMiddleware, combineEpics } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
 import { createSelector } from "reselect"
 import querystring from "querystring"
+import { filter } from "rxjs/operators/filter"
+import { isTempTaskId, asciiCompare } from "./util"
 
 export const getNewTaskText = state => state.newTask.text
 export const getTaskById = (state, id) => state.tasks.items[id]
@@ -17,7 +19,7 @@ export const makeGetTasks = () =>
     state => state.tasks.items,
     items =>
       Object.keys(items)
-        .sort((a, b) => b.localeCompare(a))
+        .sort((a, b) => asciiCompare(b, a))
         .map(key => items[key])
   )
 
@@ -155,8 +157,7 @@ export const reducer = (
             [payload.temporaryId]: {
               _id: payload.temporaryId,
               isComplete: false,
-              text: state.newTask.text,
-              isCreating: true
+              text: state.newTask.text
             }
           }
         }
@@ -175,8 +176,7 @@ export const reducer = (
             ...otherItems,
             [payload.realId]: {
               ...localTask,
-              _id: payload.realId,
-              isCreating: false
+              _id: payload.realId
             }
           }
         }
@@ -371,6 +371,7 @@ export const deleteTaskEpic = (
   { fetchFromAPI }
 ) =>
   actionsObservable.ofType("DELETE_TASK").pipe(
+    filter(({ id }) => !isTempTaskId(id)),
     mergeMap(({ id, original }) =>
       fetchFromAPI(`/tasks/${id}`, {
         method: "DELETE"

@@ -28,6 +28,7 @@ import {
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { toArray } from "rxjs/operators"
+import { getTempTaskId } from "./util"
 
 describe("configureStore", () => {
   it("makes a store without a default state", () => {
@@ -70,6 +71,26 @@ describe("selectors", () => {
     const getTasks = makeGetTasks()
 
     it("gets a list from a loaded state in order", () => {
+      const tempId = getTempTaskId()
+
+      expect(
+        getTasks({
+          tasks: {
+            items: {
+              a3s5: { _id: "a3s5", isComplete: false, text: "foo" },
+              [tempId]: { _id: tempId, isComplete: false, text: "baz" },
+              "123s": { _id: "123s", isComplete: true, text: "bar" }
+            }
+          }
+        })
+      ).toEqual([
+        { _id: tempId, isComplete: false, text: "baz" },
+        { _id: "a3s5", isComplete: false, text: "foo" },
+        { _id: "123s", isComplete: true, text: "bar" }
+      ])
+    })
+
+    it("sorts temporary ids on top", () => {
       expect(
         getTasks({
           tasks: {
@@ -298,8 +319,7 @@ describe("reducer", () => {
           fooTempId: {
             _id: "fooTempId",
             isComplete: false,
-            text: "foo",
-            isCreating: true
+            text: "foo"
           }
         }
       }
@@ -314,8 +334,7 @@ describe("reducer", () => {
         items: {
           abc: {
             ...stateWithTaskA.tasks.items.a,
-            _id: "abc",
-            isCreating: false
+            _id: "abc"
           }
         }
       }
@@ -875,6 +894,22 @@ describe("epics", () => {
       expect(fetchFromAPI).toBeCalledWith("/tasks/a", {
         method: "DELETE"
       })
+    })
+
+    it("does nothing when it gets a delete action with a temp id", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      expect(
+        await deleteTaskEpic(
+          ActionsObservable.of(deleteTask(getTempTaskId())),
+          {},
+          { fetchFromAPI }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([])
+
+      expect(fetchFromAPI).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {

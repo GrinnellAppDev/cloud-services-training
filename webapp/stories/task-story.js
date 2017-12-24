@@ -10,6 +10,7 @@ storiesOf("Task", module)
       text="Get coffee"
       onIsCompleteChange={action("isComplete change")}
       onTextChange={action("text change")}
+      onDelete={action("delete")}
     />
   ))
   .add("complete task", () => (
@@ -18,6 +19,7 @@ storiesOf("Task", module)
       text="Do laundry"
       onIsCompleteChange={action("isComplete change")}
       onTextChange={action("text change")}
+      onDelete={action("delete")}
     />
   ))
   .add("creating task", () => (
@@ -27,5 +29,6 @@ storiesOf("Task", module)
       text="Write novel"
       onIsCompleteChange={action("isComplete change")}
       onTextChange={action("text change")}
+      onDelete={action("delete")}
     />
   ))

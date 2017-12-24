@@ -5,6 +5,8 @@ import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
 import { render } from "react-dom"
 import { editTask, deleteTask } from "./store"
+import LoadingSpinner from "./LoadingSpinner"
+import { isTempTaskId, getTempTaskId } from "./util"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -31,6 +33,29 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls).toHaveLength(1)
     expect(Component.mock.calls[0][0].isComplete).toBe(false)
     expect(Component.mock.calls[0][0].text).toBe("foo")
+    expect(Component.mock.calls[0][0].isCreating).toBe(false)
+  })
+
+  it("detects isCreating from id", () => {
+    const id = getTempTaskId()
+    const store = createMockStore({
+      tasks: {
+        items: {
+          [id]: { _id: id, isComplete: false, text: "foo" }
+        }
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped id={id} />
+      </Provider>,
+      document.createElement("div")
+    )
+
     expect(Component.mock.calls[0][0].isCreating).toBe(true)
   })
 
@@ -196,6 +221,21 @@ describe("Task", () => {
 
     expect(wrapper.find(".Task-checkbox").prop("disabled")).toBe(true)
     expect(wrapper.find(".Task-text").prop("disabled")).toBe(true)
+    expect(wrapper.find(".Task-delete").prop("disabled")).toBe(true)
+  })
+
+  it("shows loader when isCreating is true", () => {
+    const wrapper = shallow(
+      <Task
+        isCreating={true}
+        isComplete={false}
+        text="foo"
+        onIsCompleteChange={() => {}}
+        onTextChange={() => {}}
+      />
+    )
+
+    expect(wrapper.find(LoadingSpinner).exists()).toBe(true)
   })
 
   it("sends a deletion event", () => {

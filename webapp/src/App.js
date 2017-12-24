@@ -14,6 +14,7 @@ import {
 } from "./store"
 import InfiniteScroll from "react-infinite-scroller"
 import LoadingSpinner from "./LoadingSpinner"
+import { getTempTaskId } from "./util"
 
 export const withEnhancers = connect(
   () => {
@@ -27,7 +28,7 @@ export const withEnhancers = connect(
   },
   {
     onNewTaskTextChange: editNewTaskText,
-    onNewTaskSubmit: () => createNewTask(`~${Date.now()}`),
+    onNewTaskSubmit: () => createNewTask(getTempTaskId()),
     onRefresh: reloadTasks,
     onLoadNextPage: loadNextTasks
   }

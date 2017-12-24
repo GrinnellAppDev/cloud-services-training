@@ -1,13 +1,15 @@
 import React from "react"
 import classnames from "classnames"
-import Ripples from "react-ripples"
 import "./Task.css"
 import { connect } from "react-redux"
 import { getTaskById, editTask, deleteTask } from "./store"
+import LoadingSpinner from "./LoadingSpinner"
+import { isTempTaskId } from "./util"
 
 export const withEnhancers = connect(
   (state, { id }) => ({
-    ...getTaskById(state, id)
+    ...getTaskById(state, id),
+    isCreating: isTempTaskId(id)
   }),
   (dispatch, { id }) => ({
     onIsCompleteChange: (isComplete, oldVal) =>
@@ -27,18 +29,19 @@ export const Task = ({
   isCreating = false
 }) => (
   <article className={classnames("Task", isComplete && "Task-isComplete")}>
-    <Ripples
-      className="Task-checkboxRipple"
-      color={isComplete ? "#ededed" : "#bddad5"}
-    >
-      <input
-        className="Task-checkbox"
-        type="checkbox"
-        onChange={() => onIsCompleteChange(!isComplete, isComplete)}
-        checked={isComplete}
-        disabled={isCreating}
-      />
-    </Ripples>
+    {isCreating && (
+      <div className="Task-loading">
+        <LoadingSpinner />
+      </div>
+    )}
+
+    <input
+      className="Task-checkbox"
+      type="checkbox"
+      onChange={() => onIsCompleteChange(!isComplete, isComplete)}
+      checked={isComplete}
+      disabled={isCreating}
+    />
 
     <input
       className="Task-text"
@@ -52,6 +55,7 @@ export const Task = ({
       className="Task-delete"
       onClick={() => onDelete({ text, isComplete })}
       title="Delete"
+      disabled={isCreating}
     >
       ×
     </button>

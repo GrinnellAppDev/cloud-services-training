@@ -11,6 +11,7 @@ import {
   reloadTasks,
   loadNextTasks
 } from "./store"
+import { isTempTaskId } from "./util"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -241,10 +242,7 @@ describe("withEnhancers", () => {
     )
 
     expect(store.getActions()[0].type).toBe(createNewTask("").type)
-
-    // It should start with a ~ so it rises above all of the permanent ids in
-    // sort order
-    expect(store.getActions()[0].temporaryId.substring(0, 1)).toBe("~")
+    expect(isTempTaskId(store.getActions()[0].temporaryId)).toBe(true)
   })
 
   it("dispatches a refresh action onRefresh", () => {

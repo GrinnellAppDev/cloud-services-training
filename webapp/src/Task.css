@@ -4,16 +4,16 @@
   align-items: center;
   background: white;
   padding: 10px;
+  position: relative;
 }
 
-.Task-checkboxRipple {
-  margin: 0;
-  margin-right: 10px;
-  border-radius: 50%;
-  height: 40px;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
+.Task-loading {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  padding: 6px;
+  pointer-events: none;
 }
 
 .Task-checkbox {
@@ -23,6 +23,30 @@
   height: 40px;
   margin: 0;
   padding: 0;
+  margin-right: 10px;
+  position: relative;
+}
+
+.Task-checkbox::before {
+  content: "";
+  display: block;
+  position: absolute;
+  border-radius: 50%;
+  background: #ededed;
+  width: 100%;
+  height: 100%;
+  transform: scale(0.1);
+  opacity: 0;
+  transition: transform 200ms, opacity 200ms;
+}
+
+.Task-checkbox:active::before {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.Task-checkbox:checked::before {
+  background: #bddad5;
 }
 
 .Task-checkbox::after {
@@ -89,6 +113,10 @@
 .Task-delete:focus,
 .Task-delete:hover {
   opacity: 1;
+}
+
+.Task-delete:disabled {
+  opacity: 0;
 }
 
 .Task-delete::after {
