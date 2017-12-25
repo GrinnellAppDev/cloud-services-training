@@ -8,4 +8,5 @@ services:
       - ./server:/var/server
     environment:
       - NODE_ENV=development
+      - REACT_APP_API_ROOT=http://localhost:5050/
     command: yarn start

@@ -1,6 +1,6 @@
 FROM node:8.9
 
-ENV REACT_APP_API_HOST="localhost:5050"
+ENV REACT_APP_API_ROOT="https://cst-api.appdev.grinnell.edu/"
 EXPOSE 5000 5050
 
 COPY ./webapp /var/webapp
