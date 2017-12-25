@@ -1,4 +1,5 @@
 const express = require("express")
+const cors = require("cors")
 const { MongoClient, ObjectID, Db } = require("mongodb")
 const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
@@ -45,6 +46,7 @@ express()
   })
 
 express()
+  .use(cors())
   .use(bodyParser.json())
 
   .get("/tasks", (request, response) =>
@@ -73,7 +75,7 @@ express()
     runWithDB(async db => {
       const newTask = {
         ...request.body,
-        completed: false
+        isComplete: false
       }
 
       const tasksCollection = db.collection("tasks")
