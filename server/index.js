@@ -43,7 +43,7 @@ express()
 
       const newTask = {
         ...request.body,
-        completed: false
+        isCompleted: false
       }
 
       const tasksCollection = db.collection("tasks")
