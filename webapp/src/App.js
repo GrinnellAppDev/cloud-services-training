@@ -23,7 +23,9 @@ export const withEnhancers = connect(
       tasks: getTasks(state),
       newTaskText: getNewTaskText(state),
       hasNextPage:
-        !!getNextPageToken(state) || getTasksStatus(state) === "UNLOADED"
+        !!getNextPageToken(state) ||
+        getTasksStatus(state) === "UNLOADED" ||
+        getTasksStatus(state) === "LOADING"
     })
   },
   {

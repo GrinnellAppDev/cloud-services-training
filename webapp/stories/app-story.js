@@ -52,7 +52,7 @@ storiesOf("App", module)
           text: ""
         },
         tasks: {
-          status: "UNLOADED",
+          status: "LOADING",
           items: {}
         }
       })}

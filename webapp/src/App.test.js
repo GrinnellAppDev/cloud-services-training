@@ -192,6 +192,32 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].hasNextPage).toBe(true)
   })
 
+  it("signals that there are more tasks if tasks are loading regardless of nextPageToken", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        status: "LOADING",
+        items: {},
+        nextPageToken: null
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].hasNextPage).toBe(true)
+  })
+
   it("dispatches an edit action onNewTaskTextChange", () => {
     const store = createMockStore({
       newTask: {
