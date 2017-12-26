@@ -19,19 +19,19 @@ services:
     networks:
       - local-bridge
     links:
-      - db
+      - apidb
     depends_on:
-      - db
+      - apidb
     environment:
-      - MONGO_URL=mongodb://db/cst
+      - MONGO_URL=mongodb://apidb/
 
-  db:
-    container_name: cst-mongodb
+  apidb:
+    container_name: cst-apidb
     image: mongo:3.4
     networks:
       - local-bridge
     volumes:
-      - db-data:/data/db
+      - apidb-data:/data/db
     expose:
       - "27017"
 
@@ -40,4 +40,4 @@ networks:
     driver: bridge
 
 volumes:
-  db-data: {}
+  apidb-data:
