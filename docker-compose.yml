@@ -1,13 +1,19 @@
 version: "3"
 
 services:
-  web:
-    container_name: cst-web-prod
-    image: cst-web-prod
-    build: .
+  webapp:
+    container_name: cst-webapp-prod
+    image: cst-webapp-prod
+    build: ./webapp
     ports:
-      - "5000:5000"
-      - "5050:5050"
+      - "2000:2000"
+
+  api:
+    container_name: cst-api-prod
+    image: cst-api-prod
+    build: ./api
+    ports:
+      - "2001:2000"
     networks:
       - local-bridge
     links:

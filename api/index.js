@@ -3,15 +3,7 @@ const cors = require("cors")
 const { MongoClient } = require("mongodb")
 const bodyParser = require("body-parser")
 
-const STATIC_PORT = 5000
-const API_PORT = 5050
-
-express()
-  .use(express.static(`${__dirname}/../webapp/build`))
-
-  .listen(STATIC_PORT, () => {
-    console.log(`Serving static files on port ${STATIC_PORT}`)
-  })
+const PORT = 2000
 
 express()
   .use(cors())
@@ -62,6 +54,6 @@ express()
     }
   })
 
-  .listen(API_PORT, () => {
-    console.log(`Serving API on port ${API_PORT}`)
+  .listen(PORT, () => {
+    console.log("Serving API.")
   })
