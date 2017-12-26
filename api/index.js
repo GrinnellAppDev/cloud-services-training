@@ -162,5 +162,5 @@ express()
   })
 
   .listen(PORT, () => {
-    console.log("Serving API.")
+    console.log("API serving.")
   })
