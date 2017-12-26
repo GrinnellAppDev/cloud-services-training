@@ -7,8 +7,6 @@ services:
     build: ./webapp
     ports:
       - "2000:2000"
-    networks:
-      - local-bridge
 
   api:
     container_name: cst-api-prod
@@ -17,7 +15,7 @@ services:
     ports:
       - "2001:2000"
     networks:
-      - local-bridge
+      - api-bridge
     links:
       - apidb
     depends_on:
@@ -29,14 +27,14 @@ services:
     container_name: cst-apidb
     image: mongo:3.4
     networks:
-      - local-bridge
+      - api-bridge
     volumes:
       - apidb-data:/data/db
     expose:
       - "27017"
 
 networks:
-  local-bridge:
+  api-bridge:
     driver: bridge
 
 volumes:
