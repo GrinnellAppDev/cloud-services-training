@@ -1,15 +1,14 @@
 const express = require("express")
+const cors = require("cors")
 const { MongoClient, ObjectID, Db } = require("mongodb")
 const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
-const cors = require("cors")
 
 // @ts-ignore
 require("express-async-errors")
 
-const STATIC_PORT = 5000
-const API_PORT = 5050
+const PORT = 2000
 
 /**
  * @param {ObjectID} id
@@ -39,13 +38,7 @@ const runWithDB = async run => {
 }
 
 express()
-  .use(express.static(`${__dirname}/../webapp/build`))
-
-  .listen(STATIC_PORT, () => {
-    console.log(`Serving static files on port ${STATIC_PORT}`)
-  })
-
-express()
+  .use(cors())
   .use(bodyParser.json())
   .use(cors())
 
@@ -78,7 +71,7 @@ express()
     runWithDB(async db => {
       const newTask = {
         ...request.body,
-        completed: false
+        isComplete: false
       }
 
       const tasksCollection = db.collection("tasks")
@@ -172,6 +165,6 @@ express()
     }
   })
 
-  .listen(API_PORT, () => {
-    console.log(`Serving API on port ${API_PORT}`)
+  .listen(PORT, () => {
+    console.log("API serving.")
   })

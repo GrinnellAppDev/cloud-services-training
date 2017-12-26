@@ -1,13 +1,20 @@
 version: "3"
 
 services:
-  web:
-    container_name: cst-web-dev
-    image: cst-web-dev
-    volumes:
-      - ./server:/var/server
+  webapp:
+    container_name: cst-webapp-dev
+    image: cst-webapp-dev
     environment:
       - NODE_ENV=development
-    command: yarn debug
+      - REACT_APP_API_ROOT=http://localhost:2001/
+
+  api:
+    container_name: cst-api-dev
+    image: cst-api-dev
+    volumes:
+      - ./api:/var/api
+    environment:
+      - NODE_ENV=development
+    command: yarn start
     ports:
       - "9222:9222"
