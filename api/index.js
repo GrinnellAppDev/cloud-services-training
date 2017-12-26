@@ -1,11 +1,8 @@
 const express = require("express")
-const cors = require("cors")
 
 const PORT = 2000
 
 express()
-  .use(cors())
-
   .get("/tasks", (request, response) => {
     response.status(200).send({
       items: [
@@ -29,5 +26,5 @@ express()
   })
 
   .listen(PORT, () => {
-    console.log("Serving API.")
+    console.log("API serving.")
   })
