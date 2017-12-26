@@ -15,11 +15,9 @@ express()
       db = await MongoClient.connect(process.env.MONGO_URL)
 
       const tasksCollection = db.collection("tasks")
-      const allTasks = tasksCollection.find()
+      const allTasks = tasksCollection.find().sort("_id", -1)
 
-      response.status(200).send({
-        items: await allTasks.toArray()
-      })
+      response.status(200).send({ items: await allTasks.toArray() })
     } catch (error) {
       response.status(500).send({ error })
       console.error(error)
