@@ -1,6 +1,6 @@
 const express = require("express")
 
-const PORT = 2000
+const PORT = process.env.WEBAPP_PORT || process.env.PORT || 2000
 
 express()
   .use(express.static(`${__dirname}/build`))
