@@ -15,6 +15,6 @@ services:
       - ./api:/var/api
     environment:
       - NODE_ENV=development
-    command: yarn debug
+    command: yarn start
     ports:
       - "9222:9222"
