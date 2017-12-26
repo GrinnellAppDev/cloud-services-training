@@ -7,6 +7,8 @@ services:
     build: ./webapp
     ports:
       - "2000:2000"
+    networks:
+      - local-bridge
 
   api:
     container_name: cst-api-prod
