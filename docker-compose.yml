@@ -1,35 +1,41 @@
 version: "3"
 
 services:
-  web:
-    container_name: cst-web-prod
-    image: cst-web-prod
-    build: .
+  webapp:
+    container_name: cst-webapp-prod
+    image: cst-webapp-prod
+    build: ./webapp
     ports:
-      - "5000:5000"
-      - "5050:5050"
-    networks:
-      - local-bridge
-    links:
-      - db
-    depends_on:
-      - db
-    environment:
-      - MONGO_URL=mongodb://db/cst
+      - "2000:2000"
 
-  db:
-    container_name: cst-mongodb
+  api:
+    container_name: cst-api-prod
+    image: cst-api-prod
+    build: ./api
+    ports:
+      - "2001:2000"
+    networks:
+      - api-bridge
+    links:
+      - apidb
+    depends_on:
+      - apidb
+    environment:
+      - MONGO_URL=mongodb://apidb/
+
+  apidb:
+    container_name: cst-apidb
     image: mongo:3.4
     networks:
-      - local-bridge
+      - api-bridge
     volumes:
-      - db-data:/data/db
+      - apidb-data:/data/db
     expose:
       - "27017"
 
 networks:
-  local-bridge:
+  api-bridge:
     driver: bridge
 
 volumes:
-  db-data: {}
+  apidb-data:
