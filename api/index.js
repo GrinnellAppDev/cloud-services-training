@@ -29,5 +29,5 @@ express()
   })
 
   .listen(PORT, () => {
-    console.log(`Serving API on port ${PORT}`)
+    console.log("Serving API.")
   })
