@@ -315,6 +315,7 @@ export const newTaskEpic = (
                   "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
+                  isComplete: false,
                   text: getNewTaskText(getState())
                 })
               })
