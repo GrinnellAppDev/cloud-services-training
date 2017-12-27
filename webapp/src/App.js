@@ -99,19 +99,19 @@ export const App = ({
             </li>
           ))}
         </FlipMove>
-
-        {tasksHaveError && (
-          <section className="App-tasksError">
-            <h2 className="App-tasksErrorHeading">
-              Oops! There was a problem loading your tasks.
-            </h2>
-            <p className="App-tasksErrorMessage">{lastTasksErrorMessage}</p>
-            <button className="App-tasksErrorTryAgain" onClick={onLoadNextPage}>
-              Try again
-            </button>
-          </section>
-        )}
       </InfiniteScroll>
+
+      {tasksHaveError && (
+        <section className="App-tasksError">
+          <h2 className="App-tasksErrorHeading">
+            Oops! There was a problem loading your tasks.
+          </h2>
+          <p className="App-tasksErrorMessage">{lastTasksErrorMessage}</p>
+          <button className="App-tasksErrorTryAgain" onClick={onLoadNextPage}>
+            Try again
+          </button>
+        </section>
+      )}
     </main>
   </div>
 )
