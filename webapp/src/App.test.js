@@ -294,6 +294,83 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].lastTasksErrorMessage).toBe("foo")
   })
 
+  it("signals hasTasks when tasks contain any elements", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: { a: "a" }
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].hasTasks).toBe(true)
+  })
+
+  it("signals hasTasks when tasks are empty but we are not loaded", () => {
+    const store = status =>
+      createMockStore({
+        newTask: {
+          text: ""
+        },
+        tasks: {
+          status,
+          items: {}
+        }
+      })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    for (const status of ["UNLOADED", "ERROR", "LOADING"])
+      render(
+        <Provider store={store(status)}>
+          <Wrapped />
+        </Provider>,
+        document.createElement("div")
+      )
+
+    expect(Component.mock.calls).toHaveLength(3)
+    for (const call of [0, 1, 2])
+      expect(Component.mock.calls[call][0].hasTasks).toBe(true)
+  })
+
+  it("signals not hasTasks when tasks are empty and we are loaded", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        status: "LOADED",
+        items: {}
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].hasTasks).toBe(false)
+  })
+
   it("dispatches an edit action onNewTaskTextChange", () => {
     const store = createMockStore({
       newTask: {
@@ -512,6 +589,38 @@ describe("App", () => {
         />
       )
         .find(".App-tasksError")
+        .exists()
+    ).toBe(false)
+  })
+
+  it("shows a message when there are no tasks", () => {
+    expect(
+      shallow(
+        <App
+          tasksHaveNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+          hasTasks={false}
+        />
+      )
+        .find(".App-noTasks")
+        .contains("You have no tasks!")
+    ).toBe(true)
+  })
+
+  it("doesn't show the no tasks message when there are tasks", () => {
+    expect(
+      shallow(
+        <App
+          tasksHaveNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+          hasTasks={true}
+        />
+      )
+        .find(".App-noTask")
         .exists()
     ).toBe(false)
   })

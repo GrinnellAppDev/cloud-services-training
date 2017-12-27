@@ -38,6 +38,7 @@ storiesOf("App", module)
           text: "Get coff"
         },
         tasks: {
+          status: "LOADED",
           items: {}
         }
       })}

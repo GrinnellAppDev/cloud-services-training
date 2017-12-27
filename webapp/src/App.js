@@ -21,17 +21,22 @@ import FlipMove from "react-flip-move"
 export const withEnhancers = connect(
   () => {
     const getTasks = makeGetTasks()
-    return state => ({
-      tasks: getTasks(state),
-      newTaskText: getNewTaskText(state),
-      tasksHaveNextPage:
-        getTasksStatus(state) !== "ERROR" &&
-        (!!getNextPageToken(state) ||
-          getTasksStatus(state) === "UNLOADED" ||
-          getTasksStatus(state) === "LOADING"),
-      tasksHaveError: getTasksStatus(state) === "ERROR",
-      lastTasksErrorMessage: getLastTasksErrorMessage(state)
-    })
+
+    return state => {
+      const status = getTasksStatus(state)
+      return {
+        tasks: getTasks(state),
+        newTaskText: getNewTaskText(state),
+        hasTasks: getTasks(state).length > 0 || status !== "LOADED",
+        tasksHaveNextPage:
+          status !== "ERROR" &&
+          (!!getNextPageToken(state) ||
+            status === "UNLOADED" ||
+            status === "LOADING"),
+        tasksHaveError: status === "ERROR",
+        lastTasksErrorMessage: getLastTasksErrorMessage(state)
+      }
+    }
   },
   {
     onNewTaskTextChange: editNewTaskText,
@@ -46,6 +51,7 @@ export const App = ({
   newTaskText,
   tasksHaveNextPage,
   tasksHaveError,
+  hasTasks,
   lastTasksErrorMessage,
   onNewTaskTextChange,
   onNewTaskSubmit,
@@ -63,6 +69,7 @@ export const App = ({
       </button>
 
       <input
+        id="App-addTask"
         className="App-addTask"
         type="text"
         placeholder="What needs to be done?"
@@ -101,13 +108,35 @@ export const App = ({
         </FlipMove>
       </InfiniteScroll>
 
+      {!hasTasks && (
+        <section className="App-taskListTail App-noTasks">
+          <p className="App-taskListTailMessage">You have no tasks!</p>
+          <button
+            className="App-taskListTailButton App-noTasksCreate"
+            onClick={() => {
+              const input = document.getElementById("App-addTask")
+
+              if (input)
+                if (newTaskText && input.select) input.select()
+                else input.focus()
+              else console.error("Couldn't select addTask input")
+            }}
+          >
+            Create a Task
+          </button>
+        </section>
+      )}
+
       {tasksHaveError && (
-        <section className="App-tasksError">
-          <h2 className="App-tasksErrorHeading">
+        <section className="App-taskListTail App-tasksError">
+          <h2 className="App-taskListTailHeading">
             Oops! There was a problem loading your tasks.
           </h2>
           <p className="App-tasksErrorMessage">{lastTasksErrorMessage}</p>
-          <button className="App-tasksErrorTryAgain" onClick={onLoadNextPage}>
+          <button
+            className="App-taskListTailButton App-tasksErrorTryAgain"
+            onClick={onLoadNextPage}
+          >
             Try again
           </button>
         </section>
