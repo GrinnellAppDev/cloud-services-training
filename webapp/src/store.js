@@ -152,14 +152,16 @@ export const reducer = (
         ...state,
         tasks: {
           ...state.tasks,
-          items: {
-            ...state.tasks.items,
-            [payload.temporaryId]: {
-              _id: payload.temporaryId,
-              isComplete: false,
-              text: state.newTask.text
-            }
-          }
+          items: state.newTask.text
+            ? {
+                ...state.tasks.items,
+                [payload.temporaryId]: {
+                  _id: payload.temporaryId,
+                  isComplete: false,
+                  text: state.newTask.text
+                }
+              }
+            : state.tasks.items
         }
       }
     case "TASK_CREATED": {
@@ -301,42 +303,47 @@ export const newTaskEpic = (
   { fetchFromAPI }
 ) =>
   actionsObservable.ofType("CREATE_NEW_TASK").pipe(
-    mergeMap(({ temporaryId }) =>
-      mergeObservables(
-        Promise.resolve(clearNewTask()),
-        fetchFromAPI("/tasks", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            text: getNewTaskText(getState())
-          })
-        })
-          .then(
-            response =>
-              response.ok
-                ? response.json()
-                : Promise.reject(
-                    Error(
-                      `HTTP Error: ${response.statusText} (${response.status})`
-                    )
-                  )
-          )
-          .then(({ item }) => {
-            if (!item) {
-              console.error("Missing 'item' field in the API response")
-            } else if (!item._id) {
-              console.error("Missing '_id' field in the API response")
-            } else {
-              return taskCreated(temporaryId, item._id)
-            }
+    mergeMap(
+      ({ temporaryId }) =>
+        !getNewTaskText(getState())
+          ? emptyObservable()
+          : mergeObservables(
+              Promise.resolve(clearNewTask()),
+              fetchFromAPI("/tasks", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  text: getNewTaskText(getState())
+                })
+              })
+                .then(
+                  response =>
+                    response.ok
+                      ? response.json()
+                      : Promise.reject(
+                          Error(
+                            `HTTP Error: ${response.statusText} (${
+                              response.status
+                            })`
+                          )
+                        )
+                )
+                .then(({ item }) => {
+                  if (!item) {
+                    console.error("Missing 'item' field in the API response")
+                  } else if (!item._id) {
+                    console.error("Missing '_id' field in the API response")
+                  } else {
+                    return taskCreated(temporaryId, item._id)
+                  }
 
-            console.error("Reloading to get correct task id...")
-            return reloadTasks()
-          })
-          .catch(err => taskCreateFailed(temporaryId, err.message))
-      )
+                  console.error("Reloading to get correct task id...")
+                  return reloadTasks()
+                })
+                .catch(err => taskCreateFailed(temporaryId, err.message))
+            )
     )
   )
 

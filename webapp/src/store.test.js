@@ -326,6 +326,21 @@ describe("reducer", () => {
     })
   })
 
+  it("does not create a dummy task when there is no new task text entered", () => {
+    expect(
+      reducer(
+        {
+          ...initialState,
+          newTask: { ...initialState.newTask, text: "" }
+        },
+        createNewTask("fooTempId")
+      )
+    ).toEqual({
+      ...initialState,
+      newTask: { ...initialState.newTask, text: "" }
+    })
+  })
+
   it("creation replaces the temporary ID with the one from the server", () => {
     expect(reducer(stateWithTaskA, taskCreated("a", "abc"))).toEqual({
       ...stateWithTaskA,
@@ -393,6 +408,22 @@ describe("epics", () => {
           text: "foo"
         })
       })
+    })
+
+    it("does nothing when it gets a create action without text", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      expect(
+        await newTaskEpic(
+          ActionsObservable.of(createNewTask()),
+          { getState: () => ({ newTask: { text: "" } }) },
+          { fetchFromAPI }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).toEqual([])
+
+      expect(fetchFromAPI).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {
