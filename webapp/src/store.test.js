@@ -389,158 +389,6 @@ describe("epics", () => {
     })
   })
 
-  describe("newTaskEpic", () => {
-    it("calls fetch when it gets a create action", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-
-      await newTaskEpic(
-        ActionsObservable.of(createNewTask()),
-        { getState: () => ({ newTask: { text: "foo" } }) },
-        { fetchFromAPI }
-      ).toPromise()
-
-      expect(fetchFromAPI).toBeCalledWith("/tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          isComplete: false,
-          text: "foo"
-        })
-      })
-    })
-
-    it("does nothing when it gets a create action without text", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask()),
-          { getState: () => ({ newTask: { text: "" } }) },
-          { fetchFromAPI }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([])
-
-      expect(fetchFromAPI).not.toBeCalled()
-    })
-
-    it("handles fetch errors gracefully", async () => {
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        clearNewTask(),
-        taskCreateFailed("abc", "Failed to fetch")
-      ])
-    })
-
-    it("handles http errors gracefully", async () => {
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
-                ok: false,
-                status: 500,
-                statusText: "Server error"
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        clearNewTask(),
-        taskCreateFailed("abc", "HTTP Error: Server error (500)")
-      ])
-    })
-
-    it("indicates success with a new id", async () => {
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({ item: { _id: "def" } })
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([clearNewTask(), taskCreated("abc", "def")])
-    })
-
-    it("handles missing id in the response", async () => {
-      const consoleError = console.error
-      console.error = jest.fn()
-
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({ item: {} })
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([clearNewTask(), reloadTasks()])
-
-      expect(console.error).toBeCalledWith(
-        "Missing '_id' field in the API response"
-      )
-      expect(console.error).toBeCalledWith(
-        "Reloading to get correct task id..."
-      )
-      console.error = consoleError
-    })
-
-    it("handles missing item field in the response", async () => {
-      const consoleError = console.error
-      console.error = jest.fn()
-
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
-                ok: true,
-                json: () => Promise.resolve({})
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([clearNewTask(), reloadTasks()])
-
-      expect(console.error).toBeCalledWith(
-        "Missing 'item' field in the API response"
-      )
-      expect(console.error).toBeCalledWith(
-        "Reloading to get correct task id..."
-      )
-      console.error = consoleError
-    })
-  })
-
   describe("loadTasksEpic", () => {
     // TODO: validate tasks against a schema and give helpful errors when it fails
 
@@ -834,6 +682,158 @@ describe("epics", () => {
 
       expect(console.error).toBeCalledWith(
         "Missing 'nextPageToken' field in the API response"
+      )
+      console.error = consoleError
+    })
+  })
+
+  describe("newTaskEpic", () => {
+    it("calls fetch when it gets a create action", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await newTaskEpic(
+        ActionsObservable.of(createNewTask()),
+        { getState: () => ({ newTask: { text: "foo" } }) },
+        { fetchFromAPI }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalledWith("/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          isComplete: false,
+          text: "foo"
+        })
+      })
+    })
+
+    it("does nothing when it gets a create action without text", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+
+      await expect(
+        newTaskEpic(
+          ActionsObservable.of(createNewTask()),
+          { getState: () => ({ newTask: { text: "" } }) },
+          { fetchFromAPI }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).resolves.toEqual([])
+
+      expect(fetchFromAPI).not.toBeCalled()
+    })
+
+    it("handles fetch errors gracefully", async () => {
+      await expect(
+        newTaskEpic(
+          ActionsObservable.of(createNewTask("abc")),
+          { getState: () => ({ newTask: { text: "foo" } }) },
+          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).resolves.toEqual([
+        clearNewTask(),
+        taskCreateFailed("abc", "Failed to fetch")
+      ])
+    })
+
+    it("handles http errors gracefully", async () => {
+      await expect(
+        newTaskEpic(
+          ActionsObservable.of(createNewTask("abc")),
+          { getState: () => ({ newTask: { text: "foo" } }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: false,
+                status: 500,
+                statusText: "Server error"
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).resolves.toEqual([
+        clearNewTask(),
+        taskCreateFailed("abc", "HTTP Error: Server error (500)")
+      ])
+    })
+
+    it("indicates success with a new id", async () => {
+      await expect(
+        newTaskEpic(
+          ActionsObservable.of(createNewTask("abc")),
+          { getState: () => ({ newTask: { text: "foo" } }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ item: { _id: "def" } })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).resolves.toEqual([clearNewTask(), taskCreated("abc", "def")])
+    })
+
+    it("handles missing id in the response", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      await expect(
+        newTaskEpic(
+          ActionsObservable.of(createNewTask("abc")),
+          { getState: () => ({ newTask: { text: "foo" } }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ item: {} })
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).resolves.toEqual([clearNewTask(), reloadTasks()])
+
+      expect(console.error).toBeCalledWith(
+        "Missing '_id' field in the API response"
+      )
+      expect(console.error).toBeCalledWith(
+        "Reloading to get correct task id..."
+      )
+      console.error = consoleError
+    })
+
+    it("handles missing item field in the response", async () => {
+      const consoleError = console.error
+      console.error = jest.fn()
+
+      await expect(
+        newTaskEpic(
+          ActionsObservable.of(createNewTask("abc")),
+          { getState: () => ({ newTask: { text: "foo" } }) },
+          {
+            fetchFromAPI: () =>
+              Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({})
+              })
+          }
+        )
+          .pipe(toArray())
+          .toPromise()
+      ).resolves.toEqual([clearNewTask(), reloadTasks()])
+
+      expect(console.error).toBeCalledWith(
+        "Missing 'item' field in the API response"
+      )
+      expect(console.error).toBeCalledWith(
+        "Reloading to get correct task id..."
       )
       console.error = consoleError
     })
