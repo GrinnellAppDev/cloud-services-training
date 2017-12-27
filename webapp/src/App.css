@@ -21,10 +21,11 @@
 }
 
 .App-refresh {
+  margin: 40px 0;
+  font: inherit;
   border: none;
   border-radius: 2px;
   background: none;
-  font: inherit;
   outline: none;
   transition: text-decoration 100ms, box-shadow 200ms;
   position: relative;
@@ -76,9 +77,11 @@
 }
 
 .App-title {
-  margin: 40px 0;
+  font: inherit;
   font-size: 40px;
   font-weight: 100;
+  margin: 0;
+  padding: 0;
 }
 
 .App-addTask {
@@ -114,16 +117,72 @@
   list-style: none;
 }
 
-.App-loading {
-  padding-top: 20px;
-  display: flex;
-  justify-content: center;
-}
-
 .App-taskListItem {
   border-bottom: 1px solid #eee;
 }
 
 .App-taskListItem:last-child {
   border-bottom: none;
+}
+
+.App-loading {
+  padding-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.App-tasksError {
+  text-align: center;
+  padding: 10px;
+}
+
+.App-tasksErrorHeading {
+  font-size: 16px;
+}
+
+.App-tasksErrorMessage {
+  font-size: 14px;
+  font-style: italic;
+}
+
+.App-tasksErrorTryAgain {
+  border: 2px solid #fff;
+  border-radius: 2px;
+  padding: 6px 10px;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  font-size: 14px;
+  text-transform: uppercase;
+  outline: none;
+  transition: border 200ms, box-shadow 200ms;
+}
+
+.App-tasksErrorTryAgain:focus {
+  border: 2px solid #ededed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.App-tasksErrorTryAgain:active {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.App-tasksErrorTryAgain::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  right: -10%;
+  left: -10%;
+  padding-bottom: 120%;
+  border-radius: 50%;
+  background: #000;
+  transform: translateY(-50%) scale(0.1);
+  opacity: 0;
+  transition: transform 200ms, opacity 200ms;
+}
+
+.App-tasksErrorTryAgain:active::before {
+  transform: translateY(-50%) scale(1);
+  opacity: 0.2;
 }

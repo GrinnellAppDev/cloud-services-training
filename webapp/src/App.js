@@ -10,7 +10,8 @@ import {
   reloadTasks,
   loadNextTasks,
   getNextPageToken,
-  getTasksStatus
+  getTasksStatus,
+  getLastTasksErrorMessage
 } from "./store"
 import InfiniteScroll from "react-infinite-scroller"
 import LoadingSpinner from "./LoadingSpinner"
@@ -23,10 +24,13 @@ export const withEnhancers = connect(
     return state => ({
       tasks: getTasks(state),
       newTaskText: getNewTaskText(state),
-      hasNextPage:
-        !!getNextPageToken(state) ||
-        getTasksStatus(state) === "UNLOADED" ||
-        getTasksStatus(state) === "LOADING"
+      tasksHaveNextPage:
+        getTasksStatus(state) !== "ERROR" &&
+        (!!getNextPageToken(state) ||
+          getTasksStatus(state) === "UNLOADED" ||
+          getTasksStatus(state) === "LOADING"),
+      tasksHaveError: getTasksStatus(state) === "ERROR",
+      lastTasksErrorMessage: getLastTasksErrorMessage(state)
     })
   },
   {
@@ -40,7 +44,9 @@ export const withEnhancers = connect(
 export const App = ({
   tasks,
   newTaskText,
-  hasNextPage,
+  tasksHaveNextPage,
+  tasksHaveError,
+  lastTasksErrorMessage,
   onNewTaskTextChange,
   onNewTaskSubmit,
   onRefresh,
@@ -49,11 +55,11 @@ export const App = ({
   <div className="App">
     <header className="App-header">
       <button
-        className="App-title App-refresh"
+        className="App-refresh"
         onClick={() => onRefresh()}
         title="Refresh"
       >
-        todo
+        <h1 className="App-title">todo</h1>
       </button>
 
       <input
@@ -72,7 +78,7 @@ export const App = ({
       <InfiniteScroll
         className="App-taskListWrapper"
         loadMore={onLoadNextPage}
-        hasMore={hasNextPage}
+        hasMore={tasksHaveNextPage}
         useWindow={false}
         loader={
           <div className="App-loading">
@@ -93,6 +99,18 @@ export const App = ({
             </li>
           ))}
         </FlipMove>
+
+        {tasksHaveError && (
+          <section className="App-tasksError">
+            <h2 className="App-tasksErrorHeading">
+              Oops! There was a problem loading your tasks.
+            </h2>
+            <p className="App-tasksErrorMessage">{lastTasksErrorMessage}</p>
+            <button className="App-tasksErrorTryAgain" onClick={onLoadNextPage}>
+              Try again
+            </button>
+          </section>
+        )}
       </InfiniteScroll>
     </main>
   </div>

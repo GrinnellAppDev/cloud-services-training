@@ -9,9 +9,12 @@ import querystring from "querystring"
 import { filter } from "rxjs/operators/filter"
 import { isTempTaskId, asciiCompare } from "./util"
 
+// Selectors
+
 export const getNewTaskText = state => state.newTask.text
 export const getTaskById = (state, id) => state.tasks.items[id]
 export const getTasksStatus = state => state.tasks.status
+export const getLastTasksErrorMessage = state => state.tasks.lastErrorMessage
 export const getNextPageToken = state => state.tasks.nextPageToken
 
 export const makeGetTasks = () =>
@@ -249,52 +252,59 @@ export const loadTasksEpic = (
   { fetchFromAPI, delay }
 ) =>
   actionsObservable.ofType("RELOAD_TASKS", "LOAD_NEXT_TASKS").pipe(
-    mergeMap(
-      ({ type }) =>
-        getTasksStatus(getState()) === "LOADING" ||
+    mergeMap(({ type }) => {
+      const status = getTasksStatus(getState())
+
+      if (
+        status === "LOADING" ||
         (type === "LOAD_NEXT_TASKS" &&
-          getTasksStatus(getState()) !== "UNLOADED" &&
+          status !== "UNLOADED" &&
+          status !== "ERROR" &&
           !getNextPageToken(getState()))
-          ? emptyObservable()
-          : mergeObservables(
-              Promise.resolve(tasksLoadingStarted()),
-              Promise.all([
-                fetchFromAPI(
-                  `/tasks?${querystring.stringify({
-                    pageToken: getNextPageToken(getState())
-                  })}`
-                ),
-                type === "RELOAD_TASKS" ? delay(500) : Promise.resolve()
-              ])
-                .then(
-                  ([response]) =>
-                    response.ok
-                      ? response.json()
-                      : Promise.reject(
-                          Error(
-                            `HTTP Error: ${response.statusText} ` +
-                              `(${response.status})`
-                          )
-                        )
-                )
-                .then(body => {
-                  if (!Array.isArray(body.items)) {
-                    console.error(
-                      "Missing or invalid 'items' field in the API response"
+      )
+        return emptyObservable()
+      else
+        return mergeObservables(
+          Promise.resolve(tasksLoadingStarted()),
+          Promise.all([
+            fetchFromAPI(
+              `/tasks?${querystring.stringify({
+                pageToken: getNextPageToken(getState())
+              })}`
+            ),
+            type === "RELOAD_TASKS" || status === "ERROR"
+              ? delay(500)
+              : Promise.resolve()
+          ])
+            .then(
+              ([response]) =>
+                response.ok
+                  ? response.json()
+                  : Promise.reject(
+                      Error(
+                        `HTTP Error: ${response.statusText} ` +
+                          `(${response.status})`
+                      )
                     )
-                    return tasksReceived([], null)
-                  } else if (body.nextPageToken === undefined) {
-                    console.error(
-                      "Missing 'nextPageToken' field in the API response"
-                    )
-                    return tasksReceived(body.items, null)
-                  } else {
-                    return tasksReceived(body.items, body.nextPageToken)
-                  }
-                })
-                .catch(err => tasksLoadingFailed(err.message))
             )
-    )
+            .then(body => {
+              if (!Array.isArray(body.items)) {
+                console.error(
+                  "Missing or invalid 'items' field in the API response"
+                )
+                return tasksReceived([], null)
+              } else if (body.nextPageToken === undefined) {
+                console.error(
+                  "Missing 'nextPageToken' field in the API response"
+                )
+                return tasksReceived(body.items, null)
+              } else {
+                return tasksReceived(body.items, body.nextPageToken)
+              }
+            })
+            .catch(err => tasksLoadingFailed(err.message))
+        )
+    })
   )
 
 export const newTaskEpic = (

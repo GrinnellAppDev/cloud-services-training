@@ -424,6 +424,42 @@ describe("epics", () => {
       expect(delay).not.toBeCalled()
     })
 
+    it("calls fetch and delay when asked to load next with an error", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const delay = jest.fn().mockReturnValue(Promise.resolve())
+
+      await loadTasksEpic(
+        ActionsObservable.of(loadNextTasks()),
+        {
+          getState: () => ({
+            tasks: { status: "ERROR", nextPageToken: null }
+          })
+        },
+        { fetchFromAPI, delay }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalled()
+      expect(delay).toBeCalled()
+    })
+
+    it("calls fetch and delay when given a reload action with an error", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const delay = jest.fn().mockReturnValue(Promise.resolve())
+
+      await loadTasksEpic(
+        ActionsObservable.of(reloadTasks()),
+        {
+          getState: () => ({
+            tasks: { status: "ERROR", nextPageToken: "abc" }
+          })
+        },
+        { fetchFromAPI, delay }
+      ).toPromise()
+
+      expect(fetchFromAPI).toBeCalled()
+      expect(delay).toBeCalled()
+    })
+
     it("calls fetch and not delay when given a load page action if tasks are unloaded", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
       const delay = jest.fn().mockReturnValue(Promise.resolve())

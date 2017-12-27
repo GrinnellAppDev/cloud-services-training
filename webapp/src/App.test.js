@@ -138,7 +138,7 @@ describe("withEnhancers", () => {
     )
 
     expect(Component.mock.calls).toHaveLength(1)
-    expect(Component.mock.calls[0][0].hasNextPage).toBe(true)
+    expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(true)
   })
 
   it("signals that there are no more tasks if next page token is null", () => {
@@ -163,7 +163,33 @@ describe("withEnhancers", () => {
     )
 
     expect(Component.mock.calls).toHaveLength(1)
-    expect(Component.mock.calls[0][0].hasNextPage).toBe(false)
+    expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(false)
+  })
+
+  it("signals that there are no more tasks if there is an error", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        status: "ERROR",
+        items: {},
+        nextPageToken: "abc"
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(false)
   })
 
   it("signals that there are more tasks if tasks are unloaded regardless of nextPageToken", () => {
@@ -189,7 +215,7 @@ describe("withEnhancers", () => {
     )
 
     expect(Component.mock.calls).toHaveLength(1)
-    expect(Component.mock.calls[0][0].hasNextPage).toBe(true)
+    expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(true)
   })
 
   it("signals that there are more tasks if tasks are loading regardless of nextPageToken", () => {
@@ -215,7 +241,57 @@ describe("withEnhancers", () => {
     )
 
     expect(Component.mock.calls).toHaveLength(1)
-    expect(Component.mock.calls[0][0].hasNextPage).toBe(true)
+    expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(true)
+  })
+
+  it("signals if there was an error loading the tasks", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        status: "ERROR",
+        items: {}
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].tasksHaveError).toBe(true)
+  })
+
+  it("loads the last error message", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: {},
+        lastErrorMessage: "foo"
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].lastTasksErrorMessage).toBe("foo")
   })
 
   it("dispatches an edit action onNewTaskTextChange", () => {
@@ -330,7 +406,7 @@ describe("App", () => {
     expect(
       shallow(
         <App
-          hasNextPage={false}
+          tasksHaveNextPage={false}
           onLoadNextPage={() => {}}
           tasks={[]}
           newTaskText=""
@@ -344,7 +420,7 @@ describe("App", () => {
   it("renders a single task", () => {
     const taskListWrapper = shallow(
       <App
-        hasNextPage={false}
+        tasksHaveNextPage={false}
         onLoadNextPage={() => {}}
         tasks={[{ _id: "a", isComplete: false, text: "foo" }]}
       />
@@ -358,7 +434,7 @@ describe("App", () => {
   it("renders a few tasks in order", () => {
     const tasksWrapper = shallow(
       <App
-        hasNextPage={false}
+        tasksHaveNextPage={false}
         onLoadNextPage={() => {}}
         tasks={[
           { _id: "a", isComplete: false, text: "foo" },
@@ -395,7 +471,7 @@ describe("App", () => {
     expect(
       shallow(
         <App
-          hasNextPage={false}
+          tasksHaveNextPage={false}
           onLoadNextPage={() => {}}
           tasks={[]}
           newTaskText="foo"
@@ -406,12 +482,46 @@ describe("App", () => {
     ).toBe("foo")
   })
 
+  it("displays the last error message when there is an error", () => {
+    expect(
+      shallow(
+        <App
+          tasksHaveNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+          tasksHaveError={true}
+          lastTasksErrorMessage="foo"
+        />
+      )
+        .find(".App-tasksError")
+        .contains("foo")
+    ).toBe(true)
+  })
+
+  it("doesn't display the last error message when there isn't currently an error", () => {
+    expect(
+      shallow(
+        <App
+          tasksHaveNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+          tasksHaveError={false}
+          lastTasksErrorMessage="foo"
+        />
+      )
+        .find(".App-tasksError")
+        .exists()
+    ).toBe(false)
+  })
+
   it("signals changes to the new task", () => {
     const onNewTaskTextChange = jest.fn()
 
     shallow(
       <App
-        hasNextPage={false}
+        tasksHaveNextPage={false}
         onLoadNextPage={() => {}}
         tasks={[]}
         newTaskText="foo"
@@ -429,7 +539,7 @@ describe("App", () => {
 
     shallow(
       <App
-        hasNextPage={false}
+        tasksHaveNextPage={false}
         onLoadNextPage={() => {}}
         tasks={[]}
         newTaskText="foo"
@@ -447,7 +557,7 @@ describe("App", () => {
 
     shallow(
       <App
-        hasNextPage={false}
+        tasksHaveNextPage={false}
         onLoadNextPage={() => {}}
         tasks={[]}
         onRefresh={onRefresh}
@@ -457,5 +567,22 @@ describe("App", () => {
       .simulate("click")
 
     expect(onRefresh).toBeCalledWith()
+  })
+
+  it("handles clicks on the try again button", () => {
+    const onLoadNextPage = jest.fn()
+
+    shallow(
+      <App
+        tasksHaveNextPage={false}
+        tasksHaveError={true}
+        onLoadNextPage={onLoadNextPage}
+        tasks={[]}
+      />
+    )
+      .find(".App-tasksErrorTryAgain")
+      .simulate("click")
+
+    expect(onLoadNextPage).toBeCalledWith()
   })
 })

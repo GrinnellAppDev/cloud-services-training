@@ -78,3 +78,38 @@ storiesOf("App", module)
       <App />
     </Provider>
   ))
+  .add("loading error", () => (
+    <Provider
+      store={createStore({
+        newTask: {
+          text: ""
+        },
+        tasks: {
+          status: "ERROR",
+          lastErrorMessage: "Failed to fetch",
+          items: {}
+        }
+      })}
+    >
+      <App />
+    </Provider>
+  ))
+  .add("loading error with some tasks", () => (
+    <Provider
+      store={createStore({
+        newTask: {
+          text: ""
+        },
+        tasks: {
+          status: "ERROR",
+          lastErrorMessage: "Failed to fetch",
+          items: {
+            s38rOsF: { _id: "s38rOsF", isComplete: false, text: "Get coffee" },
+            a23D1di: { _id: "a23D1di", isComplete: false, text: "Finish novel" }
+          }
+        }
+      })}
+    >
+      <App />
+    </Provider>
+  ))
