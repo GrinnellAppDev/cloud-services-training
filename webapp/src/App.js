@@ -132,7 +132,7 @@ export const App = ({
           <h2 className="App-taskListTailHeading">
             Oops! There was a problem loading your tasks.
           </h2>
-          <p className="App-tasksErrorMessage">{lastTasksErrorMessage}</p>
+          <p className="App-taskListTailMessage">{lastTasksErrorMessage}</p>
           <button
             className="App-taskListTailButton App-tasksErrorTryAgain"
             onClick={onLoadNextPage}
