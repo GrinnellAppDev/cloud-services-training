@@ -840,6 +840,8 @@ describe("epics", () => {
   })
 
   describe("editTaskEpic", () => {
+    // TODO: add throttling with a reducer so we don't lose edits
+
     it("calls fetch when it gets an edit action", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
 
