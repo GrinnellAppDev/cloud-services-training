@@ -381,11 +381,11 @@ describe("reducer", () => {
 describe("epics", () => {
   describe("rootEpic", () => {
     it("ignores unknown actions", async () => {
-      expect(
-        await rootEpic(ActionsObservable.of({ type: "UNKNOWN" }), {}, {})
+      await expect(
+        rootEpic(ActionsObservable.of({ type: "UNKNOWN" }), {}, {})
           .pipe(toArray())
           .toPromise()
-      ).toEqual([])
+      ).resolves.toEqual([])
     })
   })
 
@@ -414,34 +414,37 @@ describe("epics", () => {
     it("does nothing when it gets a create action without text", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
 
-      expect(
-        await newTaskEpic(
+      await expect(
+        newTaskEpic(
           ActionsObservable.of(createNewTask()),
           { getState: () => ({ newTask: { text: "" } }) },
           { fetchFromAPI }
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([])
+      ).resolves.toEqual([])
 
       expect(fetchFromAPI).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {
-      expect(
-        await newTaskEpic(
+      await expect(
+        newTaskEpic(
           ActionsObservable.of(createNewTask("abc")),
           { getState: () => ({ newTask: { text: "foo" } }) },
           { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([clearNewTask(), taskCreateFailed("abc", "Failed to fetch")])
+      ).resolves.toEqual([
+        clearNewTask(),
+        taskCreateFailed("abc", "Failed to fetch")
+      ])
     })
 
     it("handles http errors gracefully", async () => {
-      expect(
-        await newTaskEpic(
+      await expect(
+        newTaskEpic(
           ActionsObservable.of(createNewTask("abc")),
           { getState: () => ({ newTask: { text: "foo" } }) },
           {
@@ -455,15 +458,15 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         clearNewTask(),
         taskCreateFailed("abc", "HTTP Error: Server error (500)")
       ])
     })
 
     it("indicates success with a new id", async () => {
-      expect(
-        await newTaskEpic(
+      await expect(
+        newTaskEpic(
           ActionsObservable.of(createNewTask("abc")),
           { getState: () => ({ newTask: { text: "foo" } }) },
           {
@@ -476,15 +479,15 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([clearNewTask(), taskCreated("abc", "def")])
+      ).resolves.toEqual([clearNewTask(), taskCreated("abc", "def")])
     })
 
     it("handles missing id in the response", async () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      expect(
-        await newTaskEpic(
+      await expect(
+        newTaskEpic(
           ActionsObservable.of(createNewTask("abc")),
           { getState: () => ({ newTask: { text: "foo" } }) },
           {
@@ -497,7 +500,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([clearNewTask(), reloadTasks()])
+      ).resolves.toEqual([clearNewTask(), reloadTasks()])
 
       expect(console.error).toBeCalledWith(
         "Missing '_id' field in the API response"
@@ -512,8 +515,8 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      expect(
-        await newTaskEpic(
+      await expect(
+        newTaskEpic(
           ActionsObservable.of(createNewTask("abc")),
           { getState: () => ({ newTask: { text: "foo" } }) },
           {
@@ -526,7 +529,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([clearNewTask(), reloadTasks()])
+      ).resolves.toEqual([clearNewTask(), reloadTasks()])
 
       expect(console.error).toBeCalledWith(
         "Missing 'item' field in the API response"
@@ -559,15 +562,15 @@ describe("epics", () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
       const delay = jest.fn().mockReturnValue(Promise.resolve())
 
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: { status: "LOADING" } }) },
           { fetchFromAPI, delay }
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([])
+      ).resolves.toEqual([])
 
       expect(fetchFromAPI).not.toBeCalled()
       expect(delay).not.toBeCalled()
@@ -628,8 +631,8 @@ describe("epics", () => {
     })
 
     it("handles fetch errors gracefully", async () => {
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
           {
@@ -639,12 +642,15 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksLoadingStarted(), tasksLoadingFailed("Failed to fetch")])
+      ).resolves.toEqual([
+        tasksLoadingStarted(),
+        tasksLoadingFailed("Failed to fetch")
+      ])
     })
 
     it("handles http errors gracefully", async () => {
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
           {
@@ -659,15 +665,15 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         tasksLoadingStarted(),
         tasksLoadingFailed("HTTP Error: Server error (500)")
       ])
     })
 
     it("loads tasks and next page token", async () => {
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
           {
@@ -688,7 +694,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         tasksLoadingStarted(),
         tasksReceived(
           [
@@ -704,8 +710,8 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
           {
@@ -723,7 +729,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksLoadingStarted(), tasksReceived([], null)])
+      ).resolves.toEqual([tasksLoadingStarted(), tasksReceived([], null)])
 
       expect(console.error).not.toBeCalled()
       console.error = consoleError
@@ -733,8 +739,8 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
           {
@@ -751,7 +757,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksLoadingStarted(), tasksReceived([], null)])
+      ).resolves.toEqual([tasksLoadingStarted(), tasksReceived([], null)])
 
       expect(console.error).toBeCalledWith(
         "Missing or invalid 'items' field in the API response"
@@ -763,8 +769,8 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
           {
@@ -782,7 +788,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([tasksLoadingStarted(), tasksReceived([], null)])
+      ).resolves.toEqual([tasksLoadingStarted(), tasksReceived([], null)])
 
       expect(console.error).toBeCalledWith(
         "Missing or invalid 'items' field in the API response"
@@ -794,8 +800,8 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      expect(
-        await loadTasksEpic(
+      await expect(
+        loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
           {
@@ -815,7 +821,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         tasksLoadingStarted(),
         tasksReceived(
           [
@@ -859,8 +865,8 @@ describe("epics", () => {
     })
 
     it("handles fetch errors gracefully", async () => {
-      expect(
-        await editTaskEpic(
+      await expect(
+        editTaskEpic(
           ActionsObservable.of(
             editTask(
               "a",
@@ -873,7 +879,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         taskEditFailed(
           "a",
           { isComplete: false, text: "bar" },
@@ -883,8 +889,8 @@ describe("epics", () => {
     })
 
     it("handles http errors gracefully", async () => {
-      expect(
-        await editTaskEpic(
+      await expect(
+        editTaskEpic(
           ActionsObservable.of(
             editTask(
               "a",
@@ -904,7 +910,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         taskEditFailed(
           "a",
           { isComplete: false, text: "bar" },
@@ -914,8 +920,8 @@ describe("epics", () => {
     })
 
     it("indicates success when the request goes through", async () => {
-      expect(
-        await editTaskEpic(
+      await expect(
+        editTaskEpic(
           ActionsObservable.of(
             editTask(
               "a",
@@ -928,7 +934,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([taskEditSucceeded("a")])
+      ).resolves.toEqual([taskEditSucceeded("a")])
     })
   })
 
@@ -950,22 +956,22 @@ describe("epics", () => {
     it("does nothing when it gets a delete action with a temp id", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
 
-      expect(
-        await deleteTaskEpic(
+      await expect(
+        deleteTaskEpic(
           ActionsObservable.of(deleteTask(getTempTaskId())),
           {},
           { fetchFromAPI }
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([])
+      ).resolves.toEqual([])
 
       expect(fetchFromAPI).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {
-      expect(
-        await deleteTaskEpic(
+      await expect(
+        deleteTaskEpic(
           ActionsObservable.of(
             deleteTask("a", { isComplete: true, text: "foo" })
           ),
@@ -974,7 +980,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         taskDeleteFailed(
           "a",
           { isComplete: true, text: "foo" },
@@ -984,8 +990,8 @@ describe("epics", () => {
     })
 
     it("handles http errors gracefully", async () => {
-      expect(
-        await deleteTaskEpic(
+      await expect(
+        deleteTaskEpic(
           ActionsObservable.of(
             deleteTask("a", { isComplete: true, text: "foo" })
           ),
@@ -1001,7 +1007,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([
+      ).resolves.toEqual([
         taskDeleteFailed(
           "a",
           { isComplete: true, text: "foo" },
@@ -1011,8 +1017,8 @@ describe("epics", () => {
     })
 
     it("indicates success when the request goes through", async () => {
-      expect(
-        await deleteTaskEpic(
+      await expect(
+        deleteTaskEpic(
           ActionsObservable.of(
             deleteTask("a", { isComplete: true, text: "foo" })
           ),
@@ -1021,7 +1027,7 @@ describe("epics", () => {
         )
           .pipe(toArray())
           .toPromise()
-      ).toEqual([taskDeleteSucceeded("a")])
+      ).resolves.toEqual([taskDeleteSucceeded("a")])
     })
   })
 })
