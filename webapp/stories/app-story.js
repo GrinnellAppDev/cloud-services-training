@@ -60,3 +60,21 @@ storiesOf("App", module)
       <App />
     </Provider>
   ))
+  .add("loading with some tasks", () => (
+    <Provider
+      store={createStore({
+        newTask: {
+          text: ""
+        },
+        tasks: {
+          status: "LOADING",
+          items: {
+            s38rOsF: { _id: "s38rOsF", isComplete: false, text: "Get coffee" },
+            a23D1di: { _id: "a23D1di", isComplete: false, text: "Finish novel" }
+          }
+        }
+      })}
+    >
+      <App />
+    </Provider>
+  ))

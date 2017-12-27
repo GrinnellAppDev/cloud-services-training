@@ -15,6 +15,7 @@ import {
 import InfiniteScroll from "react-infinite-scroller"
 import LoadingSpinner from "./LoadingSpinner"
 import { getTempTaskId } from "./util"
+import FlipMove from "react-flip-move"
 
 export const withEnhancers = connect(
   () => {
@@ -66,20 +67,32 @@ export const App = ({
         }}
       />
     </header>
+
     <main className="App-main">
       <InfiniteScroll
-        element="ul"
-        className="App-taskList"
+        className="App-taskListWrapper"
         loadMore={onLoadNextPage}
         hasMore={hasNextPage}
         useWindow={false}
-        loader={<LoadingSpinner className="App-loading" title="Loading..." />}
+        loader={
+          <div className="App-loading">
+            <LoadingSpinner />
+          </div>
+        }
       >
-        {tasks.map(({ _id }) => (
-          <li className="App-taskListItem" key={_id}>
-            <Task id={_id} />
-          </li>
-        ))}
+        <FlipMove
+          typeName="ul"
+          className="App-taskList"
+          enterAnimation="fade"
+          leaveAnimation="fade"
+          duration={200}
+        >
+          {tasks.map(({ _id }) => (
+            <li className="App-taskListItem" key={_id}>
+              <Task id={_id} />
+            </li>
+          ))}
+        </FlipMove>
       </InfiniteScroll>
     </main>
   </div>

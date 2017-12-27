@@ -21,8 +21,8 @@ export const withEnhancers = connect(
 )
 
 export const Task = ({
-  isComplete,
-  text,
+  isComplete = false,
+  text = "",
   onIsCompleteChange,
   onTextChange,
   onDelete,

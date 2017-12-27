@@ -244,7 +244,7 @@ export const reducer = (
 export const loadTasksEpic = (
   actionsObservable,
   { getState },
-  { fetchFromAPI }
+  { fetchFromAPI, delay }
 ) =>
   actionsObservable.ofType("RELOAD_TASKS", "LOAD_NEXT_TASKS").pipe(
     mergeMap(
@@ -256,13 +256,16 @@ export const loadTasksEpic = (
           ? emptyObservable()
           : mergeObservables(
               Promise.resolve(tasksLoadingStarted()),
-              fetchFromAPI(
-                `/tasks?${querystring.stringify({
-                  pageToken: getNextPageToken(getState())
-                })}`
-              )
+              Promise.all([
+                fetchFromAPI(
+                  `/tasks?${querystring.stringify({
+                    pageToken: getNextPageToken(getState())
+                  })}`
+                ),
+                type === "RELOAD_TASKS" ? delay(500) : Promise.resolve()
+              ])
                 .then(
-                  response =>
+                  ([response]) =>
                     response.ok
                       ? response.json()
                       : Promise.reject(

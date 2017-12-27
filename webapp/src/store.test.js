@@ -509,36 +509,41 @@ describe("epics", () => {
   describe("loadTasksEpic", () => {
     // TODO: validate tasks against a schema and give helpful errors when it fails
 
-    it("calls fetch when given a reload action", async () => {
+    it("calls fetch and delay when given a reload action", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const delay = jest.fn().mockReturnValue(Promise.resolve())
 
       await loadTasksEpic(
         ActionsObservable.of(reloadTasks()),
         { getState: () => ({ tasks: {} }) },
-        { fetchFromAPI }
+        { fetchFromAPI, delay }
       ).toPromise()
 
       expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=")
+      expect(delay).toBeCalledWith(500)
     })
 
-    it("doesn't call fetch and sends nothing when already loading", async () => {
+    it("doesn't call fetch or delay and sends nothing when already loading", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const delay = jest.fn().mockReturnValue(Promise.resolve())
 
       expect(
         await loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: { status: "LOADING" } }) },
-          { fetchFromAPI }
+          { fetchFromAPI, delay }
         )
           .pipe(toArray())
           .toPromise()
       ).toEqual([])
 
       expect(fetchFromAPI).not.toBeCalled()
+      expect(delay).not.toBeCalled()
     })
 
-    it("calls fetch when given a load page action if tasks are unloaded", async () => {
+    it("calls fetch and not delay when given a load page action if tasks are unloaded", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const delay = jest.fn().mockReturnValue(Promise.resolve())
 
       await loadTasksEpic(
         ActionsObservable.of(loadNextTasks()),
@@ -547,14 +552,16 @@ describe("epics", () => {
             tasks: { status: "UNLOADED", nextPageToken: null }
           })
         },
-        { fetchFromAPI }
+        { fetchFromAPI, delay }
       ).toPromise()
 
       expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=")
+      expect(delay).not.toBeCalled()
     })
 
-    it("does not call fetch when given a load page action if tasks are loaded and there is no next page token", async () => {
+    it("does not call fetch or delay when given a load page action if tasks are loaded and there is no next page token", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const delay = jest.fn().mockReturnValue(Promise.resolve())
 
       await loadTasksEpic(
         ActionsObservable.of(loadNextTasks()),
@@ -563,14 +570,16 @@ describe("epics", () => {
             tasks: { nextPageToken: null }
           })
         },
-        { fetchFromAPI }
+        { fetchFromAPI, delay }
       ).toPromise()
 
       expect(fetchFromAPI).not.toBeCalled()
+      expect(delay).not.toBeCalled()
     })
 
-    it("calls fetch when given a load page action with the next page token", async () => {
+    it("calls fetch and not delay when given a load page action with the next page token", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const delay = jest.fn().mockReturnValue(Promise.resolve())
 
       await loadTasksEpic(
         ActionsObservable.of(loadNextTasks()),
@@ -583,6 +592,7 @@ describe("epics", () => {
       ).toPromise()
 
       expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=abc")
+      expect(delay).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {
@@ -590,7 +600,10 @@ describe("epics", () => {
         await loadTasksEpic(
           ActionsObservable.of(reloadTasks()),
           { getState: () => ({ tasks: {} }) },
-          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
+          {
+            fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")),
+            delay: () => Promise.resolve()
+          }
         )
           .pipe(toArray())
           .toPromise()
@@ -608,7 +621,8 @@ describe("epics", () => {
                 ok: false,
                 status: 500,
                 statusText: "Server error"
-              })
+              }),
+            delay: () => Promise.resolve()
           }
         )
           .pipe(toArray())
@@ -636,7 +650,8 @@ describe("epics", () => {
                     ],
                     nextPageToken: "abc"
                   })
-              })
+              }),
+            delay: () => Promise.resolve()
           }
         )
           .pipe(toArray())
@@ -670,7 +685,8 @@ describe("epics", () => {
                     items: [],
                     nextPageToken: null
                   })
-              })
+              }),
+            delay: () => Promise.resolve()
           }
         )
           .pipe(toArray())
@@ -697,7 +713,8 @@ describe("epics", () => {
                   Promise.resolve({
                     nextPageToken: null
                   })
-              })
+              }),
+            delay: () => Promise.resolve()
           }
         )
           .pipe(toArray())
@@ -727,7 +744,8 @@ describe("epics", () => {
                     items: "foo",
                     nextPageToken: null
                   })
-              })
+              }),
+            delay: () => Promise.resolve()
           }
         )
           .pipe(toArray())
@@ -759,7 +777,8 @@ describe("epics", () => {
                       { _id: "b", isComplete: true, text: "bar" }
                     ]
                   })
-              })
+              }),
+            delay: () => Promise.resolve()
           }
         )
           .pipe(toArray())
