@@ -14,6 +14,14 @@ it("getTempTaskId generates strings that come after all alphanumeric strings in 
   ).toBeLessThan(0)
 })
 
+it("getTempTaskId generates strings that are sequential by creation time in ascii ordering", async () => {
+  const id1 = getTempTaskId()
+  await new Promise(res => requestAnimationFrame(res))
+  const id2 = getTempTaskId()
+
+  expect(asciiCompare(id1, id2)).toBeLessThan(0)
+})
+
 it("isTempTaskId returns false when given a regular-ish string", () => {
   expect(isTempTaskId("foo")).toBe(false)
   expect(isTempTaskId("~foo")).toBe(false)
