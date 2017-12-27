@@ -267,6 +267,7 @@ describe("withEnhancers", () => {
       document.createElement("div")
     )
 
+    expect(store.getActions()).toHaveLength(1)
     expect(store.getActions()[0].type).toBe(createNewTask("").type)
     expect(isTempTaskId(store.getActions()[0].temporaryId)).toBe(true)
   })
