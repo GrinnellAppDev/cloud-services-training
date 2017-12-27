@@ -1,4 +1,3 @@
-// It should start with a ~ so it rises above all of the permanent ids in sort order
 export const getTempTaskId = () => `~${Date.now()}`
 export const isTempTaskId = x => typeof x === "string" && /^~\d+$/.test(x)
 
