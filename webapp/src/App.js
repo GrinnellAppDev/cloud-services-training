@@ -12,7 +12,8 @@ import {
   getNextPageToken,
   getTasksStatus,
   getLastTasksErrorMessage,
-  getTopToast
+  getTopToast,
+  closeTopToast
 } from "./store"
 import InfiniteScroll from "react-infinite-scroller"
 import LoadingSpinner from "./LoadingSpinner"
@@ -51,7 +52,9 @@ export const withEnhancers = connect(
     onNewTaskTextChange: editNewTaskText,
     onNewTaskSubmit: () => createNewTask(getTempTaskId()),
     onRefresh: reloadTasks,
-    onLoadNextPage: loadNextTasks
+    onLoadNextPage: loadNextTasks,
+    onTopToastCancel: () => closeTopToast({ withAction: false }),
+    onTopToastAction: () => closeTopToast({ withAction: true })
   }
 )
 
@@ -66,15 +69,13 @@ export const App = ({
   onNewTaskTextChange,
   onNewTaskSubmit,
   onRefresh,
-  onLoadNextPage
+  onLoadNextPage,
+  onTopToastCancel,
+  onTopToastAction
 }) => (
   <div className="App">
     <header className="App-header">
-      <button
-        className="App-refresh"
-        onClick={() => onRefresh()}
-        title="Refresh"
-      >
+      <button className="App-refresh" onClick={onRefresh} title="Refresh">
         <h1 className="App-title">todo</h1>
       </button>
 
@@ -164,11 +165,13 @@ export const App = ({
         )}
         <p className="App-topToastMessage">{topToast.message}</p>
         {topToast.buttonText && (
-          <TextButton className="App-topToastAction">
+          <TextButton className="App-topToastAction" onClick={onTopToastAction}>
             {topToast.buttonText}
           </TextButton>
         )}
-        <button className="App-topToastClose">×</button>
+        <button className="App-topToastClose" onClick={onTopToastCancel}>
+          ×
+        </button>
       </section>
     </aside>
   </div>

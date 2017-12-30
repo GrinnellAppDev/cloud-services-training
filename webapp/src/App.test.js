@@ -9,7 +9,8 @@ import {
   editNewTaskText,
   createNewTask,
   reloadTasks,
-  loadNextTasks
+  loadNextTasks,
+  closeTopToast
 } from "./store"
 import { isTempTaskId } from "./util"
 import LoadingSpinner from "./LoadingSpinner"
@@ -597,6 +598,64 @@ describe("withEnhancers", () => {
 
     expect(store.getActions()).toEqual([loadNextTasks()])
   })
+
+  it("dispatches a close action onToastCancel", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: {}
+      },
+      toasts: {
+        queue: []
+      }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onTopToastCancel()
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(store.getActions()).toEqual([closeTopToast({ withAction: false })])
+  })
+
+  it("dispatches a close action onToastAction", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        items: {}
+      },
+      toasts: {
+        queue: []
+      }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onTopToastAction()
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(store.getActions()).toEqual([closeTopToast({ withAction: true })])
+  })
 })
 
 describe("App", () => {
@@ -892,5 +951,62 @@ describe("App", () => {
       .simulate("click")
 
     expect(onLoadNextPage).toBeCalledWith()
+  })
+
+  it("handles clicks on the toast close button", () => {
+    const onTopToastCancel = jest.fn()
+
+    shallow(
+      <App
+        tasksHaveNextPage={false}
+        tasksHaveError={true}
+        onLoadNextPage={() => {}}
+        onTopToastCancel={onTopToastCancel}
+        tasks={[]}
+        topToast={{}}
+      />
+    )
+      .find(".App-topToastClose")
+      .simulate("click")
+
+    expect(onTopToastCancel).toBeCalledWith()
+  })
+
+  it("handles clicks on the toast close button", () => {
+    const onTopToastCancel = jest.fn()
+
+    shallow(
+      <App
+        tasksHaveNextPage={false}
+        tasksHaveError={true}
+        onLoadNextPage={() => {}}
+        onTopToastCancel={onTopToastCancel}
+        tasks={[]}
+        topToast={{ message: "foo", buttonText: "bar", useSpinner: false }}
+      />
+    )
+      .find(".App-topToastClose")
+      .simulate("click")
+
+    expect(onTopToastCancel).toBeCalledWith()
+  })
+
+  it("handles clicks on the toast action", () => {
+    const onTopToastAction = jest.fn()
+
+    shallow(
+      <App
+        tasksHaveNextPage={false}
+        tasksHaveError={true}
+        onLoadNextPage={() => {}}
+        onTopToastAction={onTopToastAction}
+        tasks={[]}
+        topToast={{ message: "foo", buttonText: "bar", useSpinner: false }}
+      />
+    )
+      .find(".App-topToastAction")
+      .simulate("click")
+
+    expect(onTopToastAction).toBeCalledWith()
   })
 })

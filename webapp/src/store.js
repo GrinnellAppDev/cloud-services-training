@@ -14,6 +14,7 @@ import { take } from "rxjs/operators/take"
 import { mapTo } from "rxjs/operators/mapTo"
 import { map } from "rxjs/operators/map"
 import { delayWhen } from "rxjs/operators/delayWhen"
+import { tap } from "rxjs/operators/tap"
 
 // Selectors
 
@@ -109,8 +110,15 @@ export const setToast = (message, buttonText) => ({
   message,
   buttonText
 })
-export const clearTopToast = () => ({ type: "CLEAR_TOP_TOAST" })
-export const toastClosed = id => ({ type: "TOAST_CLOSED", id })
+export const closeTopToast = ({ withAction = false } = {}) => ({
+  type: "CLOSE_TOP_TOAST",
+  withAction
+})
+export const toastClosed = (id, { withAction }) => ({
+  type: "TOAST_CLOSED",
+  id,
+  withAction
+})
 export const shiftToasts = () => ({ type: "SHIFT_TOASTS" })
 
 // Reducers
@@ -289,7 +297,7 @@ export const reducer = (
         }
       }
     }
-    case "CLEAR_TOP_TOAST":
+    case "CLOSE_TOP_TOAST":
       return {
         ...state,
         toasts: {
@@ -498,15 +506,13 @@ export const taskDeleteToastEpic = (
   { getState },
   { delay }
 ) =>
-  actionsObservable
-    .ofType("DELETE_TASK")
-    .pipe(
-      mapTo(
-        sendToast("DELETE_TASK_START", "Deleting...", "Undo", {
-          useSpinner: true
-        })
-      )
+  actionsObservable.ofType("DELETE_TASK").pipe(
+    mapTo(
+      sendToast("DELETE_TASK_START", "Deleting...", "Undo", {
+        useSpinner: true
+      })
     )
+  )
 
 export const toastEpic = (actionsObservable, { getState }, { delay }) =>
   actionsObservable.pipe(
@@ -532,24 +538,31 @@ export const toastEpic = (actionsObservable, { getState }, { delay }) =>
                   )
                 )
         ),
-        mapTo("TIMEOUT"),
+        mapTo({ signal: "TIMEOUT" }),
         race(
           actionsObservable
-            .ofType("CLEAR_TOP_TOAST")
-            .pipe(take(1), mapTo("EARLY_CLOSE")),
+            .ofType("CLOSE_TOP_TOAST")
+            .pipe(
+              take(1),
+              map(({ withAction }) => ({ signal: "EARLY_CLOSE", withAction }))
+            ),
           actionsObservable
             .ofType("SEND_TOAST")
-            .pipe(filter(action => action.id === id), take(1), mapTo("RESEND"))
+            .pipe(
+              filter(action => action.id === id),
+              take(1),
+              mapTo({ signal: "RESEND" })
+            )
         ),
         mergeMap(
-          signal =>
+          ({ signal, withAction = false }) =>
             signal === "RESEND"
               ? emptyObservable()
               : mergeObservables(
                   signal === "TIMEOUT"
-                    ? observableOf(clearTopToast())
+                    ? observableOf(closeTopToast({ withAction }))
                     : emptyObservable(),
-                  observableOf(toastClosed(id)),
+                  observableOf(toastClosed(id, { withAction })),
                   observableOf(null).pipe(delay(200), mapTo(shiftToasts()))
                 )
         )

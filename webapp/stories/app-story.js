@@ -142,7 +142,9 @@ storiesOf("App", module)
           items: {}
         },
         toasts: {
-          queue: [{ message: "Deleting...", buttonText: "Undo" }]
+          queue: [
+            { message: "Deleting...", buttonText: "Undo", useSpinner: true }
+          ]
         }
       })}
     >

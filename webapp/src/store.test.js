@@ -26,11 +26,12 @@ import {
   taskDeleteFailed,
   taskDeleteSucceeded,
   setToast,
-  clearTopToast,
+  closeTopToast,
   toastEpic,
   sendToast,
   shiftToasts,
-  toastClosed
+  toastClosed,
+  actOnTopToast
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { interval as intervalObservable } from "rxjs/observable/interval"
@@ -459,7 +460,7 @@ describe("reducer", () => {
     })
   })
 
-  it("can clear the top toast", () => {
+  it("can close the top toast", () => {
     expect(
       reducer(
         {
@@ -477,7 +478,7 @@ describe("reducer", () => {
             ]
           }
         },
-        clearTopToast()
+        closeTopToast()
       )
     ).toEqual({
       ...initialState,
@@ -491,7 +492,7 @@ describe("reducer", () => {
     })
   })
 
-  it("clear top toast does nothing when the queue is empty", () => {
+  it("closing top toast does nothing when the queue is empty", () => {
     expect(
       reducer(
         {
@@ -501,7 +502,7 @@ describe("reducer", () => {
             queue: []
           }
         },
-        clearTopToast()
+        closeTopToast()
       )
     ).toEqual({
       ...initialState,
@@ -1264,8 +1265,10 @@ describe("epics", () => {
     const valueMap = {
       a: sendToast("a", "toast a", "bar"),
       b: sendToast("b", "toast b"),
-      c: clearTopToast(),
-      x: toastClosed("a"),
+      c: closeTopToast({ withAction: false }),
+      d: closeTopToast({ withAction: true }),
+      x: toastClosed("a", { withAction: false }),
+      y: toastClosed("a", { withAction: true }),
       s: shiftToasts()
     }
 
@@ -1309,11 +1312,31 @@ describe("epics", () => {
       })
     })
 
-    it("sends just a shift toasts action when sent a toast and then a clear toast action", () => {
+    it("doesn't send another close action when closed early", () => {
       testEpic({
         epic: toastEpic,
         inputted: "-a--c-----",
         expected: "----x----s",
+        valueMap,
+        getState: () => ({ toasts: { queue: [{ id: "a" }] } })
+      })
+    })
+
+    it("acknowledges closure with action", () => {
+      testEpic({
+        epic: toastEpic,
+        inputted: "-a--d-----",
+        expected: "----y----s",
+        valueMap,
+        getState: () => ({ toasts: { queue: [{ id: "a" }] } })
+      })
+    })
+
+    it("acknowledges closure with action in the second half of its life", () => {
+      testEpic({
+        epic: toastEpic,
+        inputted: "-a-------d-----",
+        expected: "---------y----s",
         valueMap,
         getState: () => ({ toasts: { queue: [{ id: "a" }] } })
       })
