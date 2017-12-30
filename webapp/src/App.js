@@ -11,12 +11,15 @@ import {
   loadNextTasks,
   getNextPageToken,
   getTasksStatus,
-  getLastTasksErrorMessage
+  getLastTasksErrorMessage,
+  getTopToast
 } from "./store"
 import InfiniteScroll from "react-infinite-scroller"
 import LoadingSpinner from "./LoadingSpinner"
 import { getTempTaskId } from "./util"
 import FlipMove from "react-flip-move"
+import classnames from "classnames"
+import TextButton from "./TextButton"
 
 export const withEnhancers = connect(
   () => {
@@ -24,6 +27,7 @@ export const withEnhancers = connect(
 
     return state => {
       const status = getTasksStatus(state)
+
       return {
         tasks: getTasks(state),
         newTaskText: getNewTaskText(state),
@@ -34,7 +38,12 @@ export const withEnhancers = connect(
             status === "UNLOADED" ||
             status === "LOADING"),
         tasksHaveError: status === "ERROR",
-        lastTasksErrorMessage: getLastTasksErrorMessage(state)
+        lastTasksErrorMessage: getLastTasksErrorMessage(state),
+        topToast: getTopToast(state) || {
+          message: "",
+          buttonText: "",
+          useSpinner: false
+        }
       }
     }
   },
@@ -53,6 +62,7 @@ export const App = ({
   tasksHaveError,
   hasTasks,
   lastTasksErrorMessage,
+  topToast,
   onNewTaskTextChange,
   onNewTaskSubmit,
   onRefresh,
@@ -142,6 +152,25 @@ export const App = ({
         </section>
       )}
     </main>
+
+    <aside
+      role="alert"
+      className="App-topToast"
+      aria-hidden={!topToast.message}
+    >
+      <section className="App-topToastBody">
+        {topToast.useSpinner && (
+          <LoadingSpinner className="App-topToastLoading" />
+        )}
+        <p className="App-topToastMessage">{topToast.message}</p>
+        {topToast.buttonText && (
+          <TextButton className="App-topToastAction">
+            {topToast.buttonText}
+          </TextButton>
+        )}
+        <button className="App-topToastClose">×</button>
+      </section>
+    </aside>
   </div>
 )
 

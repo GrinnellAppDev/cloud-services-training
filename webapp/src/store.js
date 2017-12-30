@@ -1,13 +1,19 @@
 import { createStore, applyMiddleware } from "redux"
-import { merge as mergeObservables } from "rxjs/observable/merge"
-import { empty as emptyObservable } from "rxjs/observable/empty"
-import { mergeMap } from "rxjs/operators"
 import { createEpicMiddleware, combineEpics } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
 import { createSelector } from "reselect"
 import querystring from "querystring"
-import { filter } from "rxjs/operators/filter"
 import { isTempTaskId, asciiCompare } from "./util"
+import { merge as mergeObservables } from "rxjs/observable/merge"
+import { empty as emptyObservable } from "rxjs/observable/empty"
+import { of as observableOf } from "rxjs/observable/of"
+import { mergeMap } from "rxjs/operators/mergeMap"
+import { filter } from "rxjs/operators/filter"
+import { race } from "rxjs/operators/race"
+import { take } from "rxjs/operators/take"
+import { mapTo } from "rxjs/operators/mapTo"
+import { map } from "rxjs/operators/map"
+import { delayWhen } from "rxjs/operators/delayWhen"
 
 // Selectors
 
@@ -16,6 +22,8 @@ export const getTaskById = (state, id) => state.tasks.items[id]
 export const getTasksStatus = state => state.tasks.status
 export const getLastTasksErrorMessage = state => state.tasks.lastErrorMessage
 export const getNextPageToken = state => state.tasks.nextPageToken
+export const getToastsQueueLength = state => state.toasts.queue.length
+export const getTopToast = state => state.toasts.queue[0]
 
 export const makeGetTasks = () =>
   createSelector(
@@ -84,12 +92,34 @@ export const taskDeleteFailed = (id, original) => ({
   original
 })
 
+export const sendToast = (
+  id,
+  message,
+  buttonText = "",
+  { useSpinner = false } = {}
+) => ({
+  type: "SEND_TOAST",
+  id,
+  message,
+  buttonText,
+  useSpinner
+})
+export const setToast = (message, buttonText) => ({
+  type: "SET_TOAST",
+  message,
+  buttonText
+})
+export const clearTopToast = () => ({ type: "CLEAR_TOP_TOAST" })
+export const toastClosed = id => ({ type: "TOAST_CLOSED", id })
+export const shiftToasts = () => ({ type: "SHIFT_TOASTS" })
+
 // Reducers
 
 export const reducer = (
   state = {
     newTask: { text: "" },
-    tasks: { status: "UNLOADED", items: {} }
+    tasks: { status: "UNLOADED", items: {} },
+    toasts: { queue: [] }
   },
   { type, ...payload }
 ) => {
@@ -239,6 +269,53 @@ export const reducer = (
           }
         }
       }
+    case "SEND_TOAST": {
+      const currentToastIndex = state.toasts.queue.findIndex(
+        ({ id }) => id === payload.id
+      )
+
+      return {
+        ...state,
+        toasts: {
+          ...state.toasts,
+          queue:
+            currentToastIndex >= 0
+              ? [
+                  ...state.toasts.queue.slice(0, currentToastIndex),
+                  payload,
+                  ...state.toasts.queue.slice(currentToastIndex + 1)
+                ]
+              : [...state.toasts.queue, payload]
+        }
+      }
+    }
+    case "CLEAR_TOP_TOAST":
+      return {
+        ...state,
+        toasts: {
+          ...state.toasts,
+          queue:
+            state.toasts.queue.length > 0
+              ? [
+                  {
+                    ...state.toasts.queue[0],
+                    message: "",
+                    buttonText: "",
+                    useSpinner: false
+                  },
+                  ...state.toasts.queue.slice(1)
+                ]
+              : []
+        }
+      }
+    case "SHIFT_TOASTS":
+      return {
+        ...state,
+        toasts: {
+          ...state.toasts,
+          queue: state.toasts.queue.slice(1)
+        }
+      }
     default:
       return state
   }
@@ -249,7 +326,7 @@ export const reducer = (
 export const loadTasksEpic = (
   actionsObservable,
   { getState },
-  { fetchFromAPI, delay }
+  { fetchFromAPI, delayPromise }
 ) =>
   actionsObservable.ofType("RELOAD_TASKS", "LOAD_NEXT_TASKS").pipe(
     mergeMap(({ type }) => {
@@ -273,7 +350,7 @@ export const loadTasksEpic = (
               })}`
             ),
             type === "RELOAD_TASKS" || status === "ERROR"
-              ? delay(500)
+              ? delayPromise(500)
               : Promise.resolve()
           ])
             .then(
@@ -393,6 +470,11 @@ export const deleteTaskEpic = (
 ) =>
   actionsObservable.ofType("DELETE_TASK").pipe(
     filter(({ id }) => !isTempTaskId(id)),
+    // delayWhen(() =>
+    //   actionsObservable
+    //     .ofType("TOAST_CLOSED")
+    //     .pipe(filter(({ id }) => id === "DELETE_TASK_START"))
+    // ),
     mergeMap(({ id, original }) =>
       fetchFromAPI(`/tasks/${id}`, {
         method: "DELETE"
@@ -411,11 +493,77 @@ export const deleteTaskEpic = (
     )
   )
 
+export const taskDeleteToastEpic = (
+  actionsObservable,
+  { getState },
+  { delay }
+) =>
+  actionsObservable
+    .ofType("DELETE_TASK")
+    .pipe(
+      mapTo(
+        sendToast("DELETE_TASK_START", "Deleting...", "Undo", {
+          useSpinner: true
+        })
+      )
+    )
+
+export const toastEpic = (actionsObservable, { getState }, { delay }) =>
+  actionsObservable.pipe(
+    filter(
+      ({ type }) =>
+        (type === "SEND_TOAST" && getToastsQueueLength(getState()) <= 1) ||
+        (type === "SHIFT_TOASTS" && getToastsQueueLength(getState()) > 0)
+    ),
+    map(() => getTopToast(getState()).id),
+    mergeMap(id =>
+      observableOf(null).pipe(
+        delay(3000),
+        mergeMap(
+          () =>
+            getToastsQueueLength(getState()) > 1
+              ? observableOf(null)
+              : observableOf(null).pipe(
+                  delay(3000),
+                  race(
+                    actionsObservable
+                      .ofType("SEND_TOAST")
+                      .pipe(take(1), mapTo(null))
+                  )
+                )
+        ),
+        mapTo("TIMEOUT"),
+        race(
+          actionsObservable
+            .ofType("CLEAR_TOP_TOAST")
+            .pipe(take(1), mapTo("EARLY_CLOSE")),
+          actionsObservable
+            .ofType("SEND_TOAST")
+            .pipe(filter(action => action.id === id), take(1), mapTo("RESEND"))
+        ),
+        mergeMap(
+          signal =>
+            signal === "RESEND"
+              ? emptyObservable()
+              : mergeObservables(
+                  signal === "TIMEOUT"
+                    ? observableOf(clearTopToast())
+                    : emptyObservable(),
+                  observableOf(toastClosed(id)),
+                  observableOf(null).pipe(delay(200), mapTo(shiftToasts()))
+                )
+        )
+      )
+    )
+  )
+
 export const rootEpic = combineEpics(
   loadTasksEpic,
   newTaskEpic,
   editTaskEpic,
-  deleteTaskEpic
+  deleteTaskEpic,
+  taskDeleteToastEpic,
+  toastEpic
 )
 
 // Store

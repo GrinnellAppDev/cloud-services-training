@@ -25,6 +25,9 @@ storiesOf("App", module)
             Fs3393a: { _id: "Fs3393a", isComplete: true, text: "Do laundry" },
             a23D1di: { _id: "a23D1di", isComplete: false, text: "Finish novel" }
           }
+        },
+        toasts: {
+          queue: []
         }
       })}
     >
@@ -40,6 +43,9 @@ storiesOf("App", module)
         tasks: {
           status: "LOADED",
           items: {}
+        },
+        toasts: {
+          queue: []
         }
       })}
     >
@@ -55,6 +61,9 @@ storiesOf("App", module)
         tasks: {
           status: "LOADING",
           items: {}
+        },
+        toasts: {
+          queue: []
         }
       })}
     >
@@ -73,6 +82,9 @@ storiesOf("App", module)
             s38rOsF: { _id: "s38rOsF", isComplete: false, text: "Get coffee" },
             a23D1di: { _id: "a23D1di", isComplete: false, text: "Finish novel" }
           }
+        },
+        toasts: {
+          queue: []
         }
       })}
     >
@@ -89,6 +101,9 @@ storiesOf("App", module)
           status: "ERROR",
           lastErrorMessage: "Failed to fetch",
           items: {}
+        },
+        toasts: {
+          queue: []
         }
       })}
     >
@@ -108,6 +123,26 @@ storiesOf("App", module)
             s38rOsF: { _id: "s38rOsF", isComplete: false, text: "Get coffee" },
             a23D1di: { _id: "a23D1di", isComplete: false, text: "Finish novel" }
           }
+        },
+        toasts: {
+          queue: []
+        }
+      })}
+    >
+      <App />
+    </Provider>
+  ))
+  .add("toast", () => (
+    <Provider
+      store={createStore({
+        newTask: {
+          text: ""
+        },
+        tasks: {
+          items: {}
+        },
+        toasts: {
+          queue: [{ message: "Deleting...", buttonText: "Undo" }]
         }
       })}
     >

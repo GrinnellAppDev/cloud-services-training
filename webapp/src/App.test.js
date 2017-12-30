@@ -12,6 +12,7 @@ import {
   loadNextTasks
 } from "./store"
 import { isTempTaskId } from "./util"
+import LoadingSpinner from "./LoadingSpinner"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -23,6 +24,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -49,6 +53,9 @@ describe("withEnhancers", () => {
         items: {
           a: { _id: "a", isComplete: false, text: "foo" }
         }
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -75,6 +82,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -99,6 +109,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -124,6 +137,9 @@ describe("withEnhancers", () => {
       tasks: {
         items: {},
         nextPageToken: "abc"
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -149,6 +165,9 @@ describe("withEnhancers", () => {
       tasks: {
         items: {},
         nextPageToken: null
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -175,6 +194,9 @@ describe("withEnhancers", () => {
         status: "ERROR",
         items: {},
         nextPageToken: "abc"
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -201,6 +223,9 @@ describe("withEnhancers", () => {
         status: "UNLOADED",
         items: {},
         nextPageToken: null
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -227,6 +252,9 @@ describe("withEnhancers", () => {
         status: "LOADING",
         items: {},
         nextPageToken: null
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -252,6 +280,9 @@ describe("withEnhancers", () => {
       tasks: {
         status: "ERROR",
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -277,6 +308,9 @@ describe("withEnhancers", () => {
       tasks: {
         items: {},
         lastErrorMessage: "foo"
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -301,6 +335,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: { a: "a" }
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -327,6 +364,9 @@ describe("withEnhancers", () => {
         tasks: {
           status,
           items: {}
+        },
+        toasts: {
+          queue: []
         }
       })
 
@@ -354,6 +394,9 @@ describe("withEnhancers", () => {
       tasks: {
         status: "LOADED",
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -371,6 +414,72 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].hasTasks).toBe(false)
   })
 
+  it("loads the top toast", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        status: "LOADED",
+        items: {}
+      },
+      toasts: {
+        queue: [
+          { id: "foo", message: "bar", buttonText: "baz", useSpinner: true },
+          {}
+        ]
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].topToast).toEqual({
+      id: "foo",
+      message: "bar",
+      buttonText: "baz",
+      useSpinner: true
+    })
+  })
+
+  it("loads blank when there is no top toast", () => {
+    const store = createMockStore({
+      newTask: {
+        text: ""
+      },
+      tasks: {
+        status: "LOADED",
+        items: {}
+      },
+      toasts: {
+        queue: []
+      }
+    })
+
+    const Component = jest.fn().mockReturnValue(<div />)
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component.mock.calls).toHaveLength(1)
+    expect(Component.mock.calls[0][0].topToast.message).toBe("")
+    expect(Component.mock.calls[0][0].topToast.buttonText).toBe("")
+    expect(Component.mock.calls[0][0].topToast.useSpinner).toBe(false)
+  })
+
   it("dispatches an edit action onNewTaskTextChange", () => {
     const store = createMockStore({
       newTask: {
@@ -378,6 +487,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -404,6 +516,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -432,6 +547,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -458,6 +576,9 @@ describe("withEnhancers", () => {
       },
       tasks: {
         items: {}
+      },
+      toasts: {
+        queue: []
       }
     })
 
@@ -487,6 +608,7 @@ describe("App", () => {
           onLoadNextPage={() => {}}
           tasks={[]}
           newTaskText=""
+          topToast={{}}
         />
       )
         .find(".App-refresh")
@@ -500,6 +622,7 @@ describe("App", () => {
         tasksHaveNextPage={false}
         onLoadNextPage={() => {}}
         tasks={[{ _id: "a", isComplete: false, text: "foo" }]}
+        topToast={{}}
       />
     ).find(".App-taskList")
     const firstTask = taskListWrapper.childAt(0).find(Task)
@@ -518,6 +641,7 @@ describe("App", () => {
           { _id: "b", isComplete: true, text: "bar" },
           { _id: "c", isComplete: false, text: "baz" }
         ]}
+        topToast={{}}
       />
     )
       .find(".App-taskList")
@@ -552,6 +676,7 @@ describe("App", () => {
           onLoadNextPage={() => {}}
           tasks={[]}
           newTaskText="foo"
+          topToast={{}}
         />
       )
         .find(".App-addTask")
@@ -569,6 +694,7 @@ describe("App", () => {
           newTaskText=""
           tasksHaveError={true}
           lastTasksErrorMessage="foo"
+          topToast={{}}
         />
       )
         .find(".App-tasksError")
@@ -586,6 +712,7 @@ describe("App", () => {
           newTaskText=""
           tasksHaveError={false}
           lastTasksErrorMessage="foo"
+          topToast={{}}
         />
       )
         .find(".App-tasksError")
@@ -602,6 +729,7 @@ describe("App", () => {
           tasks={[]}
           newTaskText=""
           hasTasks={false}
+          topToast={{}}
         />
       )
         .find(".App-noTasks")
@@ -618,9 +746,76 @@ describe("App", () => {
           tasks={[]}
           newTaskText=""
           hasTasks={true}
+          topToast={{}}
         />
       )
         .find(".App-noTask")
+        .exists()
+    ).toBe(false)
+  })
+
+  it("shows the top toast", () => {
+    const toastWrapper = shallow(
+      <App
+        tasksHaveNextPage={false}
+        onLoadNextPage={() => {}}
+        tasks={[]}
+        newTaskText=""
+        topToast={{ message: "foo", buttonText: "bar", useSpinner: true }}
+      />
+    ).find(".App-topToast")
+
+    expect(
+      toastWrapper.containsAllMatchingElements(["foo", "bar", LoadingSpinner])
+    ).toBe(true)
+
+    expect(toastWrapper.prop("aria-hidden")).toBe(false)
+  })
+
+  it("hides the top toast", () => {
+    expect(
+      shallow(
+        <App
+          tasksHaveNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+          topToast={{ message: "", buttonText: "", useSpinner: false }}
+        />
+      )
+        .find(".App-topToast")
+        .prop("aria-hidden")
+    ).toBe(true)
+  })
+
+  it("hides the toast button when there is no text", () => {
+    expect(
+      shallow(
+        <App
+          tasksHaveNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+          topToast={{ message: "foo", buttonText: "", useSpinner: false }}
+        />
+      )
+        .find(".App-topToastAction")
+        .exists()
+    ).toBe(false)
+  })
+
+  it("hides the spinner when disabled", () => {
+    expect(
+      shallow(
+        <App
+          tasksHaveNextPage={false}
+          onLoadNextPage={() => {}}
+          tasks={[]}
+          newTaskText=""
+          topToast={{ message: "foo", buttonText: "", useSpinner: false }}
+        />
+      )
+        .find(".App-topToastLoading")
         .exists()
     ).toBe(false)
   })
@@ -635,6 +830,7 @@ describe("App", () => {
         tasks={[]}
         newTaskText="foo"
         onNewTaskTextChange={onNewTaskTextChange}
+        topToast={{}}
       />
     )
       .find(".App-addTask")
@@ -653,6 +849,7 @@ describe("App", () => {
         tasks={[]}
         newTaskText="foo"
         onNewTaskSubmit={onNewTaskSubmit}
+        topToast={{}}
       />
     )
       .find(".App-addTask")
@@ -670,6 +867,7 @@ describe("App", () => {
         onLoadNextPage={() => {}}
         tasks={[]}
         onRefresh={onRefresh}
+        topToast={{}}
       />
     )
       .find(".App-refresh")
@@ -687,6 +885,7 @@ describe("App", () => {
         tasksHaveError={true}
         onLoadNextPage={onLoadNextPage}
         tasks={[]}
+        topToast={{}}
       />
     )
       .find(".App-tasksErrorTryAgain")
