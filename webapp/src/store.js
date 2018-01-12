@@ -30,6 +30,12 @@ export const getNextPageToken = state => state.tasks.nextPageToken
 export const getToastsQueueLength = state => state.toasts.queue.length
 export const getTopToast = state => state.toasts.queue[0]
 
+export const makeGetAnyToastIsSpinning = () =>
+  createSelector(
+    state => state.toasts.queue,
+    queue => queue.some(toast => toast.useSpinner)
+  )
+
 export const makeGetTasks = () =>
   createSelector(
     state => state.tasks.items,

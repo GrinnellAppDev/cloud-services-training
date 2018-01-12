@@ -3,7 +3,7 @@ import ReactDOM from "react-dom"
 import "./index.css"
 import App from "./App"
 import registerServiceWorker from "./registerServiceWorker"
-import { configureStore } from "./store"
+import { configureStore, makeGetAnyToastIsSpinning } from "./store"
 import { Provider } from "react-redux"
 import { delay } from "rxjs/operators/delay"
 import { from as observableFrom } from "rxjs/observable/from"
@@ -12,6 +12,19 @@ const store = configureStore({
   fetchFromAPI: (uri, init) =>
     observableFrom(fetch(process.env.REACT_APP_API_ROOT + uri, init)),
   delay
+})
+
+const anyToastIsSpinning = makeGetAnyToastIsSpinning()
+window.addEventListener("beforeunload", ev => {
+  // TODO: add a way to check if any fetch requests are still rolling
+  if (anyToastIsSpinning(store.getState())) {
+    // TODO: close all toasts
+    ev.returnValue = "You have unsaved changes!"
+    return ev.returnValue
+  } else {
+    ev.preventDefault()
+    return null
+  }
 })
 
 ReactDOM.render(
