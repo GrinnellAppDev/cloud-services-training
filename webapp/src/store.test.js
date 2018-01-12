@@ -1110,101 +1110,91 @@ describe("epics", () => {
   describe("editTaskEpic", () => {
     // TODO: add throttling with a reduce operation so we don't lose edits
 
+    const valueMap = {
+      e: editTask(
+        "a",
+        { isComplete: true, text: "foo" },
+        { isComplete: false, text: "bar" }
+      ),
+      f: taskEditFailed(
+        "a",
+        { isComplete: false, text: "bar" },
+        "Failed to fetch"
+      ),
+      h: taskEditFailed(
+        "a",
+        { isComplete: false, text: "bar" },
+        "HTTP Error: Server error (500)"
+      ),
+      s: taskEditSucceeded("a")
+    }
+
     it("calls fetch when it gets an edit action", async () => {
       const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
 
-      await editTaskEpic(
-        ActionsObservable.of(
-          editTask(
-            "a",
-            { isComplete: true, text: "foo" },
-            { isComplete: false, text: "bar" }
-          )
-        ),
-        {},
-        { fetchFromAPI }
-      ).toPromise()
+      testEpic({
+        epic: editTaskEpic,
+        inputted: "-e-----",
+        valueMap,
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).toBeCalledWith("/tasks/a", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ isComplete: true, text: "foo" })
+        body: JSON.stringify(valueMap.e.edits)
       })
     })
 
     it("handles fetch errors gracefully", async () => {
-      await expect(
-        editTaskEpic(
-          ActionsObservable.of(
-            editTask(
-              "a",
-              { isComplete: true, text: "foo" },
-              { isComplete: false, text: "bar" }
+      testEpic({
+        epic: editTaskEpic,
+        inputted: "-e-----",
+        expected: "------f",
+        valueMap,
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableThrow(TypeError("Failed to fetch")),
+              scheduler
             )
-          ),
-          {},
-          { fetchFromAPI: () => observableThrow(TypeError("Failed to fetch")) }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        taskEditFailed(
-          "a",
-          { isComplete: false, text: "bar" },
-          "Failed to fetch"
-        )
-      ])
+        })
+      })
     })
 
     it("handles http errors gracefully", async () => {
-      await expect(
-        editTaskEpic(
-          ActionsObservable.of(
-            editTask(
-              "a",
-              { isComplete: true, text: "foo" },
-              { isComplete: false, text: "bar" }
-            )
-          ),
-          {},
-          {
-            fetchFromAPI: () =>
+      testEpic({
+        epic: editTaskEpic,
+        inputted: "-e-----",
+        expected: "------h",
+        valueMap,
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
               observableOf({
                 ok: false,
                 status: 500,
                 statusText: "Server error"
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        taskEditFailed(
-          "a",
-          { isComplete: false, text: "bar" },
-          "HTTP Error: Server error (500)"
-        )
-      ])
+              }),
+              scheduler
+            )
+        })
+      })
     })
 
     it("indicates success when the request goes through", async () => {
-      await expect(
-        editTaskEpic(
-          ActionsObservable.of(
-            editTask(
-              "a",
-              { isComplete: true, text: "foo" },
-              { isComplete: false, text: "bar" }
-            )
-          ),
-          {},
-          { fetchFromAPI: () => observableOf({ ok: true }) }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([taskEditSucceeded("a")])
+      testEpic({
+        epic: editTaskEpic,
+        inputted: "-e-----",
+        expected: "------s",
+        valueMap,
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(observableOf({ ok: true }), scheduler)
+        })
+      })
     })
   })
 
