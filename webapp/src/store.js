@@ -542,7 +542,7 @@ export const toastEpic = (actionsObservable, { getState }, { delay }) =>
             getToastsQueueLength(getState()) > 1
               ? observableOf(null)
               : observableOf(null).pipe(
-                  delay(3000),
+                  delay(1000),
                   race(
                     actionsObservable
                       .ofType("SEND_TOAST")
