@@ -7,6 +7,7 @@ import { isTempTaskId, asciiCompare } from "./util"
 import { merge as mergeObservables } from "rxjs/observable/merge"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { of as observableOf } from "rxjs/observable/of"
+import { from as observableFrom } from "rxjs/observable/from"
 import { mergeMap } from "rxjs/operators/mergeMap"
 import { filter } from "rxjs/operators/filter"
 import { race } from "rxjs/operators/race"
@@ -15,6 +16,9 @@ import { mapTo } from "rxjs/operators/mapTo"
 import { map } from "rxjs/operators/map"
 import { delayWhen } from "rxjs/operators/delayWhen"
 import { tap } from "rxjs/operators/tap"
+import { catchError } from "rxjs/operators/catchError"
+import { _throw as observableThrow } from "rxjs/observable/throw"
+import { forkJoin as forkJoinObservables } from "rxjs/observable/forkJoin"
 
 // Selectors
 
@@ -198,6 +202,7 @@ export const reducer = (
                 ...state.tasks.items,
                 [payload.temporaryId]: {
                   _id: payload.temporaryId,
+                  tempId: payload.temporaryId,
                   isComplete: false,
                   text: state.newTask.text
                 }
@@ -334,7 +339,7 @@ export const reducer = (
 export const loadTasksEpic = (
   actionsObservable,
   { getState },
-  { fetchFromAPI, delayPromise }
+  { fetchFromAPI, delay }
 ) =>
   actionsObservable.ofType("RELOAD_TASKS", "LOAD_NEXT_TASKS").pipe(
     mergeMap(({ type }) => {
@@ -350,29 +355,29 @@ export const loadTasksEpic = (
         return emptyObservable()
       else
         return mergeObservables(
-          Promise.resolve(tasksLoadingStarted()),
-          Promise.all([
+          observableOf(tasksLoadingStarted()),
+          forkJoinObservables([
             fetchFromAPI(
               `/tasks?${querystring.stringify({
                 pageToken: getNextPageToken(getState())
               })}`
             ),
             type === "RELOAD_TASKS" || status === "ERROR"
-              ? delayPromise(500)
-              : Promise.resolve()
-          ])
-            .then(
+              ? observableOf(null).pipe(delay(500))
+              : observableOf(null)
+          ]).pipe(
+            mergeMap(
               ([response]) =>
                 response.ok
-                  ? response.json()
-                  : Promise.reject(
+                  ? observableFrom(response.json())
+                  : observableThrow(
                       Error(
                         `HTTP Error: ${response.statusText} ` +
                           `(${response.status})`
                       )
                     )
-            )
-            .then(body => {
+            ),
+            map(body => {
               if (!Array.isArray(body.items)) {
                 console.error(
                   "Missing or invalid 'items' field in the API response"
@@ -386,8 +391,9 @@ export const loadTasksEpic = (
               } else {
                 return tasksReceived(body.items, body.nextPageToken)
               }
-            })
-            .catch(err => tasksLoadingFailed(err.message))
+            }),
+            catchError(err => observableOf(tasksLoadingFailed(err.message)))
+          )
         )
     })
   )
@@ -403,7 +409,7 @@ export const newTaskEpic = (
         !getNewTaskText(getState())
           ? emptyObservable()
           : mergeObservables(
-              Promise.resolve(clearNewTask()),
+              observableOf(clearNewTask()),
               fetchFromAPI("/tasks", {
                 method: "POST",
                 headers: {
@@ -413,20 +419,20 @@ export const newTaskEpic = (
                   isComplete: false,
                   text: getNewTaskText(getState())
                 })
-              })
-                .then(
+              }).pipe(
+                mergeMap(
                   response =>
                     response.ok
-                      ? response.json()
-                      : Promise.reject(
+                      ? observableFrom(response.json())
+                      : observableThrow(
                           Error(
                             `HTTP Error: ${response.statusText} (${
                               response.status
                             })`
                           )
                         )
-                )
-                .then(({ item }) => {
+                ),
+                map(({ item }) => {
                   if (!item) {
                     console.error("Missing 'item' field in the API response")
                   } else if (!item._id) {
@@ -437,8 +443,11 @@ export const newTaskEpic = (
 
                   console.error("Reloading to get correct task id...")
                   return reloadTasks()
-                })
-                .catch(err => taskCreateFailed(temporaryId, err.message))
+                }),
+                catchError(err =>
+                  observableOf(taskCreateFailed(temporaryId, err.message))
+                )
+              )
             )
     )
   )
@@ -456,18 +465,18 @@ export const editTaskEpic = (
           "Content-Type": "application/json"
         },
         body: JSON.stringify(edits)
-      })
-        .then(
-          response =>
-            response.ok
-              ? taskEditSucceeded(id)
-              : Promise.reject(
-                  Error(
-                    `HTTP Error: ${response.statusText} (${response.status})`
-                  )
-                )
+      }).pipe(
+        map(response => {
+          if (response.ok) return taskEditSucceeded(id)
+          else
+            throw Error(
+              `HTTP Error: ${response.statusText} (${response.status})`
+            )
+        }),
+        catchError(err =>
+          observableOf(taskEditFailed(id, original, err.message))
         )
-        .catch(err => taskEditFailed(id, original, err.message))
+      )
     )
   )
 
@@ -478,39 +487,42 @@ export const deleteTaskEpic = (
 ) =>
   actionsObservable.ofType("DELETE_TASK").pipe(
     filter(({ id }) => !isTempTaskId(id)),
-    // delayWhen(() =>
-    //   actionsObservable
-    //     .ofType("TOAST_CLOSED")
-    //     .pipe(filter(({ id }) => id === "DELETE_TASK_START"))
-    // ),
     mergeMap(({ id, original }) =>
-      fetchFromAPI(`/tasks/${id}`, {
-        method: "DELETE"
-      })
-        .then(
-          response =>
-            response.ok
-              ? taskDeleteSucceeded(id)
-              : Promise.reject(
-                  Error(
-                    `HTTP Error: ${response.statusText} (${response.status})`
+      mergeObservables(
+        observableOf(
+          sendToast("TASK_DELETE_START", "Deleting task...", "Undo", {
+            useSpinner: true
+          })
+        ),
+        actionsObservable.ofType("TOAST_CLOSED").pipe(
+          filter(({ id: toastId }) => toastId === "TASK_DELETE_START"),
+          take(1),
+          mergeMap(
+            ({ withAction }) =>
+              withAction
+                ? observableOf(taskDeleteFailed(id, original, "Undo"))
+                : fetchFromAPI(`/tasks/${id}`, {
+                    method: "DELETE"
+                  }).pipe(
+                    map(response => {
+                      if (response.ok) return taskDeleteSucceeded(id)
+                      else
+                        throw Error(
+                          `HTTP Error: ${response.statusText} (${
+                            response.status
+                          })`
+                        )
+                    }),
+                    catchError(err =>
+                      observableOf(
+                        taskDeleteFailed(id, original, err.message),
+                        sendToast("TASK_DELETE_ERROR", err.message)
+                      )
+                    )
                   )
-                )
+          )
         )
-        .catch(err => taskDeleteFailed(id, original, err.message))
-    )
-  )
-
-export const taskDeleteToastEpic = (
-  actionsObservable,
-  { getState },
-  { delay }
-) =>
-  actionsObservable.ofType("DELETE_TASK").pipe(
-    mapTo(
-      sendToast("DELETE_TASK_START", "Deleting...", "Undo", {
-        useSpinner: true
-      })
+      )
     )
   )
 
@@ -575,7 +587,6 @@ export const rootEpic = combineEpics(
   newTaskEpic,
   editTaskEpic,
   deleteTaskEpic,
-  taskDeleteToastEpic,
   toastEpic
 )
 

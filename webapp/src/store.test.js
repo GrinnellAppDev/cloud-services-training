@@ -35,6 +35,8 @@ import {
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { interval as intervalObservable } from "rxjs/observable/interval"
+import { of as observableOf } from "rxjs/observable/of"
+import { _throw as observableThrow } from "rxjs/observable/throw"
 import { toArray } from "rxjs/operators/toArray"
 import { map } from "rxjs/operators/map"
 import { take } from "rxjs/operators/take"
@@ -42,6 +44,8 @@ import { delay as delayOperator } from "rxjs/operators/delay"
 import { getTempTaskId } from "./util"
 import { TestScheduler } from "rxjs"
 import { debounceTime as debounceTimeOperator } from "rxjs/operators/debounceTime"
+import { mergeMap } from "rxjs/operators/mergeMap"
+import { tap } from "rxjs/operators/tap"
 
 describe("configureStore", () => {
   it("makes a store without a default state", () => {
@@ -338,6 +342,7 @@ describe("reducer", () => {
         items: {
           fooTempId: {
             _id: "fooTempId",
+            tempId: "fooTempId",
             isComplete: false,
             text: "foo"
           }
@@ -362,15 +367,32 @@ describe("reducer", () => {
   })
 
   it("creation replaces the temporary ID with the one from the server", () => {
-    expect(reducer(stateWithTaskA, taskCreated("a", "abc"))).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
-        items: {
-          abc: {
-            ...stateWithTaskA.tasks.items.a,
-            _id: "abc"
+    expect(
+      reducer(
+        {
+          ...initialState,
+          tasks: {
+            ...initialState.tasks,
+            status: "LOADED",
+            items: {
+              "~123": {
+                _id: "~123",
+                tempId: "~123",
+                isComplete: false,
+                text: "foo"
+              }
+            }
           }
+        },
+        taskCreated("~123", "abc")
+      )
+    ).toEqual({
+      ...initialState,
+      tasks: {
+        ...initialState.tasks,
+        status: "LOADED",
+        items: {
+          abc: { _id: "abc", tempId: "~123", isComplete: false, text: "foo" }
         }
       }
     })
@@ -542,34 +564,39 @@ describe("epics", () => {
   const testEpic = ({
     epic,
     inputted,
-    expected,
+    expected = null,
     valueMap,
     getState,
-    dependencies = {}
+    getDependencies = scheduler => ({})
   }) => {
-    const scheduler = new TestScheduler((actualVal, expectedVal) =>
-      expect(actualVal.filter(x => x.notification.kind !== "C")).toEqual(
-        expectedVal
-      )
+    const scheduler = new TestScheduler((actualVal, expectedVal) => {
+      if (expected !== null)
+        expect(actualVal.filter(x => x.notification.kind !== "C")).toEqual(
+          expectedVal
+        )
+    })
+
+    const outputObservable = epic(
+      ActionsObservable.from(scheduler.createHotObservable(inputted, valueMap)),
+      { getState },
+      {
+        delay: () => delayOperator(50, scheduler),
+        debounceTime: () => debounceTimeOperator(50, scheduler),
+        ...getDependencies(scheduler)
+      }
     )
 
     scheduler
-      .expectObservable(
-        epic(
-          ActionsObservable.from(
-            scheduler.createHotObservable(inputted, valueMap)
-          ),
-          { getState },
-          {
-            ...dependencies,
-            delay: () => delayOperator(50, scheduler),
-            debounceTime: () => debounceTimeOperator(50, scheduler)
-          }
-        )
-      )
-      .toBe(expected, valueMap)
+      .expectObservable(outputObservable)
+      .toBe(expected !== null ? expected : "", valueMap)
     scheduler.flush()
   }
+
+  const createDelayedObservable = (observable, scheduler, delayTime = 50) =>
+    observableOf(null).pipe(
+      delayOperator(50, scheduler),
+      mergeMap(() => observable)
+    )
 
   describe("rootEpic", () => {
     it("ignores unknown actions", async () => {
@@ -584,180 +611,181 @@ describe("epics", () => {
   describe("loadTasksEpic", () => {
     // TODO: validate tasks against a schema and give helpful errors when it fails
 
-    it("calls fetch and delayPromise when given a reload action", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-      const delayPromise = jest.fn().mockReturnValue(Promise.resolve())
+    const valueMap = {
+      r: reloadTasks(),
+      n: loadNextTasks(),
+      s: tasksLoadingStarted(),
+      f: tasksLoadingFailed("Failed to fetch"),
+      h: tasksLoadingFailed("HTTP Error: Server error (500)"),
+      x: tasksReceived([], null)
+    }
 
-      await loadTasksEpic(
-        ActionsObservable.of(reloadTasks()),
-        { getState: () => ({ tasks: {} }) },
-        { fetchFromAPI, delayPromise }
-      ).toPromise()
+    it("calls fetch when given a reload action", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
 
-      expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=")
-      expect(delayPromise).toBeCalledWith(500)
-    })
-
-    it("doesn't call fetch or delayPromise and sends nothing when already loading", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-      const delayPromise = jest.fn().mockReturnValue(Promise.resolve())
-
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: { status: "LOADING" } }) },
-          { fetchFromAPI, delayPromise }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([])
-
-      expect(fetchFromAPI).not.toBeCalled()
-      expect(delayPromise).not.toBeCalled()
-    })
-
-    it("calls fetch and delayPromise when asked to load next with an error", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-      const delayPromise = jest.fn().mockReturnValue(Promise.resolve())
-
-      await loadTasksEpic(
-        ActionsObservable.of(loadNextTasks()),
-        {
-          getState: () => ({
-            tasks: { status: "ERROR", nextPageToken: null }
-          })
-        },
-        { fetchFromAPI, delayPromise }
-      ).toPromise()
-
-      expect(fetchFromAPI).toBeCalled()
-      expect(delayPromise).toBeCalled()
-    })
-
-    it("calls fetch and delayPromise when given a reload action with an error", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-      const delayPromise = jest.fn().mockReturnValue(Promise.resolve())
-
-      await loadTasksEpic(
-        ActionsObservable.of(reloadTasks()),
-        {
-          getState: () => ({
-            tasks: { status: "ERROR", nextPageToken: "abc" }
-          })
-        },
-        { fetchFromAPI, delayPromise }
-      ).toPromise()
-
-      expect(fetchFromAPI).toBeCalled()
-      expect(delayPromise).toBeCalled()
-    })
-
-    it("calls fetch and not delayPromise when given a load page action if tasks are unloaded", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-      const delayPromise = jest.fn().mockReturnValue(Promise.resolve())
-
-      await loadTasksEpic(
-        ActionsObservable.of(loadNextTasks()),
-        {
-          getState: () => ({
-            tasks: { status: "UNLOADED", nextPageToken: null }
-          })
-        },
-        { fetchFromAPI, delayPromise }
-      ).toPromise()
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        valueMap,
+        getState: () => ({ tasks: {} }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=")
-      expect(delayPromise).not.toBeCalled()
     })
 
-    it("does not call fetch or delayPromise when given a load page action if tasks are loaded and there is no next page token", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-      const delayPromise = jest.fn().mockReturnValue(Promise.resolve())
+    it("doesn't call fetch and sends nothing when already loading", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
 
-      await loadTasksEpic(
-        ActionsObservable.of(loadNextTasks()),
-        {
-          getState: () => ({
-            tasks: { nextPageToken: null }
-          })
-        },
-        { fetchFromAPI, delayPromise }
-      ).toPromise()
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-------",
+        valueMap,
+        getState: () => ({ tasks: { status: "LOADING" } }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).not.toBeCalled()
-      expect(delayPromise).not.toBeCalled()
     })
 
-    it("calls fetch and not delayPromise when given a load page action with the next page token", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
-      const delayPromise = jest.fn().mockReturnValue(Promise.resolve())
+    it("calls fetch when asked to load next with an error", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
 
-      await loadTasksEpic(
-        ActionsObservable.of(loadNextTasks()),
-        {
-          getState: () => ({
-            tasks: { nextPageToken: "abc" }
-          })
-        },
-        { fetchFromAPI }
-      ).toPromise()
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-n-----",
+        valueMap,
+        getState: () => ({ tasks: { status: "ERROR", nextPageToken: null } }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
+
+      expect(fetchFromAPI).toBeCalled()
+    })
+
+    it("calls fetch when given a reload action with an error", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
+
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        valueMap,
+        getState: () => ({ tasks: { status: "ERROR", nextPageToken: "abc" } }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
+
+      expect(fetchFromAPI).toBeCalled()
+    })
+
+    it("calls fetch when given a load page action if tasks are unloaded", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
+
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-n-----",
+        valueMap,
+        getState: () => ({
+          tasks: { status: "UNLOADED", nextPageToken: null }
+        }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
+
+      expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=")
+    })
+
+    it("does not call fetch when given a load page action if tasks are loaded and there is no next page token", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
+
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-n-----",
+        valueMap,
+        getState: () => ({
+          tasks: { nextPageToken: null }
+        }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
+
+      expect(fetchFromAPI).not.toBeCalled()
+    })
+
+    it("calls fetch when given a load page action with the next page token", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
+
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-n-----",
+        valueMap,
+        getState: () => ({
+          tasks: { nextPageToken: "abc" }
+        }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).toBeCalledWith("/tasks?pageToken=abc")
-      expect(delayPromise).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: {} }) },
-          {
-            fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")),
-            delayPromise: () => Promise.resolve()
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        tasksLoadingStarted(),
-        tasksLoadingFailed("Failed to fetch")
-      ])
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----f",
+        valueMap,
+        getState: () => ({ tasks: {} }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableThrow(TypeError("Failed to fetch")),
+              scheduler
+            )
+        })
+      })
     })
 
     it("handles http errors gracefully", async () => {
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: {} }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----h",
+        valueMap,
+        getState: () => ({ tasks: {} }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: false,
                 status: 500,
                 statusText: "Server error"
               }),
-            delayPromise: () => Promise.resolve()
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        tasksLoadingStarted(),
-        tasksLoadingFailed("HTTP Error: Server error (500)")
-      ])
+              scheduler
+            )
+        })
+      })
     })
 
     it("loads tasks and next page token", async () => {
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: {} }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----d",
+        valueMap: {
+          ...valueMap,
+          d: tasksReceived(
+            [
+              { _id: "a", isComplete: false, text: "foo" },
+              { _id: "b", isComplete: true, text: "bar" }
+            ],
+            "abc"
+          )
+        },
+        getState: () => ({ tasks: {} }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
                 json: () =>
-                  Promise.resolve({
+                  observableOf({
                     items: [
                       { _id: "a", isComplete: false, text: "foo" },
                       { _id: "b", isComplete: true, text: "bar" }
@@ -765,47 +793,37 @@ describe("epics", () => {
                     nextPageToken: "abc"
                   })
               }),
-            delayPromise: () => Promise.resolve()
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        tasksLoadingStarted(),
-        tasksReceived(
-          [
-            { _id: "a", isComplete: false, text: "foo" },
-            { _id: "b", isComplete: true, text: "bar" }
-          ],
-          "abc"
-        )
-      ])
+              scheduler
+            )
+        })
+      })
     })
 
     it("handles empty tasks and null next page token", async () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: {} }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----x",
+        valueMap,
+        getState: () => ({ tasks: {} }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
                 json: () =>
-                  Promise.resolve({
+                  observableOf({
                     items: [],
                     nextPageToken: null
                   })
               }),
-            delayPromise: () => Promise.resolve()
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([tasksLoadingStarted(), tasksReceived([], null)])
+              scheduler
+            )
+        })
+      })
 
       expect(console.error).not.toBeCalled()
       console.error = consoleError
@@ -815,25 +833,26 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: {} }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----x",
+        valueMap,
+        getState: () => ({ tasks: {} }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
                 json: () =>
-                  Promise.resolve({
+                  observableOf({
                     nextPageToken: null
                   })
               }),
-            delayPromise: () => Promise.resolve()
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([tasksLoadingStarted(), tasksReceived([], null)])
+              scheduler
+            )
+        })
+      })
 
       expect(console.error).toBeCalledWith(
         "Missing or invalid 'items' field in the API response"
@@ -845,26 +864,27 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: {} }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----x",
+        valueMap,
+        getState: () => ({ tasks: {} }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
                 json: () =>
-                  Promise.resolve({
+                  observableOf({
                     items: "foo",
                     nextPageToken: null
                   })
               }),
-            delayPromise: () => Promise.resolve()
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([tasksLoadingStarted(), tasksReceived([], null)])
+              scheduler
+            )
+        })
+      })
 
       expect(console.error).toBeCalledWith(
         "Missing or invalid 'items' field in the API response"
@@ -876,37 +896,38 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      await expect(
-        loadTasksEpic(
-          ActionsObservable.of(reloadTasks()),
-          { getState: () => ({ tasks: {} }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----d",
+        valueMap: {
+          ...valueMap,
+          d: tasksReceived(
+            [
+              { _id: "a", isComplete: false, text: "foo" },
+              { _id: "b", isComplete: true, text: "bar" }
+            ],
+            null
+          )
+        },
+        getState: () => ({ tasks: {} }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
                 json: () =>
-                  Promise.resolve({
+                  observableOf({
                     items: [
                       { _id: "a", isComplete: false, text: "foo" },
                       { _id: "b", isComplete: true, text: "bar" }
                     ]
                   })
               }),
-            delayPromise: () => Promise.resolve()
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        tasksLoadingStarted(),
-        tasksReceived(
-          [
-            { _id: "a", isComplete: false, text: "foo" },
-            { _id: "b", isComplete: true, text: "bar" }
-          ],
-          null
-        )
-      ])
+              scheduler
+            )
+        })
+      })
 
       expect(console.error).toBeCalledWith(
         "Missing 'nextPageToken' field in the API response"
@@ -916,14 +937,24 @@ describe("epics", () => {
   })
 
   describe("newTaskEpic", () => {
-    it("calls fetch when it gets a create action", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+    const valueMap = {
+      n: createNewTask("abc"),
+      l: clearNewTask(),
+      f: taskCreateFailed("abc", "Failed to fetch"),
+      h: taskCreateFailed("abc", "HTTP Error: Server error (500)"),
+      r: reloadTasks()
+    }
 
-      await newTaskEpic(
-        ActionsObservable.of(createNewTask()),
-        { getState: () => ({ newTask: { text: "foo" } }) },
-        { fetchFromAPI }
-      ).toPromise()
+    it("calls fetch when it gets a create action", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
+
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n-----",
+        valueMap,
+        getState: () => ({ newTask: { text: "foo" } }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).toBeCalledWith("/tasks", {
         method: "POST",
@@ -938,95 +969,102 @@ describe("epics", () => {
     })
 
     it("does nothing when it gets a create action without text", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
 
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask()),
-          { getState: () => ({ newTask: { text: "" } }) },
-          { fetchFromAPI }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([])
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n-----",
+        expected: "-------",
+        valueMap,
+        getState: () => ({ newTask: { text: "" } }),
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        clearNewTask(),
-        taskCreateFailed("abc", "Failed to fetch")
-      ])
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n-----",
+        expected: "-l----f",
+        valueMap,
+        getState: () => ({ newTask: { text: "foo" } }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableThrow(TypeError("Failed to fetch")),
+              scheduler
+            )
+        })
+      })
     })
 
     it("handles http errors gracefully", async () => {
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n-----",
+        expected: "-l----h",
+        valueMap,
+        getState: () => ({ newTask: { text: "foo" } }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: false,
                 status: 500,
                 statusText: "Server error"
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        clearNewTask(),
-        taskCreateFailed("abc", "HTTP Error: Server error (500)")
-      ])
+              }),
+              scheduler
+            )
+        })
+      })
     })
 
     it("indicates success with a new id", async () => {
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n-----",
+        expected: "-l----s",
+        valueMap: {
+          ...valueMap,
+          s: taskCreated("abc", "def")
+        },
+        getState: () => ({ newTask: { text: "foo" } }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
-                json: () => Promise.resolve({ item: { _id: "def" } })
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([clearNewTask(), taskCreated("abc", "def")])
+                json: () => observableOf({ item: { _id: "def" } })
+              }),
+              scheduler
+            )
+        })
+      })
     })
 
     it("handles missing id in the response", async () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n-----",
+        expected: "-l----r",
+        valueMap,
+        getState: () => ({ newTask: { text: "foo" } }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
-                json: () => Promise.resolve({ item: {} })
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([clearNewTask(), reloadTasks()])
+                json: () => observableOf({ item: {} })
+              }),
+              scheduler
+            )
+        })
+      })
 
       expect(console.error).toBeCalledWith(
         "Missing '_id' field in the API response"
@@ -1041,21 +1079,23 @@ describe("epics", () => {
       const consoleError = console.error
       console.error = jest.fn()
 
-      await expect(
-        newTaskEpic(
-          ActionsObservable.of(createNewTask("abc")),
-          { getState: () => ({ newTask: { text: "foo" } }) },
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n-----",
+        expected: "-l----r",
+        valueMap,
+        getState: () => ({ newTask: { text: "foo" } }),
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: true,
-                json: () => Promise.resolve({})
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([clearNewTask(), reloadTasks()])
+                json: () => observableOf({})
+              }),
+              scheduler
+            )
+        })
+      })
 
       expect(console.error).toBeCalledWith(
         "Missing 'item' field in the API response"
@@ -1068,10 +1108,10 @@ describe("epics", () => {
   })
 
   describe("editTaskEpic", () => {
-    // TODO: add throttling with a reducer so we don't lose edits
+    // TODO: add throttling with a reduce operation so we don't lose edits
 
     it("calls fetch when it gets an edit action", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
 
       await editTaskEpic(
         ActionsObservable.of(
@@ -1105,7 +1145,7 @@ describe("epics", () => {
             )
           ),
           {},
-          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
+          { fetchFromAPI: () => observableThrow(TypeError("Failed to fetch")) }
         )
           .pipe(toArray())
           .toPromise()
@@ -1131,7 +1171,7 @@ describe("epics", () => {
           {},
           {
             fetchFromAPI: () =>
-              Promise.resolve({
+              observableOf({
                 ok: false,
                 status: 500,
                 statusText: "Server error"
@@ -1160,7 +1200,7 @@ describe("epics", () => {
             )
           ),
           {},
-          { fetchFromAPI: () => Promise.resolve({ ok: true }) }
+          { fetchFromAPI: () => observableOf({ ok: true }) }
         )
           .pipe(toArray())
           .toPromise()
@@ -1169,14 +1209,39 @@ describe("epics", () => {
   })
 
   describe("deleteTaskEpic", () => {
-    it("calls fetch when it gets a delete action", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+    const valueMap = {
+      d: deleteTask("a", { isComplete: true, text: "foo" }),
+      e: deleteTask(getTempTaskId(), { isComplete: true, text: "bar temp" }),
+      t: sendToast("TASK_DELETE_START", "Deleting task...", "Undo", {
+        useSpinner: true
+      }),
+      x: toastClosed("TASK_DELETE_START", { withAction: false }),
+      u: toastClosed("TASK_DELETE_START", { withAction: true }),
+      f: taskDeleteFailed(
+        "a",
+        { isComplete: true, text: "foo" },
+        "Failed to fetch"
+      ),
+      g: sendToast("TASK_DELETE_ERROR", "Failed to fetch"),
+      h: taskDeleteFailed(
+        "a",
+        { isComplete: true, text: "foo" },
+        "HTTP Error: Server error (500)"
+      ),
+      i: sendToast("TASK_DELETE_ERROR", "HTTP Error: Server error (500)"),
+      j: taskDeleteFailed("a", { isComplete: true, text: "foo" }, "Undone"),
+      s: taskDeleteSucceeded("a")
+    }
 
-      await deleteTaskEpic(
-        ActionsObservable.of(deleteTask("a")),
-        {},
-        { fetchFromAPI }
-      ).toPromise()
+    it("calls fetch when it gets a delete action", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf())
+
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d-x-",
+        valueMap,
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).toBeCalledWith("/tasks/a", {
         method: "DELETE"
@@ -1184,80 +1249,150 @@ describe("epics", () => {
     })
 
     it("does nothing when it gets a delete action with a temp id", async () => {
-      const fetchFromAPI = jest.fn().mockReturnValue(Promise.resolve())
+      const fetchFromAPI = jest
+        .fn()
+        .mockReturnValue(observableThrow(TypeError("Failed to fetch")))
 
-      await expect(
-        deleteTaskEpic(
-          ActionsObservable.of(deleteTask(getTempTaskId())),
-          {},
-          { fetchFromAPI }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([])
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-e-x-",
+        expected: "-----",
+        valueMap,
+        getDependencies: () => ({ fetchFromAPI })
+      })
+
+      expect(fetchFromAPI).not.toBeCalled()
+    })
+
+    it("does nothing if the toast isn't closed", async () => {
+      const fetchFromAPI = jest
+        .fn()
+        .mockReturnValue(observableThrow(TypeError("Failed to fetch")))
+
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d-",
+        expected: "-t-",
+        valueMap,
+        getDependencies: () => ({ fetchFromAPI })
+      })
+
+      expect(fetchFromAPI).not.toBeCalled()
+    })
+
+    it("can send multiple toasts", async () => {
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d-b-c-",
+        expected: "-t-t-t-",
+        valueMap: {
+          ...valueMap,
+          b: deleteTask("b", { isComplete: false, text: "foo b" }),
+          c: deleteTask("c", { isComplete: true, text: "foo c" })
+        },
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableThrow(TypeError("Failed to fetch")),
+              scheduler
+            )
+        })
+      })
+    })
+
+    it("can delete multiple tasks with one toast", async () => {
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d-b-c----x---------",
+        expected: "-t-t-t---------(sqr)",
+        valueMap: {
+          ...valueMap,
+          b: deleteTask("b", { isComplete: false, text: "foo b" }),
+          c: deleteTask("c", { isComplete: true, text: "foo c" }),
+          q: taskDeleteSucceeded("b"),
+          r: taskDeleteSucceeded("c")
+        },
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(observableOf({ ok: true }), scheduler)
+        })
+      })
+    })
+
+    it("handles undo and doesn't fetch", async () => {
+      const fetchFromAPI = jest.fn().mockReturnValue(observableOf({ ok: true }))
+
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d--u-",
+        expected: "-t--j-",
+        valueMap,
+        getDependencies: () => ({ fetchFromAPI })
+      })
 
       expect(fetchFromAPI).not.toBeCalled()
     })
 
     it("handles fetch errors gracefully", async () => {
-      await expect(
-        deleteTaskEpic(
-          ActionsObservable.of(
-            deleteTask("a", { isComplete: true, text: "foo" })
-          ),
-          {},
-          { fetchFromAPI: () => Promise.reject(TypeError("Failed to fetch")) }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        taskDeleteFailed(
-          "a",
-          { isComplete: true, text: "foo" },
-          "Failed to fetch"
-        )
-      ])
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d--x--------",
+        expected: "-t-------(fg)",
+        valueMap,
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableThrow(TypeError("Failed to fetch")),
+              scheduler
+            )
+        })
+      })
     })
 
     it("handles http errors gracefully", async () => {
-      await expect(
-        deleteTaskEpic(
-          ActionsObservable.of(
-            deleteTask("a", { isComplete: true, text: "foo" })
-          ),
-          {},
-          {
-            fetchFromAPI: () =>
-              Promise.resolve({
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d--x--------",
+        expected: "-t-------(hi)",
+        valueMap,
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(
+              observableOf({
                 ok: false,
                 status: 500,
                 statusText: "Server error"
-              })
-          }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([
-        taskDeleteFailed(
-          "a",
-          { isComplete: true, text: "foo" },
-          "HTTP Error: Server error (500)"
-        )
-      ])
+              }),
+              scheduler
+            )
+        })
+      })
     })
 
     it("indicates success when the request goes through", async () => {
-      await expect(
-        deleteTaskEpic(
-          ActionsObservable.of(
-            deleteTask("a", { isComplete: true, text: "foo" })
-          ),
-          {},
-          { fetchFromAPI: () => Promise.resolve({ ok: true }) }
-        )
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([taskDeleteSucceeded("a")])
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d--x-----",
+        expected: "-t-------s",
+        valueMap,
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(observableOf({ ok: true }), scheduler)
+        })
+      })
+    })
+
+    it("ignores multiple close actions", async () => {
+      testEpic({
+        epic: deleteTaskEpic,
+        inputted: "-d--x-x---",
+        expected: "-t-------s",
+        valueMap,
+        getDependencies: scheduler => ({
+          fetchFromAPI: () =>
+            createDelayedObservable(observableOf({ ok: true }), scheduler)
+        })
+      })
     })
   })
 

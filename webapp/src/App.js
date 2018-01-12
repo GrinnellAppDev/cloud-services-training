@@ -111,8 +111,8 @@ export const App = ({
           leaveAnimation="fade"
           duration={200}
         >
-          {tasks.map(({ _id }) => (
-            <li className="App-taskListItem" key={_id}>
+          {tasks.map(({ _id, tempId }) => (
+            <li className="App-taskListItem" key={tempId || _id}>
               <Task id={_id} />
             </li>
           ))}
