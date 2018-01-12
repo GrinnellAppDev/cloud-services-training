@@ -480,7 +480,10 @@ export const editTaskEpic = (
             )
         }),
         catchError(err =>
-          observableOf(taskEditFailed(id, original, err.message))
+          observableOf(
+            taskEditFailed(id, original, err.message),
+            sendToast("EDIT_TASK_FAILED", "Couldn't update task")
+          )
         )
       )
     )

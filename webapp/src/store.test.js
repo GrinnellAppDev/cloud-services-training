@@ -1126,6 +1126,7 @@ describe("epics", () => {
         { isComplete: false, text: "bar" },
         "HTTP Error: Server error (500)"
       ),
+      t: sendToast("EDIT_TASK_FAILED", "Couldn't update task"),
       s: taskEditSucceeded("a")
     }
 
@@ -1151,8 +1152,8 @@ describe("epics", () => {
     it("handles fetch errors gracefully", async () => {
       testEpic({
         epic: editTaskEpic,
-        inputted: "-e-----",
-        expected: "------f",
+        inputted: "-e--------",
+        expected: "------(ft)",
         valueMap,
         getDependencies: scheduler => ({
           fetchFromAPI: () =>
@@ -1167,8 +1168,8 @@ describe("epics", () => {
     it("handles http errors gracefully", async () => {
       testEpic({
         epic: editTaskEpic,
-        inputted: "-e-----",
-        expected: "------h",
+        inputted: "-e--------",
+        expected: "------(ht)",
         valueMap,
         getDependencies: scheduler => ({
           fetchFromAPI: () =>
