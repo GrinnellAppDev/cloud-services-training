@@ -449,7 +449,10 @@ export const newTaskEpic = (
                   return reloadTasks()
                 }),
                 catchError(err =>
-                  observableOf(taskCreateFailed(temporaryId, err.message))
+                  observableOf(
+                    taskCreateFailed(temporaryId, err.message),
+                    sendToast("CREATE_TASK_FAILED", "Couldn't create task")
+                  )
                 )
               )
             )

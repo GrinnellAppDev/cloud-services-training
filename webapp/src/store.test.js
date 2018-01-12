@@ -942,7 +942,8 @@ describe("epics", () => {
       l: clearNewTask(),
       f: taskCreateFailed("abc", "Failed to fetch"),
       h: taskCreateFailed("abc", "HTTP Error: Server error (500)"),
-      r: reloadTasks()
+      r: reloadTasks(),
+      t: sendToast("CREATE_TASK_FAILED", "Couldn't create task")
     }
 
     it("calls fetch when it gets a create action", async () => {
@@ -986,8 +987,8 @@ describe("epics", () => {
     it("handles fetch errors gracefully", async () => {
       testEpic({
         epic: newTaskEpic,
-        inputted: "-n-----",
-        expected: "-l----f",
+        inputted: "-n--------",
+        expected: "-l----(ft)",
         valueMap,
         getState: () => ({ newTask: { text: "foo" } }),
         getDependencies: scheduler => ({
@@ -1004,7 +1005,7 @@ describe("epics", () => {
       testEpic({
         epic: newTaskEpic,
         inputted: "-n-----",
-        expected: "-l----h",
+        expected: "-l----(ht)",
         valueMap,
         getState: () => ({ newTask: { text: "foo" } }),
         getDependencies: scheduler => ({
