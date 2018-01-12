@@ -19,7 +19,6 @@ import InfiniteScroll from "react-infinite-scroller"
 import LoadingSpinner from "./LoadingSpinner"
 import { getTempTaskId } from "./util"
 import FlipMove from "react-flip-move"
-import classnames from "classnames"
 import TextButton from "./TextButton"
 
 export const withEnhancers = connect(
