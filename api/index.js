@@ -190,7 +190,7 @@ express()
             }
           })
         } else if (!updateResult.result.ok) {
-          throw Error("Couldn't update database")
+          throw new Error("Couldn't update database")
         } else {
           response.status(204).send()
         }
@@ -234,7 +234,7 @@ express()
             }
           })
         } else if (!deleteResult.ok) {
-          throw Error("Couldn't update database")
+          throw new Error("Couldn't update database")
         } else {
           response.status(204).send()
         }
