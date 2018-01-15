@@ -29,9 +29,7 @@ express()
       const tasksCollection = db.collection("tasks")
       const allTasks = tasksCollection.find().sort("_id", -1)
 
-      response.status(200).send({
-        items: await allTasks.toArray()
-      })
+      response.status(200).send(await allTasks.toArray())
     })
   )
 
@@ -46,10 +44,10 @@ express()
       const insertResult = await tasksCollection.insertOne(newTask)
 
       if (!insertResult.result.ok) {
-        throw Error("Couldn't add to database")
+        throw new Error("Couldn't add to database")
       }
 
-      response.status(201).send({ item: newTask })
+      response.status(201).send(newTask)
     })
   )
 
@@ -84,7 +82,7 @@ express()
         throw Error("Couldn't update database")
       }
 
-      response.status(200).send({ item: deleteResult.value })
+      response.status(200).send(deleteResult.value)
     })
   )
 
@@ -92,7 +90,7 @@ express()
     console.error(error)
 
     if (process.env.NODE_ENV === "production") {
-      response.status(500).send({ error: true })
+      response.status(500).send({ message: "Server error" })
     } else {
       response.status(500).send({
         error: {
