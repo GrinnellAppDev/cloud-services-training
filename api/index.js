@@ -62,7 +62,7 @@ express()
       )
 
       if (!updateResult.result.ok) {
-        throw Error("Couldn't update database")
+        throw new Error("Couldn't update database")
       }
 
       response.status(204).send()
@@ -79,7 +79,7 @@ express()
       })
 
       if (!deleteResult.ok) {
-        throw Error("Couldn't update database")
+        throw new Error("Couldn't update database")
       }
 
       response.status(204).send()
