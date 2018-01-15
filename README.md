@@ -1,8 +1,11 @@
-# AppDev Cloud Services Training: Day 4
+# AppDev Cloud Services Training: Day 6
 
 ## Readings
 
-* [Higher order functions](https://eloquentjavascript.net/05_higher_order.html)
+* [Basics of JSDoc](http://usejsdoc.org/about-getting-started.html#adding-documentation-comments-to-your-code)
+* [Types in JSDoc](http://usejsdoc.org/tags-type.html)
+* [What is a schema?](https://spacetelescope.github.io/understanding-json-schema/about.html)
+* [OpenAPI Schemas](https://swagger.io/docs/specification/data-models/data-types/)
 
 ## Table of Contents
 
