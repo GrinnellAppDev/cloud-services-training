@@ -12,7 +12,7 @@ const PORT = 2000
 
 const idToBase64 = id => urlsafeBase64.encode(Buffer.from(id.toString(), "hex"))
 const base64ToId = base64 =>
-  ObjectId(urlsafeBase64.decode(base64).toString("hex"))
+  new ObjectId(urlsafeBase64.decode(base64).toString("hex"))
 
 const runWithDB = async run => {
   let db
