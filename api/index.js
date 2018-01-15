@@ -45,9 +45,9 @@ express()
 
       if (!insertResult.result.ok) {
         throw new Error("Couldn't add to database")
+      } else {
+        response.status(201).send(newTask)
       }
-
-      response.status(201).send(newTask)
     })
   )
 
@@ -63,9 +63,9 @@ express()
 
       if (!updateResult.result.ok) {
         throw new Error("Couldn't update database")
+      } else {
+        response.status(204).send()
       }
-
-      response.status(204).send()
     })
   )
 
@@ -80,9 +80,9 @@ express()
 
       if (!deleteResult.ok) {
         throw new Error("Couldn't update database")
+      } else {
+        response.status(204).send()
       }
-
-      response.status(204).send()
     })
   )
 
