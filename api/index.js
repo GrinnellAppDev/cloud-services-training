@@ -21,11 +21,7 @@ express()
 
   .use((error, request, response, next) => {
     if (error instanceof HTTPError) {
-      response.status(error.status).send({
-        error: {
-          message: error.message
-        }
-      })
+      response.status(error.status).send({ message: error.message })
     } else {
       console.error(error)
       response.status(500).send({ message: "Server error" })

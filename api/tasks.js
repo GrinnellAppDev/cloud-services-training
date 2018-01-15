@@ -35,11 +35,22 @@ module.exports = Router()
         .toArray()
       const items = readTasks.slice(0, pageSize)
       const nextPageFirstTask = readTasks[pageSize]
-      const nextPageToken = nextPageFirstTask
-        ? idToBase64(nextPageFirstTask._id)
-        : null
 
-      response.status(200).send({ items, nextPageToken })
+      if (nextPageFirstTask) {
+        const protocol = request.protocol
+        const host = request.get("host")
+        const path = request.baseUrl + request.path
+        const query = querystring.stringify({
+          ...request.query,
+          pageToken: idToBase64(nextPageFirstTask._id)
+        })
+
+        response.links({
+          next: `${protocol}://${host}${path}?${query}`
+        })
+      }
+
+      response.status(200).send(items)
     })
   )
 
@@ -60,7 +71,7 @@ module.exports = Router()
       if (!insertResult.result.ok) {
         throw new Error("Couldn't add to database")
       } else {
-        response.status(201).send({ item: newTask })
+        response.status(201).send(newTask)
       }
     })
   )
@@ -112,7 +123,7 @@ module.exports = Router()
       } else if (!deleteResult.ok) {
         throw new Error("Couldn't update database")
       } else {
-        response.status(200).send({ item: deleteResult.value })
+        response.status(204).send()
       }
     })
   )
