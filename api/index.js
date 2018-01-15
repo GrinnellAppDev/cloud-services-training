@@ -7,7 +7,6 @@ const urlsafeBase64 = require("urlsafe-base64")
 const jsonschema = require("jsonschema")
 const readYAML = require("read-yaml")
 
-// @ts-ignore
 require("express-async-errors")
 
 const PORT = 2000
