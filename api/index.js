@@ -38,8 +38,12 @@ const runWithDB = async run => {
   }
 }
 
-const schemaValidator = new jsonschema.Validator()
 const schemas = readYAML.sync("./schemas.yml")
+const schemaValidator = new jsonschema.Validator()
+
+schemaValidator.customFormats.urlsafeBase64 = input =>
+  urlsafeBase64.validate(input)
+schemaValidator.customFormats.objectID = input => ObjectID.isValid(input)
 
 express()
   .use(cors())
@@ -47,28 +51,24 @@ express()
 
   .get("/tasks", (request, response) =>
     runWithDB(async db => {
-      const pageSizeValidation = schemaValidator.validate(
-        request.query.pageSize,
-        { type: "integer" }
-      )
-      const pageTokenIsValid =
-        typeof request.query.pageToken === "string" &&
-        urlsafeBase64.validate(request.query.pageToken)
-
-      if (!pageSizeValidation.valid) {
-        response.status(400).send({
-          error: {
-            status: 400,
-            message:
-              "Invalid query param (pageSize): " +
-              pageSizeValidation.errors[0].stack
+      const queryValidation = schemaValidator.validate(
+        request.query,
+        {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            pageSize: { type: "integer" },
+            pageToken: { type: "string", format: "urlsafeBase64" }
           }
-        })
-      } else if (!pageTokenIsValid) {
+        },
+        { propertyName: "query" }
+      )
+
+      if (!queryValidation.valid) {
         response.status(400).send({
           error: {
             status: 400,
-            message: "Invalid query param (pageToken)"
+            message: "Invalid request: " + queryValidation.errors[0].stack
           }
         })
       } else {
@@ -100,14 +100,15 @@ express()
     runWithDB(async db => {
       const bodyValidation = schemaValidator.validate(
         request.body,
-        schemas.TaskCreate
+        schemas.TaskCreate,
+        { propertyName: "body" }
       )
 
       if (!bodyValidation.valid) {
         response.status(400).send({
           error: {
             status: 400,
-            message: "Invalid body: " + bodyValidation.errors[0].stack
+            message: "Invalid request: " + bodyValidation.errors[0].stack
           }
         })
       } else {
@@ -132,26 +133,32 @@ express()
     runWithDB(async db => {
       const bodyValidation = schemaValidator.validate(
         request.body,
-        schemas.TaskEdit
+        schemas.TaskEdit,
+        { propertyName: "body" }
       )
-      const taskIdValidation = schemaValidator.validate(
-        request.params.taskId,
-        schemas.ObjectID
+      const pathParamValidation = schemaValidator.validate(
+        request.params,
+        {
+          type: "object",
+          properties: {
+            taskId: { type: "string", format: "objectID" }
+          }
+        },
+        { propertyName: "path params" }
       )
 
       if (!bodyValidation.valid) {
         response.status(400).send({
           error: {
             status: 400,
-            message: "Invalid body: " + bodyValidation.errors[0].stack
+            message: "Invalid request: " + bodyValidation.errors[0].stack
           }
         })
-      } else if (!taskIdValidation.valid) {
+      } else if (!pathParamValidation.valid) {
         response.status(400).send({
           error: {
             status: 400,
-            message:
-              "Invalid path param (taskId): " + taskIdValidation.errors[0].stack
+            message: "Invalid request: " + pathParamValidation.errors[0].stack
           }
         })
       } else {
@@ -181,17 +188,22 @@ express()
 
   .delete("/tasks/:taskId", (request, response) =>
     runWithDB(async db => {
-      const taskIdValidation = schemaValidator.validate(
-        request.params.taskId,
-        schemas.ObjectID
+      const pathParamValidation = schemaValidator.validate(
+        request.params,
+        {
+          type: "object",
+          properties: {
+            taskId: { type: "string", format: "objectID" }
+          }
+        },
+        { propertyName: "path params" }
       )
 
-      if (!taskIdValidation.valid) {
+      if (!pathParamValidation.valid) {
         response.status(400).send({
           error: {
             status: 400,
-            message:
-              "Invalid path param (taskId): " + taskIdValidation.errors[0].stack
+            message: "Invalid request: " + pathParamValidation.errors[0].stack
           }
         })
       } else {
