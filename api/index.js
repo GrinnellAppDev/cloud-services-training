@@ -31,7 +31,10 @@ express()
     try {
       db = await MongoClient.connect(process.env.MONGO_URL)
 
-      const newTask = { ...request.body }
+      const newTask = {
+        ...request.body,
+        isComplete: false
+      }
 
       const tasksCollection = db.collection("tasks")
       const insertResult = await tasksCollection.insertOne(newTask)
