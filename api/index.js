@@ -4,6 +4,8 @@ const { MongoClient, ObjectID, Db } = require("mongodb")
 const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
+const jsonschema = require("jsonschema")
+const readYAML = require("read-yaml")
 
 // @ts-ignore
 require("express-async-errors")
@@ -37,95 +39,182 @@ const runWithDB = async run => {
   }
 }
 
+const schemaValidator = new jsonschema.Validator()
+const schemas = readYAML.sync("./schemas.yml")
+
 express()
   .use(cors())
   .use(bodyParser.json())
 
   .get("/tasks", (request, response) =>
     runWithDB(async db => {
-      const tasksCollection = db.collection("tasks")
+      const pageSizeValidation = schemaValidator.validate(
+        request.query.pageSize,
+        { type: "integer" }
+      )
+      const pageTokenIsValid =
+        typeof request.query.pageToken === "string" &&
+        urlsafeBase64.validate(request.query.pageToken)
 
-      /** @type {number} */ const pageSize = +request.query.pageSize || 10
-      /** @type {string} */ const pageToken = request.query.pageToken || null
+      if (!pageSizeValidation.valid) {
+        response.status(400).send({
+          error: {
+            status: 400,
+            message:
+              "Invalid query param (pageSize): " +
+              pageSizeValidation.errors[0].stack
+          }
+        })
+      } else if (!pageTokenIsValid) {
+        response.status(400).send({
+          error: {
+            status: 400,
+            message: "Invalid query param (pageToken)"
+          }
+        })
+      } else {
+        const tasksCollection = db.collection("tasks")
 
-      const allTasks = pageToken
-        ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
-        : tasksCollection.find()
+        /** @type {number} */ const pageSize = +request.query.pageSize || 10
+        /** @type {string} */ const pageToken = request.query.pageToken || null
 
-      const readTasks = await allTasks.sort("_id", -1).limit(pageSize + 1).toArray()
-      const items = readTasks.slice(0, pageSize)
-      const nextPageFirstTask = readTasks[pageSize]
-      const nextPageToken = nextPageFirstTask
-        ? idToBase64(nextPageFirstTask._id)
-        : null
+        const allTasks = pageToken
+          ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
+          : tasksCollection.find()
 
-      response.status(200).send({ items, nextPageToken })
+        const readTasks = await allTasks
+          .sort("_id", -1)
+          .limit(pageSize + 1)
+          .toArray()
+        const items = readTasks.slice(0, pageSize)
+        const nextPageFirstTask = readTasks[pageSize]
+        const nextPageToken = nextPageFirstTask
+          ? idToBase64(nextPageFirstTask._id)
+          : null
+
+        response.status(200).send({ items, nextPageToken })
+      }
     })
   )
 
   .post("/tasks", (request, response) =>
     runWithDB(async db => {
-      const newTask = {
-        ...request.body,
-        isComplete: false
+      const bodyValidation = schemaValidator.validate(
+        request.body,
+        schemas.TaskCreate
+      )
+
+      if (!bodyValidation.valid) {
+        response.status(400).send({
+          error: {
+            status: 400,
+            message: "Invalid body: " + bodyValidation.errors[0].stack
+          }
+        })
+      } else {
+        const newTask = {
+          ...request.body,
+          isComplete: false
+        }
+
+        const tasksCollection = db.collection("tasks")
+        const insertResult = await tasksCollection.insertOne(newTask)
+
+        if (!insertResult.result.ok) {
+          throw Error("Couldn't add to database")
+        }
+
+        response.status(201).send({ item: newTask })
       }
-
-      const tasksCollection = db.collection("tasks")
-      const insertResult = await tasksCollection.insertOne(newTask)
-
-      if (!insertResult.result.ok) {
-        throw Error("Couldn't add to database")
-      }
-
-      response.status(201).send({ item: newTask })
     })
   )
 
   .patch("/tasks/:taskId", (request, response) =>
     runWithDB(async db => {
-      const tasksCollection = db.collection("tasks")
-
-      const { taskId } = request.params
-      const updateResult = await tasksCollection.updateOne(
-        { _id: new ObjectID(taskId) },
-        { $set: request.body }
+      const bodyValidation = schemaValidator.validate(
+        request.body,
+        schemas.TaskEdit
+      )
+      const taskIdValidation = schemaValidator.validate(
+        request.params.taskId,
+        schemas.ObjectID
       )
 
-      if (updateResult.matchedCount < 1) {
-        response.status(404).send({
+      if (!bodyValidation.valid) {
+        response.status(400).send({
           error: {
-            status: 404,
-            message: `No task with id "${taskId}"`
+            status: 400,
+            message: "Invalid body: " + bodyValidation.errors[0].stack
           }
         })
-      } else if (!updateResult.result.ok) {
-        throw Error("Couldn't update database")
+      } else if (!taskIdValidation.valid) {
+        response.status(400).send({
+          error: {
+            status: 400,
+            message:
+              "Invalid path param (taskId): " + taskIdValidation.errors[0].stack
+          }
+        })
       } else {
-        response.status(204).send()
+        const tasksCollection = db.collection("tasks")
+
+        const { taskId } = request.params
+        const updateResult = await tasksCollection.updateOne(
+          { _id: new ObjectID(taskId) },
+          { $set: request.body }
+        )
+
+        if (updateResult.matchedCount < 1) {
+          response.status(404).send({
+            error: {
+              status: 404,
+              message: `No task with id "${taskId}"`
+            }
+          })
+        } else if (!updateResult.result.ok) {
+          throw Error("Couldn't update database")
+        } else {
+          response.status(204).send()
+        }
       }
     })
   )
 
   .delete("/tasks/:taskId", (request, response) =>
     runWithDB(async db => {
-      const tasksCollection = db.collection("tasks")
+      const taskIdValidation = schemaValidator.validate(
+        request.params.taskId,
+        schemas.ObjectID
+      )
 
-      const { taskId } = request.params
-      const deleteResult = await tasksCollection.findOneAndDelete({
-        _id: new ObjectID(taskId)
-      })
-
-      if (!deleteResult.value) {
-        response.status(404).send({
+      if (!taskIdValidation.valid) {
+        response.status(400).send({
           error: {
-            status: 404,
-            message: `No task with id "${taskId}"`
+            status: 400,
+            message:
+              "Invalid path param (taskId): " + taskIdValidation.errors[0].stack
           }
         })
-      } else if (!deleteResult.ok) {
-        throw Error("Couldn't update database")
       } else {
-        response.status(200).send({ item: deleteResult.value })
+        const tasksCollection = db.collection("tasks")
+
+        const { taskId } = request.params
+        const deleteResult = await tasksCollection.findOneAndDelete({
+          _id: new ObjectID(taskId)
+        })
+
+        if (!deleteResult.value) {
+          response.status(404).send({
+            error: {
+              status: 404,
+              message: `No task with id "${taskId}"`
+            }
+          })
+        } else if (!deleteResult.ok) {
+          throw Error("Couldn't update database")
+        } else {
+          response.status(200).send({ item: deleteResult.value })
+        }
       }
     })
   )

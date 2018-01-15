@@ -1,0 +1,21 @@
+TaskCreate:
+  type: object
+  properties:
+    text:
+      type: string
+  required:
+    - text
+  additionalProperties: false
+
+TaskEdit:
+  type: object
+  properties:
+    text:
+      type: string
+    isComplete:
+      type: boolean
+  additionalProperties: false
+
+ObjectID:
+  type: string
+  pattern: ^[0-9a-fA-F]{24}$
