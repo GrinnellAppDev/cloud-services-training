@@ -67,10 +67,7 @@ express()
 
       if (!queryValidation.valid) {
         response.status(400).send({
-          error: {
-            status: 400,
-            message: "Invalid request: " + queryValidation.errors[0].stack
-          }
+          message: "Invalid request: " + queryValidation.errors[0].stack
         })
       } else {
         const tasksCollection = db.collection("tasks")
@@ -118,10 +115,7 @@ express()
 
       if (!bodyValidation.valid) {
         response.status(400).send({
-          error: {
-            status: 400,
-            message: "Invalid request: " + bodyValidation.errors[0].stack
-          }
+          message: "Invalid request: " + bodyValidation.errors[0].stack
         })
       } else {
         const newTask = {
@@ -161,17 +155,11 @@ express()
 
       if (!bodyValidation.valid) {
         response.status(400).send({
-          error: {
-            status: 400,
-            message: "Invalid request: " + bodyValidation.errors[0].stack
-          }
+          message: "Invalid request: " + bodyValidation.errors[0].stack
         })
       } else if (!pathParamValidation.valid) {
         response.status(400).send({
-          error: {
-            status: 400,
-            message: "Invalid request: " + pathParamValidation.errors[0].stack
-          }
+          message: "Invalid request: " + pathParamValidation.errors[0].stack
         })
       } else {
         const tasksCollection = db.collection("tasks")
@@ -183,12 +171,7 @@ express()
         )
 
         if (updateResult.matchedCount < 1) {
-          response.status(404).send({
-            error: {
-              status: 404,
-              message: `No task with id "${taskId}"`
-            }
-          })
+          response.status(404).send({ message: `No task with id "${taskId}"` })
         } else if (!updateResult.result.ok) {
           throw new Error("Couldn't update database")
         } else {
@@ -213,10 +196,7 @@ express()
 
       if (!pathParamValidation.valid) {
         response.status(400).send({
-          error: {
-            status: 400,
-            message: "Invalid request: " + pathParamValidation.errors[0].stack
-          }
+          message: "Invalid request: " + pathParamValidation.errors[0].stack
         })
       } else {
         const tasksCollection = db.collection("tasks")
@@ -227,12 +207,7 @@ express()
         })
 
         if (!deleteResult.value) {
-          response.status(404).send({
-            error: {
-              status: 404,
-              message: `No task with id "${taskId}"`
-            }
-          })
+          response.status(404).send({ message: `No task with id "${taskId}"` })
         } else if (!deleteResult.ok) {
           throw new Error("Couldn't update database")
         } else {
@@ -243,9 +218,7 @@ express()
   )
 
   .all("/*", (request, response) => {
-    response.status(404).send({
-      message: "Not found"
-    })
+    response.status(404).send({ message: "Not found" })
   })
 
   .use((error, request, response, next) => {
