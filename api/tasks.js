@@ -1,4 +1,5 @@
 const { Router } = require("express")
+const { ObjectId } = require("mongodb")
 
 const {
   runWithDB,
@@ -58,9 +59,9 @@ module.exports = Router()
 
       if (!insertResult.result.ok) {
         throw new Error("Couldn't add to database")
+      } else {
+        response.status(201).send({ item: newTask })
       }
-
-      response.status(201).send({ item: newTask })
     })
   )
 
@@ -68,7 +69,7 @@ module.exports = Router()
     runWithDB(async db => {
       validateRequest(request, {
         paramSchemaProps: {
-          taskId: { type: "string", format: "objectID" }
+          taskId: { type: "string", format: "objectId" }
         },
         bodySchema: schemas.TaskEdit
       })
@@ -77,7 +78,7 @@ module.exports = Router()
 
       const { taskId } = request.params
       const updateResult = await tasksCollection.updateOne(
-        { _id: new ObjectID(taskId) },
+        { _id: new ObjectId(taskId) },
         { $set: request.body }
       )
 
@@ -95,7 +96,7 @@ module.exports = Router()
     runWithDB(async db => {
       validateRequest(request, {
         paramSchemaProps: {
-          taskId: { type: "string", format: "objectID" }
+          taskId: { type: "string", format: "objectId" }
         }
       })
 
@@ -103,7 +104,7 @@ module.exports = Router()
 
       const { taskId } = request.params
       const deleteResult = await tasksCollection.findOneAndDelete({
-        _id: new ObjectID(taskId)
+        _id: new ObjectId(taskId)
       })
 
       if (!deleteResult.value) {

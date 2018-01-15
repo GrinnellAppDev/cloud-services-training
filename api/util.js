@@ -1,4 +1,4 @@
-const { MongoClient, ObjectID, Db } = require("mongodb")
+const { MongoClient, ObjectId, Db } = require("mongodb")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
 const jsonschema = require("jsonschema")
@@ -15,7 +15,7 @@ class HTTPError extends Error {
 module.exports.HTTPError = HTTPError
 
 /**
- * @param {ObjectID} id
+ * @param {ObjectId} id
  */
 module.exports.idToBase64 = id =>
   urlsafeBase64.encode(Buffer.from(id.toString(), "hex"))
@@ -24,7 +24,7 @@ module.exports.idToBase64 = id =>
  * @param {string} base64
  */
 module.exports.base64ToId = base64 =>
-  new ObjectID(urlsafeBase64.decode(base64).toString("hex"))
+  new ObjectId(urlsafeBase64.decode(base64).toString("hex"))
 
 /**
  * @param {function(Db): Promise<void>} run
@@ -48,7 +48,7 @@ const schemaValidator = new jsonschema.Validator()
 
 schemaValidator.customFormats.urlsafeBase64 = input =>
   urlsafeBase64.validate(input)
-schemaValidator.customFormats.objectID = input => ObjectID.isValid(input)
+schemaValidator.customFormats.objectId = input => ObjectId.isValid(input)
 
 module.exports.validateRequest = (
   request,
