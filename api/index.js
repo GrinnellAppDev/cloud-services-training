@@ -85,10 +85,7 @@ express()
 
       if (updateResult.matchedCount < 1) {
         response.status(404).send({
-          error: {
-            status: 404,
-            message: `No task with id "${taskId}"`
-          }
+          message: `No task with id "${taskId}"`
         })
       } else if (!updateResult.result.ok) {
         throw Error("Couldn't update database")
@@ -109,10 +106,7 @@ express()
 
       if (!deleteResult.value) {
         response.status(404).send({
-          error: {
-            status: 404,
-            message: `No task with id "${taskId}"`
-          }
+          message: `No task with id "${taskId}"`
         })
       } else if (!deleteResult.ok) {
         throw Error("Couldn't update database")
@@ -124,10 +118,7 @@ express()
 
   .all("/*", (request, response) => {
     response.status(404).send({
-      error: {
-        status: 404,
-        message: "Not found"
-      }
+      message: "Not found"
     })
   })
 
