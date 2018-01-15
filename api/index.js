@@ -129,9 +129,7 @@ express()
   )
 
   .all("/*", (request, response) => {
-    response.status(404).send({
-      message: "Not found"
-    })
+    response.status(404).send({ message: "Not found" })
   })
 
   .use((error, request, response, next) => {
