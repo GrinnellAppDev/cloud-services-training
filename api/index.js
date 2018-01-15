@@ -41,14 +41,17 @@ express()
         ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
         : tasksCollection.find()
 
-      const readTasks = await allTasks.sort("_id", -1).limit(pageSize + 1).toArray()
+      const readTasks = await allTasks
+        .sort("_id", -1)
+        .limit(pageSize + 1)
+        .toArray()
       const items = readTasks.slice(0, pageSize)
       const nextPageFirstTask = readTasks[pageSize]
       const nextPageToken = nextPageFirstTask
         ? idToBase64(nextPageFirstTask._id)
         : null
 
-      response.status(200).send({ items, nextPageToken })
+      response.status(200).send(await allTasks.toArray())
     })
   )
 
@@ -63,10 +66,10 @@ express()
       const insertResult = await tasksCollection.insertOne(newTask)
 
       if (!insertResult.result.ok) {
-        throw Error("Couldn't add to database")
+        throw new Error("Couldn't add to database")
       }
 
-      response.status(201).send({ item: newTask })
+      response.status(201).send(newTask)
     })
   )
 
@@ -76,7 +79,7 @@ express()
 
       const { taskId } = request.params
       const updateResult = await tasksCollection.updateOne(
-        { _id: ObjectId(taskId) },
+        { _id: new ObjectId(taskId) },
         { $set: request.body }
       )
 
@@ -101,7 +104,7 @@ express()
 
       const { taskId } = request.params
       const deleteResult = await tasksCollection.findOneAndDelete({
-        _id: ObjectId(taskId)
+        _id: new ObjectId(taskId)
       })
 
       if (!deleteResult.value) {
@@ -114,7 +117,7 @@ express()
       } else if (!deleteResult.ok) {
         throw Error("Couldn't update database")
       } else {
-        response.status(200).send({ item: deleteResult.value })
+        response.status(204).send()
       }
     })
   )
@@ -132,12 +135,7 @@ express()
     console.error(error)
 
     if (process.env.NODE_ENV === "production") {
-      response.status(500).send({
-        error: {
-          status: 500,
-          message: "Server error"
-        }
-      })
+      response.status(500).send({ message: "Server error" })
     } else {
       response.status(500).send({
         error: {
