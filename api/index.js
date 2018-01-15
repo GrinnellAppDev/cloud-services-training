@@ -133,19 +133,7 @@ express()
 
   .use((error, request, response, next) => {
     console.error(error)
-
-    if (process.env.NODE_ENV === "production") {
-      response.status(500).send({ message: "Server error" })
-    } else {
-      response.status(500).send({
-        error: {
-          status: 500,
-          code: error.code,
-          message: error.message,
-          stack: error.stack
-        }
-      })
-    }
+    response.status(500).send({ message: "Server error" })
   })
 
   .listen(PORT, () => {
