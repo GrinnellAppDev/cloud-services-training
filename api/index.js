@@ -1,9 +1,10 @@
 const express = require("express")
 const cors = require("cors")
-const { MongoClient, ObjectID, Db } = require("mongodb")
+const { MongoClient, ObjectId, Db } = require("mongodb")
 const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
+const querystring = require("querystring")
 const jsonschema = require("jsonschema")
 const readYAML = require("read-yaml")
 
@@ -12,7 +13,7 @@ require("express-async-errors")
 const PORT = 2000
 
 /**
- * @param {ObjectID} id
+ * @param {ObjectId} id
  */
 const idToBase64 = id => urlsafeBase64.encode(Buffer.from(id.toString(), "hex"))
 
@@ -20,7 +21,7 @@ const idToBase64 = id => urlsafeBase64.encode(Buffer.from(id.toString(), "hex"))
  * @param {string} base64
  */
 const base64ToId = base64 =>
-  new ObjectID(urlsafeBase64.decode(base64).toString("hex"))
+  new ObjectId(urlsafeBase64.decode(base64).toString("hex"))
 
 /**
  * @param {function(Db): Promise<void>} run
@@ -43,7 +44,7 @@ const schemaValidator = new jsonschema.Validator()
 
 schemaValidator.customFormats.urlsafeBase64 = input =>
   urlsafeBase64.validate(input)
-schemaValidator.customFormats.objectID = input => ObjectID.isValid(input)
+schemaValidator.customFormats.objectId = input => ObjectId.isValid(input)
 
 express()
   .use(cors())
@@ -87,11 +88,22 @@ express()
           .toArray()
         const items = readTasks.slice(0, pageSize)
         const nextPageFirstTask = readTasks[pageSize]
-        const nextPageToken = nextPageFirstTask
-          ? idToBase64(nextPageFirstTask._id)
-          : null
 
-        response.status(200).send({ items, nextPageToken })
+        if (nextPageFirstTask) {
+          const protocol = request.protocol
+          const host = request.get("host")
+          const path = request.baseUrl + request.path
+          const query = querystring.stringify({
+            ...request.query,
+            pageToken: idToBase64(nextPageFirstTask._id)
+          })
+
+          response.links({
+            next: `${protocol}://${host}${path}?${query}`
+          })
+        }
+
+        response.status(200).send(items)
       }
     })
   )
@@ -124,7 +136,7 @@ express()
           throw Error("Couldn't add to database")
         }
 
-        response.status(201).send({ item: newTask })
+        response.status(201).send(newTask)
       }
     })
   )
@@ -141,7 +153,7 @@ express()
         {
           type: "object",
           properties: {
-            taskId: { type: "string", format: "objectID" }
+            taskId: { type: "string", format: "objectId" }
           }
         },
         { propertyName: "path params" }
@@ -166,7 +178,7 @@ express()
 
         const { taskId } = request.params
         const updateResult = await tasksCollection.updateOne(
-          { _id: new ObjectID(taskId) },
+          { _id: new ObjectId(taskId) },
           { $set: request.body }
         )
 
@@ -193,7 +205,7 @@ express()
         {
           type: "object",
           properties: {
-            taskId: { type: "string", format: "objectID" }
+            taskId: { type: "string", format: "objectId" }
           }
         },
         { propertyName: "path params" }
@@ -211,7 +223,7 @@ express()
 
         const { taskId } = request.params
         const deleteResult = await tasksCollection.findOneAndDelete({
-          _id: new ObjectID(taskId)
+          _id: new ObjectId(taskId)
         })
 
         if (!deleteResult.value) {
@@ -224,7 +236,7 @@ express()
         } else if (!deleteResult.ok) {
           throw Error("Couldn't update database")
         } else {
-          response.status(200).send({ item: deleteResult.value })
+          response.status(204).send()
         }
       }
     })
@@ -232,33 +244,13 @@ express()
 
   .all("/*", (request, response) => {
     response.status(404).send({
-      error: {
-        status: 404,
-        message: "Not found"
-      }
+      message: "Not found"
     })
   })
 
   .use((error, request, response, next) => {
     console.error(error)
-
-    if (process.env.NODE_ENV === "production") {
-      response.status(500).send({
-        error: {
-          status: 500,
-          message: "Server error"
-        }
-      })
-    } else {
-      response.status(500).send({
-        error: {
-          status: 500,
-          code: error.code,
-          message: error.message,
-          stack: error.stack
-        }
-      })
-    }
+    response.status(500).send({ message: "Server error" })
   })
 
   .listen(PORT, () => {
