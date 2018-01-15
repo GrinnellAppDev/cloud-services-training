@@ -58,7 +58,7 @@ module.exports.validateRequest = (
     bodySchema = { type: "object", additionalProperties: false }
   }
 ) => {
-  const paramValidation = schemaValidator.validate(
+  const paramsResult = schemaValidator.validate(
     request.params,
     {
       type: "object",
@@ -68,7 +68,7 @@ module.exports.validateRequest = (
     { propertyName: "Path Params" }
   )
 
-  const queryValidation = schemaValidator.validate(
+  const queryResult = schemaValidator.validate(
     request.query,
     {
       type: "object",
@@ -78,20 +78,17 @@ module.exports.validateRequest = (
     { propertyName: "Query" }
   )
 
-  const bodyValidation = schemaValidator.validate(request.body, bodySchema, {
+  const bodyResult = schemaValidator.validate(request.body, bodySchema, {
     propertyName: "Body"
   })
 
-  if (
-    !paramValidation.valid ||
-    !queryValidation.valid ||
-    !bodyValidation.valid
-  ) {
+  if (!paramsResult.valid || !queryResult.valid || !bodyResult.valid) {
     const errors = [
-      ...paramValidation.errors,
-      ...queryValidation.errors,
-      ...bodyValidation.errors
+      ...paramsResult.errors,
+      ...queryResult.errors,
+      ...bodyResult.errors
     ]
+
     throw new HTTPError(
       400,
       `Invalid request: ${errors[0].property} ${errors[0].message}`
