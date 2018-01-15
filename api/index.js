@@ -1,6 +1,6 @@
 const express = require("express")
 const cors = require("cors")
-const { MongoClient } = require("mongodb")
+const { MongoClient, ObjectId } = require("mongodb")
 const bodyParser = require("body-parser")
 
 require("express-async-errors")
@@ -57,7 +57,7 @@ express()
 
       const { taskId } = request.params
       const updateResult = await tasksCollection.updateOne(
-        { _id: ObjectId(taskId) },
+        { _id: new ObjectId(taskId) },
         { $set: request.body }
       )
 
@@ -65,7 +65,7 @@ express()
         throw Error("Couldn't update database")
       }
 
-      response.sendStatus(204)
+      response.status(204).send()
     })
   )
 
@@ -75,14 +75,14 @@ express()
 
       const { taskId } = request.params
       const deleteResult = await tasksCollection.findOneAndDelete({
-        _id: ObjectId(taskId)
+        _id: new ObjectId(taskId)
       })
 
       if (!deleteResult.ok) {
         throw Error("Couldn't update database")
       }
 
-      response.status(200).send(deleteResult.value)
+      response.status(204).send()
     })
   )
 
