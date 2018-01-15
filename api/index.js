@@ -41,9 +41,9 @@ express()
 
       if (!insertResult.result.ok) {
         throw new Error("Couldn't add to database")
+      } else {
+        response.status(201).send(newTask)
       }
-
-      response.status(201).send(newTask)
     } catch (error) {
       console.error(error)
       response.status(500).send({ message: "Server error" })
