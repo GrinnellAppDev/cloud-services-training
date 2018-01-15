@@ -17,10 +17,10 @@ express()
       const tasksCollection = db.collection("tasks")
       const allTasks = tasksCollection.find().sort("_id", -1)
 
-      response.status(200).send({ items: await allTasks.toArray() })
+      response.status(200).send(await allTasks.toArray())
     } catch (error) {
-      response.status(500).send({ error })
       console.error(error)
+      response.status(500).send({ message: "Server error" })
     } finally {
       db.close()
     }
@@ -31,22 +31,19 @@ express()
     try {
       db = await MongoClient.connect(process.env.MONGO_URL)
 
-      const newTask = {
-        ...request.body,
-        isComplete: false
-      }
+      const newTask = { ...request.body }
 
       const tasksCollection = db.collection("tasks")
       const insertResult = await tasksCollection.insertOne(newTask)
 
       if (!insertResult.result.ok) {
-        throw Error("Couldn't add to database")
+        throw new Error("Couldn't add to database")
       }
 
-      response.status(201).send({ item: newTask })
+      response.status(201).send(newTask)
     } catch (error) {
-      response.status(500).send({ error })
       console.error(error)
+      response.status(500).send({ message: "Server error" })
     } finally {
       db.close()
     }
