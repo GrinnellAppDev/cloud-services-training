@@ -79,9 +79,9 @@ express()
 
       if (!insertResult.result.ok) {
         throw new Error("Couldn't add to database")
+      } else {
+        response.status(201).send(newTask)
       }
-
-      response.status(201).send(newTask)
     })
   )
 
