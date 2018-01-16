@@ -1,6 +1,5 @@
 const express = require("express")
 const cors = require("cors")
-const bodyParser = require("body-parser")
 const swaggerJSDoc = require("swagger-jsdoc")
 const swaggerUI = require("swagger-ui-express")
 const readYAML = require("read-yaml")
@@ -19,7 +18,7 @@ const swaggerSpec = swaggerJSDoc({
 
 express()
   .use(cors())
-  .use(bodyParser.json())
+  .use(express.json())
 
   .get("/", (request, response) => response.redirect("/docs"))
   .use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec))
