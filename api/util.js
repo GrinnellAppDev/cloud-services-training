@@ -42,13 +42,30 @@ module.exports.runWithDB = async run => {
   }
 }
 
-module.exports.schemas = readYAML.sync("./schemas.yml")
+const openApiComponents = readYAML.sync("./open-api.yml").components
+module.exports.schemas = openApiComponents.schemas
 
 const schemaValidator = new jsonschema.Validator()
-
 schemaValidator.customFormats.urlsafeBase64 = input =>
   urlsafeBase64.validate(input)
 schemaValidator.customFormats.objectId = input => ObjectId.isValid(input)
+
+for (const schema in openApiComponents.schemas) {
+  schemaValidator.addSchema(
+    openApiComponents.schemas[schema],
+    `/#/components/schemas/${schema}`
+  )
+}
+
+for (const schema in openApiComponents.propSchemas) {
+  console.log(schema)
+  schemaValidator.addSchema(
+    openApiComponents.propSchemas[schema],
+    `/#/components/propSchemas/${schema}`
+  )
+}
+
+console.log(schemaValidator.schemas)
 
 module.exports.validateRequest = (
   request,

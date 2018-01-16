@@ -1,6 +1,9 @@
 const express = require("express")
 const cors = require("cors")
 const bodyParser = require("body-parser")
+const swaggerJSDoc = require("swagger-jsdoc")
+const swaggerUI = require("swagger-ui-express")
+const readYAML = require("read-yaml")
 
 require("express-async-errors")
 
@@ -9,9 +12,20 @@ const { HTTPError } = require("./util")
 
 const PORT = 2000
 
+const swaggerSpec = swaggerJSDoc({
+  swaggerDefinition: readYAML.sync("./open-api.yml"),
+  apis: ["./tasks.js"]
+})
+
 express()
   .use(cors())
   .use(bodyParser.json())
+
+  .get("/", (request, response) => response.redirect("/docs"))
+  .use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec))
+  .get("/docs.json", (request, response) =>
+    response.status(200).send(swaggerSpec)
+  )
 
   .use("/tasks", tasksRouter)
 

@@ -12,6 +12,35 @@ const {
 } = require("./util")
 
 module.exports = Router()
+  /**
+   * @swagger
+   *  /tasks:
+   *    get:
+   *      description: Get a list of all tasks
+   *      parameters:
+   *        - name: pageSize
+   *          in: query
+   *          description: Maximum number of items per response
+   *          schema:
+   *            type: integer
+   *            default: 10
+   *        - name: pageToken
+   *          in: query
+   *          description: Token representing a particular page of results
+   *          schema:
+   *            type: integer
+   *      responses:
+   *        200:
+   *          description: An array of tasks
+   *          content:
+   *            application/json:
+   *              schema:
+   *                type: array
+   *                items:
+   *                  $ref: "#/components/schemas/Task"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
+   */
   .get("/", (request, response) =>
     runWithDB(async db => {
       validateRequest(request, {
@@ -55,6 +84,29 @@ module.exports = Router()
     })
   )
 
+  /**
+   * @swagger
+   *  /tasks:
+   *    post:
+   *      description: Create a new, incomplete task
+   *      requestBody:
+   *        required: true
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: "#/components/schemas/TaskCreate"
+   *      responses:
+   *        201:
+   *          description: >
+   *            Task creation was successful.
+   *            Response contains the newly created task.
+   *          content:
+   *            application/json:
+   *              schema:
+   *                $ref: "#/components/schemas/Task"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
+   */
   .post("/", (request, response) =>
     runWithDB(async db => {
       validateRequest(request, {
@@ -77,6 +129,32 @@ module.exports = Router()
     })
   )
 
+  /**
+   * @swagger
+   *  /tasks/{taskId}:
+   *    patch:
+   *      description: Update a task's fields.
+   *      requestBody:
+   *        required: true
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: "#/components/schemas/TaskEdit"
+   *      parameters:
+   *        - name: taskId
+   *          in: path
+   *          description: The unique ID of a task.
+   *          schema:
+   *            type: string
+   *            format: objectId
+   *      responses:
+   *        204:
+   *          description: Task update was successful. No content.
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
+   *        404:
+   *          $ref: "#/components/responses/NotFound"
+   */
   .patch("/:taskId", (request, response) =>
     runWithDB(async db => {
       validateRequest(request, {
@@ -104,6 +182,26 @@ module.exports = Router()
     })
   )
 
+  /**
+   * @swagger
+   *  /tasks/{taskId}:
+   *    delete:
+   *      description: Delete a task.
+   *      parameters:
+   *        - name: taskId
+   *          in: path
+   *          description: The unique ID of a task.
+   *          schema:
+   *            type: string
+   *            format: objectId
+   *      responses:
+   *        204:
+   *          description: Task was successfully deleted. No content.
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
+   *        404:
+   *          $ref: "#/components/responses/NotFound"
+   */
   .delete("/:taskId", (request, response) =>
     runWithDB(async db => {
       validateRequest(request, {

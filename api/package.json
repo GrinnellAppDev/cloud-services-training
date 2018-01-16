@@ -13,6 +13,8 @@
     "jsonschema": "^1.2.2",
     "mongodb": "^2.2.33",
     "read-yaml": "^1.1.0",
+    "swagger-jsdoc": "^1.9.7",
+    "swagger-ui-express": "^2.0.14",
     "urlsafe-base64": "^1.0.0"
   },
   "devDependencies": {
