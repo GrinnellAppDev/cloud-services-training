@@ -11,7 +11,10 @@ code and learn strategies to avoid repeating ourselves.
 ## Readings
 
 * [Higher order functions](https://eloquentjavascript.net/05_higher_order.html)
+  * Hey there CSC-151 survivors! Looks familiar?
 * [Error handling in Express](http://expressjs.com/en/guide/error-handling.html)
+  * We haven't talked a lot about how middleware works in express, so just try
+    and get familiar with the examples.
 * [HTTP PATCH method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH)
 * [HTTP DELETE method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE)
 
