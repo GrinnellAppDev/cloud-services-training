@@ -46,6 +46,7 @@ const openApiComponents = readYAML.sync("./open-api.yml").components
 module.exports.schemas = openApiComponents.schemas
 
 const schemaValidator = new jsonschema.Validator()
+
 schemaValidator.customFormats.urlsafeBase64 = input =>
   urlsafeBase64.validate(input)
 schemaValidator.customFormats.objectId = input => ObjectId.isValid(input)
@@ -58,14 +59,11 @@ for (const schema in openApiComponents.schemas) {
 }
 
 for (const schema in openApiComponents.propSchemas) {
-  console.log(schema)
   schemaValidator.addSchema(
     openApiComponents.propSchemas[schema],
     `/#/components/propSchemas/${schema}`
   )
 }
-
-console.log(schemaValidator.schemas)
 
 module.exports.validateRequest = (
   request,
