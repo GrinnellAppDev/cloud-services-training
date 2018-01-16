@@ -1,7 +1,6 @@
 const express = require("express")
 const cors = require("cors")
 const { MongoClient, ObjectId } = require("mongodb")
-const bodyParser = require("body-parser")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
 const querystring = require("querystring")
@@ -29,7 +28,7 @@ const runWithDB = async run => {
 
 express()
   .use(cors())
-  .use(bodyParser.json())
+  .use(express.json())
 
   .get("/tasks", (request, response) =>
     runWithDB(async db => {
