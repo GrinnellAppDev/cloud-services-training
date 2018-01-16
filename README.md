@@ -1,11 +1,6 @@
-# AppDev Cloud Services Training: Day 6
+# AppDev Cloud Services Training: Day 9
 
 ## Readings
-
-* [Basics of JSDoc](http://usejsdoc.org/about-getting-started.html#adding-documentation-comments-to-your-code)
-* [Types in JSDoc](http://usejsdoc.org/tags-type.html)
-* [What is a schema?](https://spacetelescope.github.io/understanding-json-schema/about.html)
-* [OpenAPI Schemas](https://swagger.io/docs/specification/data-models/data-types/)
 
 ## Table of Contents
 
