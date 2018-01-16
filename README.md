@@ -3,6 +3,9 @@
 ## Readings
 
 * [Higher order functions](https://eloquentjavascript.net/05_higher_order.html)
+* [Error handling in Express](http://expressjs.com/en/guide/error-handling.html)
+* [HTTP PATCH method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH)
+* [HTTP DELETE method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE)
 
 ## Table of Contents
 
