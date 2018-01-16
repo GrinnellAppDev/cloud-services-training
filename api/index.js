@@ -1,7 +1,6 @@
 const express = require("express")
 const cors = require("cors")
 const { MongoClient, ObjectId } = require("mongodb")
-const bodyParser = require("body-parser")
 
 require("express-async-errors")
 
@@ -22,7 +21,7 @@ const runWithDB = async run => {
 
 express()
   .use(cors())
-  .use(bodyParser.json())
+  .use(express.json())
 
   .get("/tasks", (request, response) =>
     runWithDB(async db => {
