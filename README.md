@@ -1,5 +1,13 @@
 # AppDev Cloud Services Training: Day 4
 
+We are half way to having an api with Create, Read, Update, and Delete (CRUD)
+functionality. We have the CR. The `POST` method allows us to _create_ new
+tasks and the `GET` HTTP method allows us to _read_ a list of tasks. Now we
+have to add in the UD. The `PATCH` HTTP method will allow us to _update_ our
+tasks and the `DELETE` method lets us spawn swarms of bees. jk. `DELETE` is
+for _deleting_. Along the way to implementing these, we will notice duplicate
+code and learn strategies to avoid repeating ourselves.
+
 ## Readings
 
 * [Higher order functions](https://eloquentjavascript.net/05_higher_order.html)
