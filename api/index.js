@@ -1,6 +1,5 @@
 const express = require("express")
 const cors = require("cors")
-const bodyParser = require("body-parser")
 
 require("express-async-errors")
 
@@ -11,7 +10,7 @@ const PORT = 2000
 
 express()
   .use(cors())
-  .use(bodyParser.json())
+  .use(express.json())
 
   .use("/tasks", tasksRouter)
 
