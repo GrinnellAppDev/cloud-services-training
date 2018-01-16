@@ -1,13 +1,12 @@
 const express = require("express")
 const cors = require("cors")
 const { MongoClient } = require("mongodb")
-const bodyParser = require("body-parser")
 
 const PORT = 2000
 
 express()
   .use(cors())
-  .use(bodyParser.json())
+  .use(express.json())
 
   .get("/tasks", async (request, response) => {
     let db
