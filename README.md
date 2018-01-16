@@ -1,5 +1,7 @@
 # AppDev Cloud Services Training: Day 9
 
+It's authentication day.
+
 ## Readings
 
 ## Table of Contents
