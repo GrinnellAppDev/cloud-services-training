@@ -27,6 +27,7 @@ module.exports = Router()
 
       token = jwt.verify(auth.token, JWT_PUBLIC)
     } catch (error) {
+      response.header("WWW-Authenticate", "Bearer")
       throw new HTTPError(401, "Invalid token.")
     }
 
