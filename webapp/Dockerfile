@@ -8,6 +8,6 @@ RUN yarn build
 ENV NODE_ENV=production
 ENV REACT_APP_API_ROOT="https://cst-api.appdev.grinnell.edu/"
 
-EXPOSE 2000
+EXPOSE 80
 
 CMD ["node", "index.js"]
