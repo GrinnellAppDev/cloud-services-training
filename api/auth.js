@@ -6,6 +6,7 @@ const fs = require("fs")
 const authHeader = require("auth-header")
 const { Buffer } = require("buffer")
 const { ObjectId } = require("mongodb")
+const helmet = require("helmet")
 
 require("express-async-errors")
 
@@ -34,6 +35,7 @@ const getCredentials = userIdObject => {
 }
 
 express()
+  .use(helmet({ dnsPrefetchControl: false }))
   .use(express.json())
 
   /**

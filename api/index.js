@@ -3,6 +3,7 @@ const swaggerJSDoc = require("swagger-jsdoc")
 const swaggerUI = require("swagger-ui-express")
 const readYAML = require("read-yaml")
 const proxy = require("express-http-proxy")
+const helmet = require("helmet")
 
 require("express-async-errors")
 
@@ -17,6 +18,7 @@ const swaggerSpec = swaggerJSDoc({
 })
 
 express()
+  .use(helmet({ dnsPrefetchControl: false }))
   .use(express.json())
 
   .get("/", (request, response) => response.redirect("/docs"))
