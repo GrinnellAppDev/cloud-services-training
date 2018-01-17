@@ -58,7 +58,7 @@ module.exports = Router()
       let pageTokenValue
       try {
         pageTokenValue = base64ToId(pageToken)
-      } catch (err) {
+      } catch (error) {
         throw new HTTPError(400, "Invalid pageToken.")
       }
 
