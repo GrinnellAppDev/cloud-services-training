@@ -72,32 +72,43 @@ express()
         /** @type {number} */ const pageSize = +request.query.pageSize || 10
         /** @type {string} */ const pageToken = request.query.pageToken || null
 
-        const allTasks = pageToken
-          ? tasksCollection.find({ _id: { $lte: base64ToId(pageToken) } })
-          : tasksCollection.find()
-
-        const readTasks = await allTasks
-          .sort("_id", -1)
-          .limit(pageSize + 1)
-          .toArray()
-        const items = readTasks.slice(0, pageSize)
-        const nextPageFirstTask = readTasks[pageSize]
-
-        if (nextPageFirstTask) {
-          const protocol = request.protocol
-          const host = request.get("host")
-          const path = request.baseUrl + request.path
-          const query = querystring.stringify({
-            ...request.query,
-            pageToken: idToBase64(nextPageFirstTask._id)
-          })
-
-          response.links({
-            next: `${protocol}://${host}${path}?${query}`
-          })
+        let pageTokenValue
+        try {
+          pageTokenValue = base64ToId(pageToken)
+        } catch (err) {
+          pageTokenValue = null
         }
 
-        response.status(200).send(items)
+        if (!pageTokenValue) {
+          response.status(400).send({ message: "Invalid pageToken." })
+        } else {
+          const allTasks = pageToken
+            ? tasksCollection.find({ _id: { $lte: pageTokenValue } })
+            : tasksCollection.find()
+
+          const readTasks = await allTasks
+            .sort("_id", -1)
+            .limit(pageSize + 1)
+            .toArray()
+          const items = readTasks.slice(0, pageSize)
+          const nextPageFirstTask = readTasks[pageSize]
+
+          if (nextPageFirstTask) {
+            const protocol = request.protocol
+            const host = request.get("host")
+            const path = request.baseUrl + request.path
+            const query = querystring.stringify({
+              ...request.query,
+              pageToken: idToBase64(nextPageFirstTask._id)
+            })
+
+            response.links({
+              next: `${protocol}://${host}${path}?${query}`
+            })
+          }
+
+          response.status(200).send(items)
+        }
       }
     })
   )
