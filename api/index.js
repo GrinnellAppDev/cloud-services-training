@@ -4,7 +4,7 @@ const { MongoClient, ObjectId } = require("mongodb")
 
 require("express-async-errors")
 
-const PORT = 2000
+const PORT = 80
 
 const runWithDB = async run => {
   let db
