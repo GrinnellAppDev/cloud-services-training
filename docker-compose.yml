@@ -23,7 +23,7 @@ services:
       - auth
     environment:
       - MONGO_URL=mongodb://apidb/
-      - AUTH_HOST=auth:2000
+      - AUTH_HOST=auth
 
   apidb:
     container_name: cst-apidb

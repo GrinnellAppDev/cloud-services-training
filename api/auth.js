@@ -11,7 +11,7 @@ require("express-async-errors")
 
 const { HTTPError, validateRequest, schemas, runWithDB } = require("./util")
 
-const PORT = 2000
+const PORT = 80
 const JWT_SECRET = fs.readFileSync("/run/secrets/jwt.key")
 const JWT_PUBLIC = fs.readFileSync("./jwt.key.pub")
 
