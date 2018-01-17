@@ -6,7 +6,8 @@ services:
     image: cst-webapp-dev
     environment:
       - NODE_ENV=development
-      - REACT_APP_API_ROOT=http://localhost:2001/
+    ports:
+      - "2000:80"
 
   api:
     container_name: cst-api-dev
@@ -16,3 +17,9 @@ services:
     environment:
       - NODE_ENV=development
     command: yarn start
+    ports:
+      - "2001:80"
+
+networks:
+  default:
+    driver: bridge
