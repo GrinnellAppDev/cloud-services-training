@@ -35,12 +35,6 @@ services:
       - "2002:80"
       - "9223:9223"
 
-networks:
-  default:
-    driver: bridge
-  auth:
-    driver: bridge
-
 secrets:
   jwt.key:
     file: ./secrets/jwt.key.example

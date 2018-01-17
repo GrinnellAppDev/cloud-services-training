@@ -18,6 +18,7 @@ services:
     build: ./api
     networks:
       - default
+      - api
     depends_on:
       - apidb
       - auth
@@ -29,7 +30,7 @@ services:
     container_name: cst-apidb
     image: mongo:3.4
     networks:
-      - default
+      - api
     volumes:
       - apidb-data:/data/db
     expose:
@@ -58,15 +59,13 @@ services:
     volumes:
       - authdb-data:/data/db
 
-networks:
-  default:
-    driver: overlay
-  auth:
-    driver: overlay
-
 volumes:
   apidb-data:
   authdb-data:
+
+networks:
+  api:
+  auth:
 
 secrets:
   jwt.key:
