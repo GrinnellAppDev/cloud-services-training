@@ -16,7 +16,3 @@ services:
     container_name: cst-api-prod
     image: cst-api-prod
     build: ./api
-
-networks:
-  default:
-    driver: overlay

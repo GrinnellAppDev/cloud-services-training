@@ -19,7 +19,3 @@ services:
     command: yarn start
     ports:
       - "2001:80"
-
-networks:
-  default:
-    driver: bridge
