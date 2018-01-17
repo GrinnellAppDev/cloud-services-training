@@ -65,6 +65,8 @@ module.exports = Router()
    *                  $ref: "#/components/schemas/Task"
    *        400:
    *          $ref: "#/components/responses/BadRequest"
+   *        401:
+   *          $ref: "#/components/responses/Unauthorized"
    */
   .get("/", (request, response) =>
     runWithDB(async db => {
@@ -151,6 +153,8 @@ module.exports = Router()
    *                $ref: "#/components/schemas/Task"
    *        400:
    *          $ref: "#/components/responses/BadRequest"
+   *        401:
+   *          $ref: "#/components/responses/Unauthorized"
    */
   .post("/", (request, response) =>
     runWithDB(async db => {
@@ -204,6 +208,8 @@ module.exports = Router()
    *          description: Task update was successful. No content.
    *        400:
    *          $ref: "#/components/responses/BadRequest"
+   *        401:
+   *          $ref: "#/components/responses/Unauthorized"
    *        404:
    *          $ref: "#/components/responses/NotFound"
    */
@@ -253,6 +259,8 @@ module.exports = Router()
    *          description: Task was successfully deleted. No content.
    *        400:
    *          $ref: "#/components/responses/BadRequest"
+   *        401:
+   *          $ref: "#/components/responses/Unauthorized"
    *        404:
    *          $ref: "#/components/responses/NotFound"
    */

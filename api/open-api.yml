@@ -111,6 +111,13 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
 
+    Unauthorized:
+      description: The request didn't contain valid authorization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
   securitySchemes:
     BasicAuth:
       type: http
