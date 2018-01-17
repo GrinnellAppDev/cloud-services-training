@@ -79,7 +79,7 @@ express()
           pageTokenValue = null
         }
 
-        if (!pageTokenValue) {
+        if (pageToken && !pageTokenValue) {
           response.status(400).send({ message: "Invalid pageToken." })
         } else {
           const allTasks = pageToken
