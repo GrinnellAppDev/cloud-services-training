@@ -75,7 +75,7 @@ express()
         let pageTokenValue
         try {
           pageTokenValue = base64ToId(pageToken)
-        } catch (err) {
+        } catch (error) {
           pageTokenValue = null
         }
 
