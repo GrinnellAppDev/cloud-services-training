@@ -1,11 +1,9 @@
 const express = require("express")
-const cors = require("cors")
 const { MongoClient } = require("mongodb")
 
 const PORT = 80
 
 express()
-  .use(cors())
   .use(express.json())
 
   .get("/tasks", async (request, response) => {
