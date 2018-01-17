@@ -104,6 +104,12 @@ express()
    *  /auth/token:
    *    get:
    *      summary: Get a new token from email and password or from an old token.
+   *      description: >
+   *        Remember, **expired tokens are allowed** here. Because of the sensitivity
+   *        of passwords, it is recommended to use an expired token for authorization
+   *        whenever possible. Email/password auth should only be attempted during
+   *        initial sign in, when the client possesses no token, or if none tokens in
+   *        the client's possession are accepted.
    *      security:
    *        - BasicAuth: []
    *        - BearerAuth: []
@@ -116,8 +122,10 @@ express()
    *                $ref: "#/components/schemas/JwtCredentials"
    *        401:
    *          description: >
-   *            The email or password is incorrect or the authorization is
-   *            otherwise invalid.
+   *            The email or password is incorrect or the authorization is otherwise
+   *            invalid. Tokens can be invalidated for any reason at any time. If a token
+   *            is rejected, the client should try any other tokens in their possession,
+   *            and only then attempt email/password validation.
    *          content:
    *            application/json:
    *              schema:
