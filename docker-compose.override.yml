@@ -22,7 +22,6 @@ services:
 
   auth:
     container_name: cst-auth-dev
-    image: cst-auth-dev
     volumes:
       - ./api/jwt.key.pub.example:/var/api/jwt.key.pub
       - ./api:/var/api

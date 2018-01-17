@@ -38,7 +38,7 @@ services:
 
   auth:
     container_name: cst-auth-prod
-    image: cst-auth-prod
+    image: cst-auth
     build: ./api
     command: node auth.js
     networks:
