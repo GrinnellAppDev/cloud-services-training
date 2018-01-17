@@ -1,5 +1,4 @@
 const express = require("express")
-const cors = require("cors")
 const swaggerJSDoc = require("swagger-jsdoc")
 const swaggerUI = require("swagger-ui-express")
 const readYAML = require("read-yaml")
@@ -10,7 +9,7 @@ require("express-async-errors")
 const tasksRouter = require("./tasks")
 const { HTTPError } = require("./util")
 
-const PORT = 2000
+const PORT = 80
 
 const swaggerSpec = swaggerJSDoc({
   swaggerDefinition: readYAML.sync("./open-api.yml"),
@@ -18,7 +17,6 @@ const swaggerSpec = swaggerJSDoc({
 })
 
 express()
-  .use(cors())
   .use(express.json())
 
   .get("/", (request, response) => response.redirect("/docs"))
@@ -30,7 +28,7 @@ express()
   .use("/auth", proxy(process.env.AUTH_HOST))
   .use("/tasks", tasksRouter)
 
-  .all("/*", () => {
+  .all("*", () => {
     throw new HTTPError(404, "Not found")
   })
 

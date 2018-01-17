@@ -38,7 +38,7 @@ module.exports = Router()
    * @swagger
    *  /tasks:
    *    get:
-   *      description: Get a list of all tasks
+   *      summary: Get a list of all tasks
    *      security:
    *        - BearerAuth: []
    *      parameters:
@@ -52,7 +52,7 @@ module.exports = Router()
    *          in: query
    *          description: Token representing a particular page of results
    *          schema:
-   *            type: integer
+   *            type: string
    *      responses:
    *        200:
    *          description: An array of tasks
@@ -79,11 +79,18 @@ module.exports = Router()
       /** @type {number} */ const pageSize = +request.query.pageSize || 10
       /** @type {string} */ const pageToken = request.query.pageToken || null
 
+      let pageTokenValue
+      try {
+        pageTokenValue = base64ToId(pageToken)
+      } catch (err) {
+        throw new HTTPError(400, "Invalid pageToken.")
+      }
+
       const query = { _userId: request.authorizedUser }
       const allTasks = pageToken
         ? tasksCollection.find({
             ...query,
-            _id: { $gte: base64ToId(pageToken) }
+            _id: { $lte: pageTokenValue }
           })
         : tasksCollection.find(query)
 
@@ -121,7 +128,7 @@ module.exports = Router()
    * @swagger
    *  /tasks:
    *    post:
-   *      description: Create a new, incomplete task
+   *      summary: Create a new, incomplete task
    *      security:
    *        - BearerAuth: []
    *      requestBody:
@@ -173,7 +180,7 @@ module.exports = Router()
    * @swagger
    *  /tasks/{taskId}:
    *    patch:
-   *      description: Update a task's fields.
+   *      summary: Update a task's fields.
    *      security:
    *        - BearerAuth: []
    *      requestBody:
@@ -228,7 +235,7 @@ module.exports = Router()
    * @swagger
    *  /tasks/{taskId}:
    *    delete:
-   *      description: Delete a task.
+   *      summary: Delete a task.
    *      security:
    *        - BearerAuth: []
    *      parameters:
