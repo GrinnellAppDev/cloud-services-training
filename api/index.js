@@ -12,7 +12,7 @@ express()
 
   .use("/tasks", tasksRouter)
 
-  .all("/*", () => {
+  .all("*", () => {
     throw new HTTPError(404, "Not found")
   })
 
