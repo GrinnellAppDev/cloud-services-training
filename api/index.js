@@ -1,5 +1,4 @@
 const express = require("express")
-const cors = require("cors")
 const { MongoClient, ObjectId } = require("mongodb")
 
 require("express-async-errors")
@@ -20,7 +19,6 @@ const runWithDB = async run => {
 }
 
 express()
-  .use(cors())
   .use(express.json())
 
   .get("/tasks", (request, response) =>
