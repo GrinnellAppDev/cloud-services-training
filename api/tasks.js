@@ -217,7 +217,7 @@ module.exports = Router()
 
       const { taskId } = request.params
       const updateResult = await tasksCollection.updateOne(
-        { _id: new ObjectId(taskId) },
+        { _id: new ObjectId(taskId), _userId: request.authorizedUser },
         { $set: request.body }
       )
 
@@ -265,7 +265,8 @@ module.exports = Router()
 
       const { taskId } = request.params
       const deleteResult = await tasksCollection.findOneAndDelete({
-        _id: new ObjectId(taskId)
+        _id: new ObjectId(taskId),
+        _userId: request.authorizedUser
       })
 
       if (!deleteResult.value) {
