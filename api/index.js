@@ -1,6 +1,6 @@
 const express = require("express")
 
-const PORT = 2000
+const PORT = 80
 
 express()
   .get("/tasks", (request, response) => {
