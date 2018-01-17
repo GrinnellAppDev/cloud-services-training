@@ -5,7 +5,7 @@ require("express-async-errors")
 const tasksRouter = require("./tasks")
 const { HTTPError } = require("./util")
 
-const PORT = 2000
+const PORT = 80
 
 express()
   .use(express.json())
