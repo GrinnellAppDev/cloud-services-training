@@ -1,5 +1,4 @@
 const express = require("express")
-const cors = require("cors")
 
 require("express-async-errors")
 
@@ -9,7 +8,6 @@ const { HTTPError } = require("./util")
 const PORT = 2000
 
 express()
-  .use(cors())
   .use(express.json())
 
   .use("/tasks", tasksRouter)
