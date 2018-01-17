@@ -1,0 +1,128 @@
+openapi: 3.0.0
+
+info:
+  title: Cloud Services Training API
+  version: 1.0.0
+
+components:
+  propSchemas:
+    TaskId:
+      type: string
+      description: The unique ID of the task.
+      format: objectId
+    TaskText:
+      type: string
+      description: The text content of the task.
+    TaskIsComplete:
+      type: boolean
+      description: Whether the task has been checked off.
+
+  schemas:
+    TaskCreate:
+      type: object
+      properties:
+        text:
+          $ref: "#/components/propSchemas/TaskText"
+      required:
+        - text
+      additionalProperties: false
+
+    TaskEdit:
+      type: object
+      properties:
+        text:
+          $ref: "#/components/propSchemas/TaskText"
+        isComplete:
+          $ref: "#/components/propSchemas/TaskIsComplete"
+      additionalProperties: false
+
+    Task:
+      type: object
+      properties:
+        _id:
+          $ref: "#/components/propSchemas/TaskId"
+        text:
+          $ref: "#/components/propSchemas/TaskText"
+        isComplete:
+          $ref: "#/components/propSchemas/TaskIsComplete"
+      required:
+        - _id
+        - text
+        - isComplete
+      additionalProperties: false
+
+    UserCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 15
+        name:
+          type: string
+          description: The user's preferred name.
+      required:
+        - email
+        - password
+      additionalProperties: false
+
+    JwtCredentials:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: objectId
+        token:
+          type: string
+          description: A short-lived token used to authenticate API endpoints.
+          format: jwt
+        tokenExpiration:
+          type: string
+          description: When accessToken will expire and need to be refreshed.
+          format: date-time
+      required:
+        - token
+        - tokenExpiration
+      additionalProperties: false
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+      additionalProperties: false
+
+  responses:
+    BadRequest:
+      description: The request is incorrectly formatted.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: The requested resource could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: The request didn't contain valid authorization.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+    BearerAuth:
+      type: http
+      scheme: bearer

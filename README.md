@@ -1,8 +1,8 @@
-# AppDev Cloud Services Training: Day 4
+# AppDev Cloud Services Training: Day 9
+
+It's authentication day.
 
 ## Readings
-
-* [Higher order functions](https://eloquentjavascript.net/05_higher_order.html)
 
 ## Table of Contents
 

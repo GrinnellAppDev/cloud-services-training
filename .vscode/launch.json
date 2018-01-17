@@ -5,42 +5,26 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "chrome",
-      "request": "launch",
-      "name": "Launch Chrome",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceRoot}/webapp/src",
-      "sourceMapPathOverrides": {
-        "webpack:///src/*": "${webRoot}/*"
-      }
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to API",
+      "protocol": "inspector",
+      "address": "localhost",
+      "port": 9222,
+      "localRoot": "${workspaceFolder}/api",
+      "remoteRoot": "/var/api",
+      "restart": true
     },
     {
       "type": "node",
       "request": "attach",
-      "name": "Attach to Docker",
-      "port": 9222,
-      "address": "localhost",
-      "localRoot": "${workspaceFolder}/server",
-      "remoteRoot": "/var/server",
-      "protocol": "inspector"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch Docker",
-      "port": 9222,
-      "timeout": 60000,
-      "runtimeExecutable": "docker-compose",
-      "runtimeArgs": [
-        "up"
-      ],
-      "restart": true,
-      "address": "localhost",
-      "localRoot": "${workspaceFolder}/server",
-      "remoteRoot": "/var/server",
+      "name": "Attach to Auth",
       "protocol": "inspector",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "address": "localhost",
+      "port": 9223,
+      "localRoot": "${workspaceFolder}/api",
+      "remoteRoot": "/var/api",
+      "restart": true
     }
   ]
 }

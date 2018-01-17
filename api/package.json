@@ -3,14 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "nodemon --inspect=0.0.0.0:9222 index.js"
+    "start": "nodemon --inspect=0.0.0.0:9222 index.js",
+    "start:auth": "nodemon --inspect=0.0.0.0:9223 auth.js"
   },
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "cors": "^2.8.4",
+    "auth-header": "^0.3.1",
+    "bcrypt": "^1.0.3",
     "express": "^4.16.2",
     "express-async-errors": "^2.1.0",
+    "express-http-proxy": "^1.1.0",
+    "helmet": "^3.9.0",
+    "jsonschema": "^1.2.2",
+    "jsonwebtoken": "^8.1.0",
     "mongodb": "^2.2.33",
+    "ms": "^2.1.1",
+    "read-yaml": "^1.1.0",
+    "swagger-jsdoc": "^1.9.7",
+    "swagger-ui-express": "^2.0.14",
     "urlsafe-base64": "^1.0.0"
   },
   "devDependencies": {
