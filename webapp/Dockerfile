@@ -10,4 +10,4 @@ ENV REACT_APP_API_ROOT="https://cst-api.appdev.grinnell.edu/"
 
 EXPOSE 80
 
-CMD ["yarn", "start"]
+CMD ["node", "index.js"]
