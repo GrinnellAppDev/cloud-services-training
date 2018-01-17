@@ -74,9 +74,7 @@ express()
       const { email, password, name } = request.body
 
       const usersCollection = db.collection("users")
-      const numEmailMatches = await usersCollection
-        .find({ email: { $eq: email } })
-        .count()
+      const numEmailMatches = await usersCollection.find({ email }).count()
 
       if (numEmailMatches > 0) {
         throw new HTTPError(403, `A user with email "${email}" already exists.`)
