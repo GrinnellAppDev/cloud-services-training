@@ -7,7 +7,7 @@ const querystring = require("querystring")
 
 require("express-async-errors")
 
-const PORT = 2000
+const PORT = 80
 
 const idToBase64 = id => urlsafeBase64.encode(Buffer.from(id.toString(), "hex"))
 const base64ToId = base64 =>
