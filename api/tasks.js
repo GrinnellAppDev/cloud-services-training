@@ -28,7 +28,7 @@ module.exports = Router()
    *          in: query
    *          description: Token representing a particular page of results
    *          schema:
-   *            type: integer
+   *            type: string
    *      responses:
    *        200:
    *          description: An array of tasks
