@@ -1,36 +1,35 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to Docker",
-            "port": 9222,
-            "address": "localhost",
-            "localRoot": "${workspaceFolder}/server",
-            "remoteRoot": "/var/server",
-            "protocol": "inspector"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Docker",
-            "port": 9222,
-            "timeout": 60000,
-            "runtimeExecutable": "docker-compose",
-            "runtimeArgs": [
-                "up"
-            ],
-            "restart": true,
-            "address": "localhost",
-            "localRoot": "${workspaceFolder}/server",
-            "remoteRoot": "/var/server",
-            "protocol": "inspector",
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Docker",
+      "port": 9222,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/server",
+      "remoteRoot": "/var/server",
+      "protocol": "inspector",
+      "restart": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Docker",
+      "port": 9222,
+      "timeout": 60000,
+      "runtimeExecutable": "docker-compose",
+      "runtimeArgs": ["up"],
+      "restart": true,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/server",
+      "remoteRoot": "/var/server",
+      "protocol": "inspector",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
 }
