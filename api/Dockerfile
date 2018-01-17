@@ -6,6 +6,6 @@ RUN yarn install
 
 ENV NODE_ENV=production
 
-EXPOSE 2000
+EXPOSE 80
 
 CMD ["node", "index.js"]

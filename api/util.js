@@ -12,24 +12,24 @@ class HTTPError extends Error {
   }
 }
 
-module.exports.HTTPError = HTTPError
+exports.HTTPError = HTTPError
 
 /**
  * @param {ObjectId} id
  */
-module.exports.idToBase64 = id =>
+exports.idToBase64 = id =>
   urlsafeBase64.encode(Buffer.from(id.toString(), "hex"))
 
 /**
  * @param {string} base64
  */
-module.exports.base64ToId = base64 =>
+exports.base64ToId = base64 =>
   new ObjectId(urlsafeBase64.decode(base64).toString("hex"))
 
 /**
  * @param {function(Db): Promise<void>} run
  */
-module.exports.runWithDB = async run => {
+exports.runWithDB = async run => {
   let db
   try {
     db = await MongoClient.connect(process.env.MONGO_URL)
@@ -43,7 +43,7 @@ module.exports.runWithDB = async run => {
 }
 
 const openApiComponents = readYAML.sync("./open-api.yml").components
-module.exports.schemas = openApiComponents.schemas
+exports.schemas = openApiComponents.schemas
 
 const schemaValidator = new jsonschema.Validator()
 
@@ -65,7 +65,7 @@ for (const schema in openApiComponents.propSchemas) {
   )
 }
 
-module.exports.validateRequest = (
+exports.validateRequest = (
   request,
   {
     paramSchemaProps = {},
