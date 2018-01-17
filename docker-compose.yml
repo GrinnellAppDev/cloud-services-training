@@ -5,15 +5,17 @@ services:
     container_name: cst-webapp-prod
     image: cst-webapp-prod
     build: ./webapp
+    environment:
+      - API_HOST=api
+    depends_on:
+      - api
     ports:
-      - "2000:2000"
+      - "443:80"
 
   api:
     container_name: cst-api-prod
     image: cst-api-prod
     build: ./api
-    ports:
-      - "2001:2000"
     networks:
       - api-bridge
     links:

@@ -2,7 +2,7 @@ const express = require("express")
 const cors = require("cors")
 const { MongoClient } = require("mongodb")
 
-const PORT = 2000
+const PORT = 80
 
 express()
   .use(cors())
