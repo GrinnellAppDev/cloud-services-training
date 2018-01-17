@@ -26,10 +26,9 @@ const getCredentials = userIdObject => {
   return {
     userId,
     tokenExpiration: new Date(Date.now() + ms(expiresIn)).toISOString(),
-    token: jwt.sign({}, JWT_SECRET, {
+    token: jwt.sign({ sub: userId }, JWT_SECRET, {
       algorithm: "RS256",
-      expiresIn,
-      subject: userId
+      expiresIn
     })
   }
 }
