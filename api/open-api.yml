@@ -98,14 +98,14 @@ components:
 
   responses:
     BadRequest:
-      description: Thrown when the request is incorrectly formatted.
+      description: The request is incorrectly formatted.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
 
     NotFound:
-      description: Thrown when the requested resource could not be found.
+      description: The requested resource could not be found.
       content:
         application/json:
           schema:
