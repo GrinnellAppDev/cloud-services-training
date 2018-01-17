@@ -12,6 +12,7 @@ services:
     container_name: cst-api-dev
     image: cst-api-dev
     volumes:
+      - ./api/jwt.key.pub.example:/var/api/jwt.key.pub
       - ./api:/var/api
     environment:
       - NODE_ENV=development
@@ -23,6 +24,7 @@ services:
     container_name: cst-auth-dev
     image: cst-auth-dev
     volumes:
+      - ./api/jwt.key.pub.example:/var/api/jwt.key.pub
       - ./api:/var/api
     environment:
       - NODE_ENV=development
@@ -35,3 +37,7 @@ networks:
     driver: bridge
   auth:
     driver: bridge
+
+secrets:
+  jwt.key:
+    file: ./secrets/jwt.key.example
