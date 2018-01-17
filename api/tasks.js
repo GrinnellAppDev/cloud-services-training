@@ -26,8 +26,15 @@ module.exports = Router()
       /** @type {number} */ const pageSize = +request.query.pageSize || 10
       /** @type {string} */ const pageToken = request.query.pageToken || null
 
+      let pageTokenValue
+      try {
+        pageTokenValue = base64ToId(pageToken)
+      } catch (err) {
+        throw new HTTPError(400, "Invalid pageToken.")
+      }
+
       const allTasks = pageToken
-        ? tasksCollection.find({ _id: { $lte: base64ToId(pageToken) } })
+        ? tasksCollection.find({ _id: { $lte: pageTokenValue } })
         : tasksCollection.find()
 
       const readTasks = await allTasks
