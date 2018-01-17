@@ -1,5 +1,4 @@
 const express = require("express")
-const cors = require("cors")
 const { MongoClient, ObjectId } = require("mongodb")
 const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
@@ -27,7 +26,6 @@ const runWithDB = async run => {
 }
 
 express()
-  .use(cors())
   .use(express.json())
 
   .get("/tasks", (request, response) =>
