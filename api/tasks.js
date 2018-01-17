@@ -79,11 +79,13 @@ module.exports = Router()
       /** @type {number} */ const pageSize = +request.query.pageSize || 10
       /** @type {string} */ const pageToken = request.query.pageToken || null
 
-      let pageTokenValue
-      try {
-        pageTokenValue = base64ToId(pageToken)
-      } catch (error) {
-        throw new HTTPError(400, "Invalid pageToken.")
+      let pageTokenValue = null
+      if (pageToken) {
+        try {
+          pageTokenValue = base64ToId(pageToken)
+        } catch (error) {
+          throw new HTTPError(400, "Invalid pageToken.")
+        }
       }
 
       const query = { _userId: request.authorizedUser }
