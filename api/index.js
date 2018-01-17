@@ -36,7 +36,7 @@ express()
       const pageToken = request.query.pageToken || null
 
       const allTasks = pageToken
-        ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
+        ? tasksCollection.find({ _id: { $lte: base64ToId(pageToken) } })
         : tasksCollection.find()
 
       const readTasks = await allTasks
