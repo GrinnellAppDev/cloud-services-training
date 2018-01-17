@@ -1,6 +1,9 @@
 const { Router } = require("express")
 const { ObjectId } = require("mongodb")
 const querystring = require("querystring")
+const jwt = require("jsonwebtoken")
+const authHeader = require("auth-header")
+const fs = require("fs")
 
 const {
   runWithDB,
@@ -11,12 +14,33 @@ const {
   HTTPError
 } = require("./util")
 
+const JWT_PUBLIC = fs.readFileSync("./jwt.key.pub")
+
 module.exports = Router()
+  .use((request, response, next) => {
+    let token
+    try {
+      const auth = authHeader.parse(request.header("Authorization"))
+      if (auth.scheme !== "Bearer") {
+        throw new Error()
+      }
+
+      token = jwt.verify(auth.token, JWT_PUBLIC)
+    } catch (error) {
+      throw new HTTPError(401, "Invalid token.")
+    }
+
+    request.authorizedUser = new ObjectId(token.sub)
+    next()
+  })
+
   /**
    * @swagger
    *  /tasks:
    *    get:
    *      description: Get a list of all tasks
+   *      security:
+   *        - BearerAuth: []
    *      parameters:
    *        - name: pageSize
    *          in: query
@@ -55,17 +79,26 @@ module.exports = Router()
       /** @type {number} */ const pageSize = +request.query.pageSize || 10
       /** @type {string} */ const pageToken = request.query.pageToken || null
 
+      const query = { _userId: request.authorizedUser }
       const allTasks = pageToken
-        ? tasksCollection.find({ _id: { $gte: base64ToId(pageToken) } })
-        : tasksCollection.find()
+        ? tasksCollection.find({
+            ...query,
+            _id: { $gte: base64ToId(pageToken) }
+          })
+        : tasksCollection.find(query)
 
       const readTasks = await allTasks
         .sort("_id", -1)
         .limit(pageSize + 1)
         .toArray()
-      const items = readTasks.slice(0, pageSize)
-      const nextPageFirstTask = readTasks[pageSize]
 
+      const items = readTasks.slice(0, pageSize).map(task => ({
+        _id: task._id,
+        isComplete: task.isComplete,
+        text: task.text
+      }))
+
+      const nextPageFirstTask = readTasks[pageSize]
       if (nextPageFirstTask) {
         const protocol = request.protocol
         const host = request.get("host")
@@ -89,6 +122,8 @@ module.exports = Router()
    *  /tasks:
    *    post:
    *      description: Create a new, incomplete task
+   *      security:
+   *        - BearerAuth: []
    *      requestBody:
    *        required: true
    *        content:
@@ -115,6 +150,7 @@ module.exports = Router()
 
       const newTask = {
         ...request.body,
+        _userId: request.authorizedUser,
         isComplete: false
       }
 
@@ -124,7 +160,11 @@ module.exports = Router()
       if (!insertResult.result.ok) {
         throw new Error("Couldn't add to database")
       } else {
-        response.status(201).send(newTask)
+        response.status(201).send({
+          _id: insertResult.insertedId,
+          text: newTask.text,
+          isComplete: newTask.isComplete
+        })
       }
     })
   )
@@ -134,6 +174,8 @@ module.exports = Router()
    *  /tasks/{taskId}:
    *    patch:
    *      description: Update a task's fields.
+   *      security:
+   *        - BearerAuth: []
    *      requestBody:
    *        required: true
    *        content:
@@ -187,6 +229,8 @@ module.exports = Router()
    *  /tasks/{taskId}:
    *    delete:
    *      description: Delete a task.
+   *      security:
+   *        - BearerAuth: []
    *      parameters:
    *        - name: taskId
    *          in: path
