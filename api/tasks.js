@@ -16,7 +16,7 @@ module.exports = Router()
    * @swagger
    *  /tasks:
    *    get:
-   *      description: Get a list of all tasks
+   *      summary: Get a list of all tasks
    *      parameters:
    *        - name: pageSize
    *          in: query
@@ -88,7 +88,7 @@ module.exports = Router()
    * @swagger
    *  /tasks:
    *    post:
-   *      description: Create a new, incomplete task
+   *      summary: Create a new, incomplete task
    *      requestBody:
    *        required: true
    *        content:
@@ -133,7 +133,7 @@ module.exports = Router()
    * @swagger
    *  /tasks/{taskId}:
    *    patch:
-   *      description: Update a task's fields.
+   *      summary: Update a task's fields.
    *      requestBody:
    *        required: true
    *        content:
@@ -186,7 +186,7 @@ module.exports = Router()
    * @swagger
    *  /tasks/{taskId}:
    *    delete:
-   *      description: Delete a task.
+   *      summary: Delete a task.
    *      parameters:
    *        - name: taskId
    *          in: path
