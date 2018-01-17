@@ -3,6 +3,7 @@ const cors = require("cors")
 const swaggerJSDoc = require("swagger-jsdoc")
 const swaggerUI = require("swagger-ui-express")
 const readYAML = require("read-yaml")
+const proxy = require("express-http-proxy")
 
 require("express-async-errors")
 
@@ -13,7 +14,7 @@ const PORT = 2000
 
 const swaggerSpec = swaggerJSDoc({
   swaggerDefinition: readYAML.sync("./open-api.yml"),
-  apis: ["./tasks.js"]
+  apis: ["./tasks.js", "./auth.js"]
 })
 
 express()
@@ -26,6 +27,7 @@ express()
     response.status(200).send(swaggerSpec)
   )
 
+  .use("/auth", proxy(process.env.AUTH_HOST))
   .use("/tasks", tasksRouter)
 
   .all("/*", () => {

@@ -51,6 +51,42 @@ components:
         - isComplete
       additionalProperties: false
 
+    UserCreate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 15
+        name:
+          type: string
+          description: The user's preferred name.
+      required:
+        - email
+        - password
+      additionalProperties: false
+
+    JwtCredentials:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: objectId
+        token:
+          type: string
+          description: A short-lived token used to authenticate API endpoints.
+          format: jwt
+        tokenExpiration:
+          type: string
+          description: When accessToken will expire and need to be refreshed.
+          format: date-time
+      required:
+        - token
+        - tokenExpiration
+      additionalProperties: false
+
     Error:
       type: object
       properties:
@@ -74,3 +110,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
+    BearerAuth:
+      type: http
+      scheme: bearer

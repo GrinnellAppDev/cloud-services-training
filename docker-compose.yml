@@ -1,4 +1,4 @@
-version: "3"
+version: "3.1"
 
 services:
   webapp:
@@ -15,27 +15,59 @@ services:
     ports:
       - "2001:2000"
     networks:
-      - api-bridge
-    links:
-      - apidb
+      - default
     depends_on:
       - apidb
+      - auth
     environment:
       - MONGO_URL=mongodb://apidb/
+      - AUTH_HOST=auth:2000
 
   apidb:
     container_name: cst-apidb
     image: mongo:3.4
     networks:
-      - api-bridge
+      - default
     volumes:
       - apidb-data:/data/db
     expose:
       - "27017"
 
+  auth:
+    container_name: cst-auth-prod
+    image: cst-auth-prod
+    build: ./api
+    command: node auth.js
+    ports:
+      - "2002:2000"
+    networks:
+      - default
+      - auth
+    depends_on:
+      - authdb
+    environment:
+      - MONGO_URL=mongodb://authdb/
+    secrets:
+      - jwt.key
+
+  authdb:
+    container_name: cst-authdb
+    image: mongo:3.4
+    networks:
+      - auth
+    volumes:
+      - authdb-data:/data/db
+
 networks:
-  api-bridge:
-    driver: bridge
+  default:
+    driver: overlay
+  auth:
+    driver: overlay
 
 volumes:
   apidb-data:
+  authdb-data:
+
+secrets:
+  jwt.key:
+    file: ./secrets/jwt.key

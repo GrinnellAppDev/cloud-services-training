@@ -1,4 +1,4 @@
-version: "3"
+version: "3.1"
 
 services:
   webapp:
@@ -18,3 +18,20 @@ services:
     command: yarn start
     ports:
       - "9222:9222"
+
+  auth:
+    container_name: cst-auth-dev
+    image: cst-auth-dev
+    volumes:
+      - ./api:/var/api
+    environment:
+      - NODE_ENV=development
+    command: yarn start:auth
+    ports:
+      - "9223:9223"
+
+networks:
+  default:
+    driver: bridge
+  auth:
+    driver: bridge
