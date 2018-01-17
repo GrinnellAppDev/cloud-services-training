@@ -16,10 +16,6 @@ services:
     container_name: cst-api-prod
     image: cst-api-prod
     build: ./api
-    networks:
-      - api-bridge
-    links:
-      - apidb
     depends_on:
       - apidb
     environment:
@@ -28,16 +24,8 @@ services:
   apidb:
     container_name: cst-apidb
     image: mongo:3.4
-    networks:
-      - api-bridge
     volumes:
       - apidb-data:/data/db
-    expose:
-      - "27017"
-
-networks:
-  api-bridge:
-    driver: bridge
 
 volumes:
   apidb-data:
