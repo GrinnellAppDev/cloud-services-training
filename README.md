@@ -6,6 +6,12 @@ of reorganizing code without changing its behavior. Today in training, we
 will go through that process, and learn ways to organize code as our projects
 grow.
 
+Right now, we are suffering from a limitation of JavaScript: it is hard to
+tell what data type anything is. In some ways, this is a good thing, because
+we don't have to obsess over all the minutia that PM loves so dearly. Still,
+knowing the types of certain things can be really helpful. We have a few
+tools at our disposal.
+
 ## Readings
 
 * [Express router](http://expressjs.com/en/4x/api.html#router)

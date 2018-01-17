@@ -1,6 +1,6 @@
 const express = require("express")
-const cors = require("cors")
 const { MongoClient, ObjectId, Db } = require("mongodb")
+const { Buffer } = require("buffer")
 const urlsafeBase64 = require("urlsafe-base64")
 const querystring = require("querystring")
 const jsonschema = require("jsonschema")
@@ -8,7 +8,7 @@ const readYAML = require("read-yaml")
 
 require("express-async-errors")
 
-const PORT = 2000
+const PORT = 80
 
 /**
  * @param {ObjectId} id
@@ -45,7 +45,6 @@ schemaValidator.customFormats.urlsafeBase64 = input =>
 schemaValidator.customFormats.objectId = input => ObjectId.isValid(input)
 
 express()
-  .use(cors())
   .use(express.json())
 
   .get("/tasks", (request, response) =>
