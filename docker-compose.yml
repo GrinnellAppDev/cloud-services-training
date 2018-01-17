@@ -3,7 +3,7 @@ version: "3"
 services:
   webapp:
     container_name: cst-webapp-prod
-    image: cst-webapp-prod
+    image: cst-webapp
     build: ./webapp
     environment:
       - API_HOST=api
@@ -14,5 +14,5 @@ services:
 
   api:
     container_name: cst-api-prod
-    image: cst-api-prod
+    image: cst-api
     build: ./api
