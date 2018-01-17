@@ -3,7 +3,6 @@ version: "3"
 services:
   webapp:
     container_name: cst-webapp-dev
-    image: cst-webapp-dev
     environment:
       - NODE_ENV=development
     ports:
@@ -11,7 +10,6 @@ services:
 
   api:
     container_name: cst-api-dev
-    image: cst-api-dev
     volumes:
       - ./api:/var/api
     environment:
