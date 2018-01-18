@@ -1,4 +1,3 @@
-import { ActionsObservable } from "redux-observable"
 import {
   configureStore,
   reducer,
@@ -31,7 +30,10 @@ import {
   sendToast,
   shiftToasts,
   toastClosed,
-  actOnTopToast
+  actOnTopToast,
+  newTaskReducer,
+  toastsReducer,
+  tasksReducer
 } from "./store"
 import { empty as emptyObservable } from "rxjs/observable/empty"
 import { interval as intervalObservable } from "rxjs/observable/interval"
@@ -40,12 +42,11 @@ import { _throw as observableThrow } from "rxjs/observable/throw"
 import { toArray } from "rxjs/operators/toArray"
 import { map } from "rxjs/operators/map"
 import { take } from "rxjs/operators/take"
-import { delay as delayOperator } from "rxjs/operators/delay"
 import { getTempTaskId } from "./util"
-import { TestScheduler } from "rxjs"
 import { debounceTime as debounceTimeOperator } from "rxjs/operators/debounceTime"
 import { mergeMap } from "rxjs/operators/mergeMap"
 import { tap } from "rxjs/operators/tap"
+import { testEpic, createDelayedObservable } from "./testUtils"
 
 describe("configureStore", () => {
   it("makes a store without a default state", () => {
@@ -135,53 +136,229 @@ describe("selectors", () => {
   })
 })
 
-describe("reducer", () => {
-  const initialState = {
-    newTask: { text: "" },
-    tasks: { status: "UNLOADED", items: {}, nextPageURI: null },
-    toasts: { queue: [] }
-  }
+describe("toastsReducer", () => {
+  const initialState = { queue: [] }
 
-  const stateWithTaskA = {
-    ...initialState,
-    tasks: {
-      ...initialState.tasks,
+  it("has a complete default initial state", () => {
+    expect(toastsReducer(undefined, { type: "UNKNOWN" })).toEqual(initialState)
+  })
+
+  it("can add a toast", () => {
+    expect(
+      toastsReducer(
+        initialState,
+        sendToast("a", "foo", "bar", { useSpinner: true })
+      )
+    ).toEqual({
+      ...initialState,
+      queue: [{ id: "a", message: "foo", buttonText: "bar", useSpinner: true }]
+    })
+  })
+
+  it("can modify a toast", () => {
+    expect(
+      toastsReducer(
+        {
+          ...initialState,
+          queue: [
+            {
+              id: "b",
+              message: "message b",
+              buttonText: "",
+              useSpinner: false
+            },
+            {
+              id: "a",
+              message: "foo",
+              buttonText: "bar",
+              useSpinner: false
+            },
+            {
+              id: "c",
+              message: "message c",
+              buttonText: "",
+              useSpinner: false
+            }
+          ]
+        },
+        sendToast("a", "foo2", "bar2", { useSpinner: true })
+      )
+    ).toEqual({
+      ...initialState,
+      queue: [
+        {
+          id: "b",
+          message: "message b",
+          buttonText: "",
+          useSpinner: false
+        },
+        { id: "a", message: "foo2", buttonText: "bar2", useSpinner: true },
+        { id: "c", message: "message c", buttonText: "", useSpinner: false }
+      ]
+    })
+  })
+
+  it("can add a toast with defaults", () => {
+    expect(toastsReducer(initialState, sendToast("a", "foo"))).toEqual({
+      ...initialState,
+      queue: [{ id: "a", message: "foo", buttonText: "", useSpinner: false }]
+    })
+  })
+
+  it("can close the top toast", () => {
+    expect(
+      toastsReducer(
+        {
+          ...initialState,
+          queue: [
+            {
+              id: "a",
+              message: "foo",
+              buttonText: "bar",
+              useSpinner: true
+            },
+            {
+              id: "c",
+              message: "message c",
+              buttonText: "",
+              useSpinner: false
+            }
+          ]
+        },
+        closeTopToast()
+      )
+    ).toEqual({
+      ...initialState,
+      queue: [
+        { id: "a", message: "", buttonText: "", useSpinner: false },
+        { id: "c", message: "message c", buttonText: "", useSpinner: false }
+      ]
+    })
+  })
+
+  it("closing top toast does nothing when the queue is empty", () => {
+    expect(
+      toastsReducer(
+        {
+          ...initialState,
+          queue: []
+        },
+        closeTopToast()
+      )
+    ).toEqual({
+      ...initialState,
+      queue: []
+    })
+  })
+
+  it("can shift out the top toast", () => {
+    expect(
+      toastsReducer(
+        {
+          ...initialState,
+          queue: [
+            { id: "a", message: "foo", buttonText: "bar" },
+            { id: "c", message: "message c", buttonText: "" }
+          ]
+        },
+        shiftToasts()
+      )
+    ).toEqual({
+      ...initialState,
+      queue: [{ id: "c", message: "message c", buttonText: "" }]
+    })
+  })
+})
+
+describe("reducers", () => {
+  const initialNewTaskState = { text: "" }
+
+  describe("newTaskReducer", () => {
+    it("ignores unknown actions", () => {
+      expect(newTaskReducer(initialNewTaskState, { type: "UNKNOWN" })).toEqual(
+        initialNewTaskState
+      )
+    })
+
+    it("has a complete default initial state", () => {
+      expect(newTaskReducer(undefined, { type: "UNKNOWN" })).toEqual(
+        initialNewTaskState
+      )
+    })
+
+    it("can edit the new task", () => {
+      expect(
+        newTaskReducer(
+          {
+            ...initialNewTaskState,
+            text: "foo"
+          },
+          editNewTaskText("bar")
+        )
+      ).toEqual({
+        ...initialNewTaskState,
+        text: "bar"
+      })
+    })
+
+    it("can clear out the newTask text", () => {
+      expect(
+        newTaskReducer(
+          {
+            ...initialNewTaskState,
+            text: "foo"
+          },
+          clearNewTask()
+        )
+      ).toEqual({
+        ...initialNewTaskState,
+        text: ""
+      })
+    })
+  })
+
+  describe("tasksReducer", () => {
+    const initialTasksState = {
+      status: "UNLOADED",
+      items: {},
+      nextPageURI: null
+    }
+    const stateWithTaskA = {
+      ...initialTasksState,
       status: "LOADED",
       items: {
         a: { _id: "a", isComplete: false, text: "foo" }
       },
       nextPageURI: "/api/tasks?pageToken=abc"
     }
-  }
 
-  it("ignores unknown actions", () => {
-    expect(reducer(initialState, { type: "UNKNOWN" })).toEqual(initialState)
-  })
+    it("ignores unknown actions", () => {
+      expect(tasksReducer(initialTasksState, { type: "UNKNOWN" })).toEqual(
+        initialTasksState
+      )
+    })
 
-  it("has a complete default initial state", () => {
-    expect(reducer(undefined, { type: "UNKNOWN" })).toEqual(initialState)
-  })
+    it("has a complete default initial state", () => {
+      expect(tasksReducer(undefined, { type: "UNKNOWN" })).toEqual(
+        initialTasksState
+      )
+    })
 
-  it("adds items on load", () => {
-    const itemA = { _id: "a", isComplete: false, text: "foo" }
-    const itemB = { _id: "b", isComplete: true, text: "bar" }
-    const pageURI1 = "/api/tasks?pageToken=abc"
-    const pageURI2 = null
-    const stateAfterPage1 = {
-      ...initialState,
-      tasks: {
-        ...initialState.tasks,
+    it("adds items on load", () => {
+      const itemA = { _id: "a", isComplete: false, text: "foo" }
+      const itemB = { _id: "b", isComplete: true, text: "bar" }
+      const pageURI1 = "/api/tasks?pageToken=abc"
+      const pageURI2 = null
+      const stateAfterPage1 = {
+        ...initialTasksState,
         status: "LOADED",
         items: {
           a: itemA
         },
         nextPageURI: pageURI1
       }
-    }
-    const stateAfterPage2 = {
-      ...stateAfterPage1,
-      tasks: {
-        ...stateAfterPage1.tasks,
+      const stateAfterPage2 = {
+        ...stateAfterPage1,
         status: "LOADED",
         items: {
           a: itemA,
@@ -189,154 +366,103 @@ describe("reducer", () => {
         },
         nextPageURI: pageURI2
       }
-    }
 
-    expect(reducer(initialState, tasksReceived([itemA], pageURI1))).toEqual(
-      stateAfterPage1
-    )
-    expect(reducer(stateAfterPage1, tasksReceived([itemB], pageURI2))).toEqual(
-      stateAfterPage2
-    )
-    expect(reducer(stateAfterPage2, tasksReceived([], pageURI2))).toEqual(
-      stateAfterPage2
-    )
-  })
+      expect(
+        tasksReducer(initialTasksState, tasksReceived([itemA], pageURI1))
+      ).toEqual(stateAfterPage1)
+      expect(
+        tasksReducer(stateAfterPage1, tasksReceived([itemB], pageURI2))
+      ).toEqual(stateAfterPage2)
+      expect(
+        tasksReducer(stateAfterPage2, tasksReceived([], pageURI2))
+      ).toEqual(stateAfterPage2)
+    })
 
-  it("removes all items on refresh", () => {
-    expect(reducer(stateWithTaskA, reloadTasks())).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("removes all items on refresh", () => {
+      expect(tasksReducer(stateWithTaskA, reloadTasks())).toEqual({
+        ...stateWithTaskA,
         items: {},
         nextPageURI: null
-      }
+      })
     })
-  })
 
-  it("sets the status to loading once loading starts", () => {
-    expect(reducer(stateWithTaskA, tasksLoadingStarted())).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("sets the status to loading once loading starts", () => {
+      expect(tasksReducer(stateWithTaskA, tasksLoadingStarted())).toEqual({
+        ...stateWithTaskA,
         status: "LOADING"
-      }
+      })
     })
-  })
 
-  it("indicates errors when loading tasks fails", () => {
-    expect(reducer(stateWithTaskA, tasksLoadingFailed("foo error"))).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("indicates errors when loading tasks fails", () => {
+      expect(
+        tasksReducer(stateWithTaskA, tasksLoadingFailed("foo error"))
+      ).toEqual({
+        ...stateWithTaskA,
         status: "ERROR",
         lastErrorMessage: "foo error"
-      }
+      })
     })
-  })
 
-  it("can edit the new task", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          newTask: {
-            ...initialState.newTask,
-            text: "foo"
-          }
-        },
-        editNewTaskText("bar")
-      )
-    ).toEqual({
-      ...initialState,
-      newTask: {
-        ...initialState.newTask,
-        text: "bar"
-      }
-    })
-  })
-
-  it("can edit tasks", () => {
-    expect(
-      reducer(stateWithTaskA, editTask("a", { isComplete: true }))
-    ).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("can edit tasks", () => {
+      expect(
+        tasksReducer(stateWithTaskA, editTask("a", { isComplete: true }))
+      ).toEqual({
+        ...stateWithTaskA,
         items: {
-          ...stateWithTaskA.tasks.items,
-          a: { ...stateWithTaskA.tasks.items.a, isComplete: true }
+          ...stateWithTaskA.items,
+          a: { ...stateWithTaskA.items.a, isComplete: true }
         }
-      }
+      })
     })
-  })
 
-  it("reverts back to the original when edit fails", () => {
-    expect(
-      reducer(stateWithTaskA, taskEditFailed("a", { isComplete: true }))
-    ).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("reverts back to the original when edit fails", () => {
+      expect(
+        tasksReducer(stateWithTaskA, taskEditFailed("a", { isComplete: true }))
+      ).toEqual({
+        ...stateWithTaskA,
         items: {
-          ...stateWithTaskA.tasks.items,
-          a: { ...stateWithTaskA.tasks.items.a, isComplete: true }
+          ...stateWithTaskA.items,
+          a: { ...stateWithTaskA.items.a, isComplete: true }
         }
-      }
+      })
     })
-  })
 
-  it("can delete tasks", () => {
-    expect(reducer(stateWithTaskA, deleteTask("a"))).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("can delete tasks", () => {
+      expect(tasksReducer(stateWithTaskA, deleteTask("a"))).toEqual({
+        ...stateWithTaskA,
         items: {}
-      }
+      })
     })
-  })
 
-  it("puts a task back if it failed to delete", () => {
-    expect(
-      reducer(
-        stateWithTaskA,
-        taskDeleteFailed("b", { isComplete: true, text: "bar" })
-      )
-    ).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("puts a task back if it failed to delete", () => {
+      expect(
+        tasksReducer(
+          stateWithTaskA,
+          taskDeleteFailed("b", { isComplete: true, text: "bar" })
+        )
+      ).toEqual({
+        ...stateWithTaskA,
         items: {
-          ...stateWithTaskA.tasks.items,
+          ...stateWithTaskA.items,
           b: { _id: "b", isComplete: true, text: "bar" }
         }
-      }
+      })
     })
-  })
 
-  it("deletes a task if it failed to create on the server", () => {
-    expect(reducer(stateWithTaskA, taskCreateFailed("a"))).toEqual({
-      ...stateWithTaskA,
-      tasks: {
-        ...stateWithTaskA.tasks,
+    it("deletes a task if it failed to create on the server", () => {
+      expect(tasksReducer(stateWithTaskA, taskCreateFailed("a"))).toEqual({
+        ...stateWithTaskA,
         items: {}
-      }
+      })
     })
-  })
 
-  it("creates a dummy task with a temporary id while the server loads the real one", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          newTask: { ...initialState.newTask, text: "foo" }
-        },
-        createNewTask("fooTempId")
-      )
-    ).toEqual({
-      ...initialState,
-      newTask: { ...initialState.newTask, text: "foo" },
-      tasks: {
-        ...initialState.tasks,
+    it("creates a dummy task with a temporary id while the server loads the real one", () => {
+      expect(
+        tasksReducer(initialTasksState, createNewTask("fooTempId"), {
+          newTask: { ...initialNewTaskState, text: "foo" }
+        })
+      ).toEqual({
+        ...initialTasksState,
         items: {
           fooTempId: {
             _id: "fooTempId",
@@ -345,32 +471,22 @@ describe("reducer", () => {
             text: "foo"
           }
         }
-      }
+      })
     })
-  })
 
-  it("does not create a dummy task when there is no new task text entered", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          newTask: { ...initialState.newTask, text: "" }
-        },
-        createNewTask("fooTempId")
-      )
-    ).toEqual({
-      ...initialState,
-      newTask: { ...initialState.newTask, text: "" }
+    it("does not create a dummy task when there is no new task text entered", () => {
+      expect(
+        tasksReducer(initialTasksState, createNewTask("fooTempId"), {
+          newTask: { ...initialNewTaskState, text: "" }
+        })
+      ).toEqual(initialTasksState)
     })
-  })
 
-  it("creation replaces the temporary ID with the one from the server", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          tasks: {
-            ...initialState.tasks,
+    it("creation replaces the temporary ID with the one from the server", () => {
+      expect(
+        tasksReducer(
+          {
+            ...initialTasksState,
             status: "LOADED",
             items: {
               "~123": {
@@ -380,229 +496,31 @@ describe("reducer", () => {
                 text: "foo"
               }
             }
-          }
-        },
-        taskCreated("~123", "abc")
-      )
-    ).toEqual({
-      ...initialState,
-      tasks: {
-        ...initialState.tasks,
+          },
+          taskCreated("~123", "abc")
+        )
+      ).toEqual({
+        ...initialTasksState,
         status: "LOADED",
         items: {
           abc: { _id: "abc", tempId: "~123", isComplete: false, text: "foo" }
         }
-      }
-    })
-  })
-
-  it("can clear out the newTask text", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          newTask: {
-            ...initialState.newTask,
-            text: "foo"
-          }
-        },
-        clearNewTask()
-      )
-    ).toEqual({
-      ...initialState,
-      newTask: {
-        ...initialState.newTask,
-        text: ""
-      }
-    })
-  })
-
-  it("can add a toast", () => {
-    expect(
-      reducer(initialState, sendToast("a", "foo", "bar", { useSpinner: true }))
-    ).toEqual({
-      ...initialState,
-      toasts: {
-        ...initialState.toasts,
-        queue: [
-          { id: "a", message: "foo", buttonText: "bar", useSpinner: true }
-        ]
-      }
-    })
-  })
-
-  it("can modify a toast", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          toasts: {
-            ...initialState.toasts,
-            queue: [
-              {
-                id: "b",
-                message: "message b",
-                buttonText: "",
-                useSpinner: false
-              },
-              { id: "a", message: "foo", buttonText: "bar", useSpinner: false },
-              {
-                id: "c",
-                message: "message c",
-                buttonText: "",
-                useSpinner: false
-              }
-            ]
-          }
-        },
-        sendToast("a", "foo2", "bar2", { useSpinner: true })
-      )
-    ).toEqual({
-      ...initialState,
-      toasts: {
-        ...initialState.toasts,
-        queue: [
-          { id: "b", message: "message b", buttonText: "", useSpinner: false },
-          { id: "a", message: "foo2", buttonText: "bar2", useSpinner: true },
-          { id: "c", message: "message c", buttonText: "", useSpinner: false }
-        ]
-      }
-    })
-  })
-
-  it("can add a toast with defaults", () => {
-    expect(reducer(initialState, sendToast("a", "foo"))).toEqual({
-      ...initialState,
-      toasts: {
-        ...initialState.toasts,
-        queue: [{ id: "a", message: "foo", buttonText: "", useSpinner: false }]
-      }
-    })
-  })
-
-  it("can close the top toast", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          toasts: {
-            ...initialState.toasts,
-            queue: [
-              { id: "a", message: "foo", buttonText: "bar", useSpinner: true },
-              {
-                id: "c",
-                message: "message c",
-                buttonText: "",
-                useSpinner: false
-              }
-            ]
-          }
-        },
-        closeTopToast()
-      )
-    ).toEqual({
-      ...initialState,
-      toasts: {
-        ...initialState.toasts,
-        queue: [
-          { id: "a", message: "", buttonText: "", useSpinner: false },
-          { id: "c", message: "message c", buttonText: "", useSpinner: false }
-        ]
-      }
-    })
-  })
-
-  it("closing top toast does nothing when the queue is empty", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          toasts: {
-            ...initialState.toasts,
-            queue: []
-          }
-        },
-        closeTopToast()
-      )
-    ).toEqual({
-      ...initialState,
-      toasts: {
-        ...initialState.toasts,
-        queue: []
-      }
-    })
-  })
-
-  it("can shift out the top toast", () => {
-    expect(
-      reducer(
-        {
-          ...initialState,
-          toasts: {
-            ...initialState.toasts,
-            queue: [
-              { id: "a", message: "foo", buttonText: "bar" },
-              { id: "c", message: "message c", buttonText: "" }
-            ]
-          }
-        },
-        shiftToasts()
-      )
-    ).toEqual({
-      ...initialState,
-      toasts: {
-        ...initialState.toasts,
-        queue: [{ id: "c", message: "message c", buttonText: "" }]
-      }
+      })
     })
   })
 })
 
 describe("epics", () => {
-  const testEpic = ({
-    epic,
-    inputted,
-    expected = null,
-    valueMap,
-    getState,
-    getDependencies = scheduler => ({})
-  }) => {
-    const scheduler = new TestScheduler((actualVal, expectedVal) => {
-      if (expected !== null)
-        expect(actualVal.filter(x => x.notification.kind !== "C")).toEqual(
-          expectedVal
-        )
-    })
-
-    const outputObservable = epic(
-      ActionsObservable.from(scheduler.createHotObservable(inputted, valueMap)),
-      { getState },
-      {
-        delay: () => delayOperator(50, scheduler),
-        debounceTime: () => debounceTimeOperator(50, scheduler),
-        ...getDependencies(scheduler)
-      }
-    )
-
-    scheduler
-      .expectObservable(outputObservable)
-      .toBe(expected !== null ? expected : "", valueMap)
-    scheduler.flush()
-  }
-
-  const createDelayedObservable = (observable, scheduler, delayTime = 50) =>
-    observableOf(null).pipe(
-      delayOperator(50, scheduler),
-      mergeMap(() => observable)
-    )
-
   describe("rootEpic", () => {
     it("ignores unknown actions", async () => {
-      await expect(
-        rootEpic(ActionsObservable.of({ type: "UNKNOWN" }), {}, {})
-          .pipe(toArray())
-          .toPromise()
-      ).resolves.toEqual([])
+      testEpic({
+        epic: rootEpic,
+        inputted: "-u-----",
+        expected: "-------",
+        valueMap: {
+          u: { type: "UNKNOWN" }
+        }
+      })
     })
   })
 

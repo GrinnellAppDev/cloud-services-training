@@ -25,14 +25,6 @@ export const getTaskById = (state, id) => state.tasks.items[id]
 export const getTasksStatus = state => state.tasks.status
 export const getLastTasksErrorMessage = state => state.tasks.lastErrorMessage
 export const getNextPageURI = state => state.tasks.nextPageURI
-export const getToastsQueueLength = state => state.toasts.queue.length
-export const getTopToast = state => state.toasts.queue[0]
-
-export const makeGetAnyToastIsSpinning = () =>
-  createSelector(
-    state => state.toasts.queue,
-    queue => queue.some(toast => toast.useSpinner)
-  )
 
 export const makeGetTasks = () =>
   createSelector(
@@ -41,6 +33,15 @@ export const makeGetTasks = () =>
       Object.keys(items)
         .sort((a, b) => asciiCompare(b, a))
         .map(key => items[key])
+  )
+
+export const getToastsQueueLength = state => state.toasts.queue.length
+export const getTopToast = state => state.toasts.queue[0]
+
+export const makeGetAnyToastIsSpinning = () =>
+  createSelector(
+    state => state.toasts.queue,
+    queue => queue.some(toast => toast.useSpinner)
   )
 
 // Action Creators
@@ -131,212 +132,178 @@ export const shiftToasts = () => ({ type: "SHIFT_TOASTS" })
 
 // Reducers
 
-export const reducer = (
-  state = {
-    newTask: { text: "" },
-    tasks: { status: "UNLOADED", items: {}, nextPageURI: null },
-    toasts: { queue: [] }
-  },
-  { type, ...payload }
+export const newTaskReducer = (state = { text: "" }, { type, ...payload }) => {
+  switch (type) {
+    case "CLEAR_NEW_TASK":
+      return {
+        ...state,
+        text: ""
+      }
+    case "EDIT_NEW_TASK_TEXT":
+      return {
+        text: payload.text
+      }
+    default:
+      return state
+  }
+}
+
+export const tasksReducer = (
+  state = { status: "UNLOADED", items: {}, nextPageURI: null },
+  { type, ...payload },
+  globalState
 ) => {
   switch (type) {
     case "RELOAD_TASKS":
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          items: {},
-          nextPageURI: null
-        }
+        items: {},
+        nextPageURI: null
       }
     case "TASKS_LOADING_STARTED":
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          status: "LOADING"
-        }
+        status: "LOADING"
       }
     case "TASKS_RECEIVED": {
-      const items = { ...state.tasks.items }
+      const items = { ...state.items }
       for (const item of payload.items) {
         items[item._id] = item
       }
 
       return {
-        ...state,
-        tasks: {
-          status: "LOADED",
-          items,
-          nextPageURI: payload.nextPageURI
-        }
+        status: "LOADED",
+        items,
+        nextPageURI: payload.nextPageURI
       }
     }
     case "TASKS_LOADING_FAILED":
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          status: "ERROR",
-          lastErrorMessage: payload.message
-        }
-      }
-    case "CLEAR_NEW_TASK":
-      return {
-        ...state,
-        newTask: {
-          ...state.newTask,
-          text: ""
-        }
-      }
-    case "EDIT_NEW_TASK_TEXT":
-      return {
-        ...state,
-        newTask: {
-          text: payload.text
-        }
+        status: "ERROR",
+        lastErrorMessage: payload.message
       }
     case "CREATE_NEW_TASK":
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          items: state.newTask.text
-            ? {
-                ...state.tasks.items,
-                [payload.temporaryId]: {
-                  _id: payload.temporaryId,
-                  tempId: payload.temporaryId,
-                  isComplete: false,
-                  text: state.newTask.text
-                }
+        items: globalState.newTask.text
+          ? {
+              ...state.items,
+              [payload.temporaryId]: {
+                _id: payload.temporaryId,
+                tempId: payload.temporaryId,
+                isComplete: false,
+                text: globalState.newTask.text
               }
-            : state.tasks.items
-        }
+            }
+          : state.items
       }
     case "TASK_CREATED": {
-      const {
-        [payload.temporaryId]: localTask,
-        ...otherItems
-      } = state.tasks.items
+      const { [payload.temporaryId]: localTask, ...otherItems } = state.items
 
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          items: {
-            ...otherItems,
-            [payload.realId]: {
-              ...localTask,
-              _id: payload.realId
-            }
+        items: {
+          ...otherItems,
+          [payload.realId]: {
+            ...localTask,
+            _id: payload.realId
           }
         }
       }
     }
     case "TASK_CREATE_FAILED": {
-      const {
-        [payload.temporaryId]: deletedItem,
-        ...otherItems
-      } = state.tasks.items
+      const { [payload.temporaryId]: deletedItem, ...otherItems } = state.items
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          items: otherItems
-        }
+        items: otherItems
       }
     }
     case "EDIT_TASK":
     case "TASK_EDIT_FAILED":
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          items: {
-            ...state.tasks.items,
-            [payload.id]: {
-              ...state.tasks.items[payload.id],
-              ...(type === "EDIT_TASK" ? payload.edits : payload.original)
-            }
+        items: {
+          ...state.items,
+          [payload.id]: {
+            ...state.items[payload.id],
+            ...(type === "EDIT_TASK" ? payload.edits : payload.original)
           }
         }
       }
     case "DELETE_TASK": {
-      const { [payload.id]: deletedItem, ...otherItems } = state.tasks.items
+      const { [payload.id]: deletedItem, ...otherItems } = state.items
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          items: otherItems
-        }
+        items: otherItems
       }
     }
     case "TASK_DELETE_FAILED":
       return {
         ...state,
-        tasks: {
-          ...state.tasks,
-          items: {
-            ...state.tasks.items,
-            [payload.id]: {
-              ...payload.original,
-              _id: payload.id
-            }
+        items: {
+          ...state.items,
+          [payload.id]: {
+            ...payload.original,
+            _id: payload.id
           }
-        }
-      }
-    case "SEND_TOAST": {
-      const currentToastIndex = state.toasts.queue.findIndex(
-        ({ id }) => id === payload.id
-      )
-
-      return {
-        ...state,
-        toasts: {
-          ...state.toasts,
-          queue:
-            currentToastIndex >= 0
-              ? [
-                  ...state.toasts.queue.slice(0, currentToastIndex),
-                  payload,
-                  ...state.toasts.queue.slice(currentToastIndex + 1)
-                ]
-              : [...state.toasts.queue, payload]
-        }
-      }
-    }
-    case "CLOSE_TOP_TOAST":
-      return {
-        ...state,
-        toasts: {
-          ...state.toasts,
-          queue:
-            state.toasts.queue.length > 0
-              ? [
-                  {
-                    ...state.toasts.queue[0],
-                    message: "",
-                    buttonText: "",
-                    useSpinner: false
-                  },
-                  ...state.toasts.queue.slice(1)
-                ]
-              : []
-        }
-      }
-    case "SHIFT_TOASTS":
-      return {
-        ...state,
-        toasts: {
-          ...state.toasts,
-          queue: state.toasts.queue.slice(1)
         }
       }
     default:
       return state
   }
 }
+
+export const toastsReducer = (state = { queue: [] }, { type, ...payload }) => {
+  switch (type) {
+    case "SEND_TOAST": {
+      const currentToastIndex = state.queue.findIndex(
+        ({ id }) => id === payload.id
+      )
+
+      return {
+        ...state,
+        queue:
+          currentToastIndex >= 0
+            ? [
+                ...state.queue.slice(0, currentToastIndex),
+                payload,
+                ...state.queue.slice(currentToastIndex + 1)
+              ]
+            : [...state.queue, payload]
+      }
+    }
+    case "CLOSE_TOP_TOAST":
+      return {
+        ...state,
+        queue:
+          state.queue.length > 0
+            ? [
+                {
+                  ...state.queue[0],
+                  message: "",
+                  buttonText: "",
+                  useSpinner: false
+                },
+                ...state.queue.slice(1)
+              ]
+            : []
+      }
+    case "SHIFT_TOASTS":
+      return {
+        ...state,
+        queue: state.queue.slice(1)
+      }
+    default:
+      return state
+  }
+}
+
+export const reducer = (state = {}, action) => ({
+  tasks: tasksReducer(state.tasks, action, state),
+  newTask: newTaskReducer(state.newTask, action),
+  toasts: toastsReducer(state.toasts, action)
+})
 
 // Epics
 
