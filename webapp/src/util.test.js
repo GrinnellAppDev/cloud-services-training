@@ -10,13 +10,13 @@ it("getTempTaskId generates strings that come after all alphanumeric strings in 
   expect(asciiCompare("1", getTempTaskId())).toBeLessThan(0)
   expect(asciiCompare("A", getTempTaskId())).toBeLessThan(0)
   expect(
-    asciiCompare("1ba13SEFSsf32fssf3f3f3fs324rsf", getTempTaskId())
+    asciiCompare("1ba13SEFSsf32fsf3f3f3fs324rsf", getTempTaskId())
   ).toBeLessThan(0)
 })
 
 it("getTempTaskId generates strings that are sequential by creation time in ascii ordering", async () => {
   const id1 = getTempTaskId()
-  await new Promise(res => requestAnimationFrame(res))
+  await new Promise(res => setTimeout(res, 50))
   const id2 = getTempTaskId()
 
   expect(asciiCompare(id1, id2)).toBeLessThan(0)
