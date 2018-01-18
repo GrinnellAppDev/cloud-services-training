@@ -6,7 +6,8 @@ describe("reducer", () => {
     const state = {
       newTask: {},
       tasks: {},
-      toasts: {}
+      toasts: {},
+      auth: {}
     }
     expect(reducer(state, { type: "UNKNOWN" })).toBe(state)
   })
