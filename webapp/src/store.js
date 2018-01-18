@@ -2,7 +2,7 @@ import { createStore, applyMiddleware } from "redux"
 import { createEpicMiddleware, combineEpics } from "redux-observable"
 import { composeWithDevTools } from "redux-devtools-extension"
 import { createSelector } from "reselect"
-import querystring from "querystring"
+import parseLinkHeader from "parse-link-header"
 import { isTempTaskId, asciiCompare } from "./util"
 import { merge as mergeObservables } from "rxjs/observable/merge"
 import { empty as emptyObservable } from "rxjs/observable/empty"
@@ -24,7 +24,7 @@ export const getNewTaskText = state => state.newTask.text
 export const getTaskById = (state, id) => state.tasks.items[id]
 export const getTasksStatus = state => state.tasks.status
 export const getLastTasksErrorMessage = state => state.tasks.lastErrorMessage
-export const getNextPageToken = state => state.tasks.nextPageToken
+export const getNextPageURI = state => state.tasks.nextPageURI
 export const getToastsQueueLength = state => state.toasts.queue.length
 export const getTopToast = state => state.toasts.queue[0]
 
@@ -48,10 +48,10 @@ export const makeGetTasks = () =>
 export const loadNextTasks = () => ({ type: "LOAD_NEXT_TASKS" })
 export const reloadTasks = () => ({ type: "RELOAD_TASKS" })
 export const tasksLoadingStarted = () => ({ type: "TASKS_LOADING_STARTED" })
-export const tasksReceived = (items, nextPageToken) => ({
+export const tasksReceived = (items, nextPageURI) => ({
   type: "TASKS_RECEIVED",
   items,
-  nextPageToken
+  nextPageURI
 })
 export const tasksLoadingFailed = (message = null) => ({
   type: "TASKS_LOADING_FAILED",
@@ -134,7 +134,7 @@ export const shiftToasts = () => ({ type: "SHIFT_TOASTS" })
 export const reducer = (
   state = {
     newTask: { text: "" },
-    tasks: { status: "UNLOADED", items: {} },
+    tasks: { status: "UNLOADED", items: {}, nextPageURI: null },
     toasts: { queue: [] }
   },
   { type, ...payload }
@@ -146,7 +146,7 @@ export const reducer = (
         tasks: {
           ...state.tasks,
           items: {},
-          nextPageToken: null
+          nextPageURI: null
         }
       }
     case "TASKS_LOADING_STARTED":
@@ -168,7 +168,7 @@ export const reducer = (
         tasks: {
           status: "LOADED",
           items,
-          nextPageToken: payload.nextPageToken
+          nextPageURI: payload.nextPageURI
         }
       }
     }
@@ -343,7 +343,7 @@ export const reducer = (
 export const loadTasksEpic = (
   actionsObservable,
   { getState },
-  { fetchFromAPI, delay }
+  { fetch, delay }
 ) =>
   actionsObservable.ofType("RELOAD_TASKS", "LOAD_NEXT_TASKS").pipe(
     mergeMap(({ type }) => {
@@ -354,47 +354,32 @@ export const loadTasksEpic = (
         (type === "LOAD_NEXT_TASKS" &&
           status !== "UNLOADED" &&
           status !== "ERROR" &&
-          !getNextPageToken(getState()))
+          !getNextPageURI(getState()))
       )
         return emptyObservable()
       else
         return mergeObservables(
           observableOf(tasksLoadingStarted()),
           forkJoinObservables([
-            fetchFromAPI(
-              `/tasks?${querystring.stringify({
-                pageToken: getNextPageToken(getState())
-              })}`
-            ),
+            fetch(getNextPageURI(getState()) || "/api/tasks"),
             type === "RELOAD_TASKS" || status === "ERROR"
               ? observableOf(null).pipe(delay(500))
               : observableOf(null)
           ]).pipe(
-            mergeMap(
-              ([response]) =>
-                response.ok
-                  ? observableFrom(response.json())
-                  : observableThrow(
-                      Error(
-                        `HTTP Error: ${response.statusText} ` +
-                          `(${response.status})`
-                      )
-                    )
-            ),
-            map(body => {
-              if (!Array.isArray(body.items)) {
-                console.error(
-                  "Missing or invalid 'items' field in the API response"
+            mergeMap(([response]) => {
+              if (response.ok) {
+                const { next } =
+                  parseLinkHeader(response.headers.get("Link")) || {}
+
+                return observableFrom(response.json()).pipe(
+                  map(body => {
+                    return tasksReceived(body, next ? next.url : null)
+                  })
                 )
-                return tasksReceived([], null)
-              } else if (body.nextPageToken === undefined) {
-                console.error(
-                  "Missing 'nextPageToken' field in the API response"
+              } else
+                throw Error(
+                  `HTTP Error: ${response.statusText} ` + `(${response.status})`
                 )
-                return tasksReceived(body.items, null)
-              } else {
-                return tasksReceived(body.items, body.nextPageToken)
-              }
             }),
             catchError(err => observableOf(tasksLoadingFailed(err.message)))
           )
@@ -402,11 +387,7 @@ export const loadTasksEpic = (
     })
   )
 
-export const newTaskEpic = (
-  actionsObservable,
-  { getState },
-  { fetchFromAPI }
-) =>
+export const newTaskEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("CREATE_NEW_TASK").pipe(
     mergeMap(
       ({ temporaryId }) =>
@@ -414,16 +395,18 @@ export const newTaskEpic = (
           ? emptyObservable()
           : mergeObservables(
               observableOf(clearNewTask()),
-              fetchFromAPI("/tasks", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                  isComplete: false,
-                  text: getNewTaskText(getState())
+              observableFrom(
+                fetch("/api/tasks", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({
+                    isComplete: false,
+                    text: getNewTaskText(getState())
+                  })
                 })
-              }).pipe(
+              ).pipe(
                 mergeMap(
                   response =>
                     response.ok
@@ -459,20 +442,18 @@ export const newTaskEpic = (
     )
   )
 
-export const editTaskEpic = (
-  actionsObservable,
-  { getState },
-  { fetchFromAPI }
-) =>
+export const editTaskEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("EDIT_TASK").pipe(
     mergeMap(({ id, edits, original }) =>
-      fetchFromAPI(`/tasks/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(edits)
-      }).pipe(
+      observableFrom(
+        fetch(`/api/tasks/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(edits)
+        })
+      ).pipe(
         map(response => {
           if (response.ok) return taskEditSucceeded(id)
           else
@@ -490,11 +471,7 @@ export const editTaskEpic = (
     )
   )
 
-export const deleteTaskEpic = (
-  actionsObservable,
-  { getState },
-  { fetchFromAPI }
-) =>
+export const deleteTaskEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("DELETE_TASK").pipe(
     filter(({ id }) => !isTempTaskId(id)),
     mergeMap(({ id, original }) =>
@@ -511,9 +488,11 @@ export const deleteTaskEpic = (
             ({ withAction }) =>
               withAction
                 ? observableOf(taskDeleteFailed(id, original, "Undo"))
-                : fetchFromAPI(`/tasks/${id}`, {
-                    method: "DELETE"
-                  }).pipe(
+                : observableFrom(
+                    fetch(`/api/tasks/${id}`, {
+                      method: "DELETE"
+                    })
+                  ).pipe(
                     map(response => {
                       if (response.ok) return taskDeleteSucceeded(id)
                       else

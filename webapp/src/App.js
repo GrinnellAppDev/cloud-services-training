@@ -9,7 +9,7 @@ import {
   createNewTask,
   reloadTasks,
   loadNextTasks,
-  getNextPageToken,
+  getNextPageURI,
   getTasksStatus,
   getLastTasksErrorMessage,
   getTopToast,
@@ -34,7 +34,7 @@ export const withEnhancers = connect(
         hasTasks: getTasks(state).length > 0 || status !== "LOADED",
         tasksHaveNextPage:
           status !== "ERROR" &&
-          (!!getNextPageToken(state) ||
+          (!!getNextPageURI(state) ||
             status === "UNLOADED" ||
             status === "LOADING"),
         tasksHaveError: status === "ERROR",

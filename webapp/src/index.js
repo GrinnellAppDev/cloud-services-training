@@ -6,13 +6,8 @@ import registerServiceWorker from "./registerServiceWorker"
 import { configureStore, makeGetAnyToastIsSpinning } from "./store"
 import { Provider } from "react-redux"
 import { delay } from "rxjs/operators/delay"
-import { from as observableFrom } from "rxjs/observable/from"
 
-const store = configureStore({
-  fetchFromAPI: (uri, init) =>
-    observableFrom(fetch(process.env.REACT_APP_API_ROOT + uri, init)),
-  delay
-})
+const store = configureStore({ fetch, delay })
 
 const anyToastIsSpinning = makeGetAnyToastIsSpinning()
 window.addEventListener("beforeunload", ev => {

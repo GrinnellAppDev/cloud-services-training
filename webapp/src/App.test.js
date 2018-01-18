@@ -130,14 +130,14 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].newTaskText).toBe("foo")
   })
 
-  it("signals that there are more tasks if there is a nextPageToken", () => {
+  it("signals that there are more tasks if there is a nextPageURI", () => {
     const store = createMockStore({
       newTask: {
         text: ""
       },
       tasks: {
         items: {},
-        nextPageToken: "abc"
+        nextPageURI: "/auth/tasks?pageToken=abc"
       },
       toasts: {
         queue: []
@@ -158,14 +158,14 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(true)
   })
 
-  it("signals that there are no more tasks if next page token is null", () => {
+  it("signals that there are no more tasks if next page URI is null", () => {
     const store = createMockStore({
       newTask: {
         text: ""
       },
       tasks: {
         items: {},
-        nextPageToken: null
+        nextPageURI: null
       },
       toasts: {
         queue: []
@@ -194,7 +194,7 @@ describe("withEnhancers", () => {
       tasks: {
         status: "ERROR",
         items: {},
-        nextPageToken: "abc"
+        nextPageURI: "/auth/tasks?pageToken=abc"
       },
       toasts: {
         queue: []
@@ -215,7 +215,7 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(false)
   })
 
-  it("signals that there are more tasks if tasks are unloaded regardless of nextPageToken", () => {
+  it("signals that there are more tasks if tasks are unloaded regardless of nextPageURI", () => {
     const store = createMockStore({
       newTask: {
         text: ""
@@ -223,7 +223,7 @@ describe("withEnhancers", () => {
       tasks: {
         status: "UNLOADED",
         items: {},
-        nextPageToken: null
+        nextPageURI: null
       },
       toasts: {
         queue: []
@@ -244,7 +244,7 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].tasksHaveNextPage).toBe(true)
   })
 
-  it("signals that there are more tasks if tasks are loading regardless of nextPageToken", () => {
+  it("signals that there are more tasks if tasks are loading regardless of nextPageURI", () => {
     const store = createMockStore({
       newTask: {
         text: ""
@@ -252,7 +252,7 @@ describe("withEnhancers", () => {
       tasks: {
         status: "LOADING",
         items: {},
-        nextPageToken: null
+        nextPageURI: null
       },
       toasts: {
         queue: []
