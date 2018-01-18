@@ -930,74 +930,12 @@ describe("epics", () => {
             createDelayedObservable(
               observableOf({
                 ok: true,
-                json: () => observableOf({ item: { _id: "def" } })
+                json: () => observableOf({ _id: "def" })
               }),
               scheduler
             )
         })
       })
-    })
-
-    it("handles missing id in the response", async () => {
-      const consoleError = console.error
-      console.error = jest.fn()
-
-      testEpic({
-        epic: newTaskEpic,
-        inputted: "-n-----",
-        expected: "-l----r",
-        valueMap,
-        getState: () => ({ newTask: { text: "foo" } }),
-        getDependencies: scheduler => ({
-          fetch: () =>
-            createDelayedObservable(
-              observableOf({
-                ok: true,
-                json: () => observableOf({ item: {} })
-              }),
-              scheduler
-            )
-        })
-      })
-
-      expect(console.error).toBeCalledWith(
-        "Missing '_id' field in the API response"
-      )
-      expect(console.error).toBeCalledWith(
-        "Reloading to get correct task id..."
-      )
-      console.error = consoleError
-    })
-
-    it("handles missing item field in the response", async () => {
-      const consoleError = console.error
-      console.error = jest.fn()
-
-      testEpic({
-        epic: newTaskEpic,
-        inputted: "-n-----",
-        expected: "-l----r",
-        valueMap,
-        getState: () => ({ newTask: { text: "foo" } }),
-        getDependencies: scheduler => ({
-          fetch: () =>
-            createDelayedObservable(
-              observableOf({
-                ok: true,
-                json: () => observableOf({})
-              }),
-              scheduler
-            )
-        })
-      })
-
-      expect(console.error).toBeCalledWith(
-        "Missing 'item' field in the API response"
-      )
-      expect(console.error).toBeCalledWith(
-        "Reloading to get correct task id..."
-      )
-      console.error = consoleError
     })
   })
 

@@ -378,7 +378,7 @@ export const loadTasksEpic = (
                 )
               } else
                 throw Error(
-                  `HTTP Error: ${response.statusText} ` + `(${response.status})`
+                  `HTTP Error: ${response.statusText} (${response.status})`
                 )
             }),
             catchError(err => observableOf(tasksLoadingFailed(err.message)))
@@ -419,18 +419,7 @@ export const newTaskEpic = (actionsObservable, { getState }, { fetch }) =>
                           )
                         )
                 ),
-                map(({ item }) => {
-                  if (!item) {
-                    console.error("Missing 'item' field in the API response")
-                  } else if (!item._id) {
-                    console.error("Missing '_id' field in the API response")
-                  } else {
-                    return taskCreated(temporaryId, item._id)
-                  }
-
-                  console.error("Reloading to get correct task id...")
-                  return reloadTasks()
-                }),
+                map(({ _id }) => taskCreated(temporaryId, _id)),
                 catchError(err =>
                   observableOf(
                     taskCreateFailed(temporaryId, err.message),
