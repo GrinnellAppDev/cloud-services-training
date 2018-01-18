@@ -9,9 +9,9 @@ import {
   editNewTaskText,
   createNewTask,
   reloadTasks,
-  loadNextTasks,
-  closeTopToast
-} from "./store"
+  loadNextTasks
+} from "./store/tasks"
+import { closeTopToast } from "./store/toasts"
 import { isTempTaskId } from "./util"
 import LoadingSpinner from "./LoadingSpinner"
 

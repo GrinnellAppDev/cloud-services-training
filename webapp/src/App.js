@@ -11,10 +11,9 @@ import {
   loadNextTasks,
   getNextPageURI,
   getTasksStatus,
-  getLastTasksErrorMessage,
-  getTopToast,
-  closeTopToast
-} from "./store"
+  getLastTasksErrorMessage
+} from "./store/tasks"
+import { getTopToast, closeTopToast } from "./store/toasts"
 import InfiniteScroll from "react-infinite-scroller"
 import LoadingSpinner from "./LoadingSpinner"
 import { getTempTaskId } from "./util"

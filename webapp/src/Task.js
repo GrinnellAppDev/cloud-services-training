@@ -2,7 +2,7 @@ import React from "react"
 import classnames from "classnames"
 import "./Task.css"
 import { connect } from "react-redux"
-import { getTaskById, editTask, deleteTask } from "./store"
+import { getTaskById, editTask, deleteTask } from "./store/tasks"
 import LoadingSpinner from "./LoadingSpinner"
 import { isTempTaskId } from "./util"
 

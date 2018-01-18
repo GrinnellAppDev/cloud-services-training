@@ -4,7 +4,7 @@ import { shallow } from "enzyme"
 import configureMockStore from "redux-mock-store"
 import { Provider } from "react-redux"
 import { render } from "react-dom"
-import { editTask, deleteTask } from "./store"
+import { editTask, deleteTask } from "./store/tasks"
 import LoadingSpinner from "./LoadingSpinner"
 import { isTempTaskId, getTempTaskId } from "./util"
 
