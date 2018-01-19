@@ -12,13 +12,15 @@ import {
 } from "./store/auth"
 import "./AuthBar.css"
 import classnames from "classnames"
+import LoadingSpinner from "./LoadingSpinner"
 
 export const withEnhancers = connect(
   state => {
-    const { isOpen, email, password } = getAuthDialog(state)
+    const { isOpen, isSubmitting, email, password } = getAuthDialog(state)
     return {
       isSignedIn: !!getAuthToken(state),
       dialogIsOpen: isOpen,
+      isSubmitting,
       email,
       password
     }
@@ -36,8 +38,9 @@ export const AuthBar = ({
   Dialog = DialogComponent,
   isSignedIn,
   dialogIsOpen,
+  isSubmitting,
   email,
-  authorizedEmail,
+  authorizedName,
   password,
   onOpenClick,
   onEmailChange,
@@ -55,16 +58,24 @@ export const AuthBar = ({
   >
     <TextButton className="AuthBar-openButton" onClick={onOpenClick}>
       <div className="AuthBar-openButtonIcon" />
-      {isSignedIn ? authorizedEmail : "Sign Up or Log In"}
+      {isSignedIn ? authorizedName : "Sign Up or Log In"}
     </TextButton>
 
-    <Dialog className="AuthBar-dialog" open={dialogIsOpen} onCancel={onCancel}>
+    <Dialog
+      className={classnames(
+        "AuthBar-dialog",
+        isSubmitting && "AuthBar-isSubmitting"
+      )}
+      open={dialogIsOpen}
+      onCancel={onCancel}
+    >
       <input
         type="email"
         className="AuthBar-emailInput"
         value={email}
         placeholder="Email"
         onChange={ev => onEmailChange(ev.currentTarget.value)}
+        disabled={isSubmitting}
       />
       <input
         type="password"
@@ -72,6 +83,7 @@ export const AuthBar = ({
         value={password}
         placeholder="Password"
         onChange={ev => onPasswordChange(ev.currentTarget.value)}
+        disabled={isSubmitting}
       />
 
       <div className="AuthBar-controls">
@@ -79,7 +91,13 @@ export const AuthBar = ({
           Cancel
         </TextButton>
         <span />
-        <TextButton className="AuthBar-submit" type="submit" onClick={onSubmit}>
+        {isSubmitting && <LoadingSpinner className="AuthBar-loading" />}
+        <TextButton
+          className="AuthBar-submit"
+          type="submit"
+          disabled={isSubmitting}
+          onClick={onSubmit}
+        >
           Sign In
         </TextButton>
       </div>

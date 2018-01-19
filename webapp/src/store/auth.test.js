@@ -99,7 +99,15 @@ describe("authReducer", () => {
   })
 
   it("handles auth errors", () => {
-    expect(authReducer(initialState, authSubmitFailed("foo"))).toEqual({
+    expect(
+      authReducer(
+        {
+          ...initialState,
+          dialog: { ...initialState.dialog, isSubmitting: true }
+        },
+        authSubmitFailed("foo")
+      )
+    ).toEqual({
       ...initialState,
       dialog: {
         ...initialState.dialog,

@@ -10,6 +10,7 @@ import {
   submitAuthDialog,
   closeAuthDialog
 } from "./store/auth"
+import LoadingSpinner from "./LoadingSpinner"
 
 describe("withEnhancers", () => {
   const createMockStore = configureMockStore()
@@ -52,7 +53,14 @@ describe("withEnhancers", () => {
 
   it("loads dialog state", () => {
     const store = createMockStore({
-      auth: { dialog: { isOpen: true, email: "foo", password: "bar" } }
+      auth: {
+        dialog: {
+          isOpen: true,
+          isSubmitting: false,
+          email: "foo",
+          password: "bar"
+        }
+      }
     })
 
     const Component = jest.fn().mockReturnValue(<div />)
@@ -68,6 +76,7 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].dialogIsOpen).toBe(true)
     expect(Component.mock.calls[0][0].email).toBe("foo")
     expect(Component.mock.calls[0][0].password).toBe("bar")
+    expect(Component.mock.calls[0][0].isSubmitting).toBe(false)
   })
 
   it("handles open click", () => {
@@ -192,15 +201,11 @@ describe("AuthBar", () => {
     ).toBe(true)
   })
 
-  it("displays their email when signed in", () => {
+  it("displays their name when signed in", () => {
     expect(
       shallow(
-        <AuthBar
-          Dialog={Dialog}
-          isSignedIn={true}
-          authorizedEmail="foo@bar.com"
-        />
-      ).contains("foo@bar.com")
+        <AuthBar Dialog={Dialog} isSignedIn={true} authorizedName="foo" />
+      ).contains("foo")
     ).toBe(true)
   })
 
@@ -226,6 +231,60 @@ describe("AuthBar", () => {
         .find("input[type='password']")
         .prop("value")
     ).toBe("foo")
+  })
+
+  it("doesn't show loading spinner when not submitting", () => {
+    expect(
+      shallow(
+        <AuthBar
+          Dialog={Dialog}
+          dialogIsOpen={true}
+          email="foo"
+          password="bar"
+          isSubmitting={false}
+          isSignedIn={false}
+        />
+      )
+        .find("Dialog")
+        .find(LoadingSpinner)
+        .exists()
+    ).toBe(false)
+  })
+
+  describe("while submitting", () => {
+    const handler = jest.fn()
+
+    const wrapper = shallow(
+      <AuthBar
+        Dialog={Dialog}
+        dialogIsOpen={true}
+        email="foo"
+        password="bar"
+        isSubmitting={true}
+        isSignedIn={false}
+      />
+    )
+
+    it("locks all inputs", () => {
+      expect(wrapper.find("Dialog input").every("[disabled]")).toBe(true)
+    })
+
+    it("locks submit button", () => {
+      expect(wrapper.find("Dialog [type='submit']").prop("disabled")).toBe(true)
+    })
+
+    it("shows loading spinner", () => {
+      expect(
+        wrapper
+          .find("Dialog")
+          .find(LoadingSpinner)
+          .exists()
+      ).toBe(true)
+    })
+
+    it("doesn't lock close button", () => {
+      expect(wrapper.find("Dialog [type='reset']").prop("disabled")).toBeFalsy()
+    })
   })
 
   it("handles clicks on the open button", () => {

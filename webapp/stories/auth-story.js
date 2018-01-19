@@ -6,7 +6,7 @@ import { AuthBar } from "../src/AuthBar"
 storiesOf("AuthBar", module)
   .add("signed out", () => <AuthBar isSignedIn={false} />)
   .add("signed in", () => (
-    <AuthBar isSignedIn={true} authorizedEmail="user@example.com" />
+    <AuthBar isSignedIn={true} authorizedName="Johanna Smith" />
   ))
   .add("dialog open", () => (
     <AuthBar
@@ -36,6 +36,19 @@ storiesOf("AuthBar", module)
     <AuthBar
       isSignedIn={false}
       dialogIsOpen={true}
+      email="user@example.com"
+      password="string password"
+      onEmailChange={action("email change")}
+      onPasswordChange={action("password change")}
+      onSubmit={action("submit")}
+      onCancel={action("cancel")}
+    />
+  ))
+  .add("dialog submitting", () => (
+    <AuthBar
+      isSignedIn={false}
+      dialogIsOpen={true}
+      isSubmitting={true}
       email="user@example.com"
       password="string password"
       onEmailChange={action("email change")}
