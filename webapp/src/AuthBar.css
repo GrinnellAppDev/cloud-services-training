@@ -11,7 +11,7 @@
 }
 
 .AuthBar-signedIn .AuthBar-openButton:focus {
-  border-color: #ddd;
+  border-color: #bddad5;
 }
 
 .AuthBar-openButtonIcon {
