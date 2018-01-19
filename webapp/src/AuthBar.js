@@ -37,6 +37,7 @@ export const AuthBar = ({
   isSignedIn,
   dialogIsOpen,
   email,
+  authorizedEmail,
   password,
   onOpenClick,
   onEmailChange,
@@ -54,7 +55,7 @@ export const AuthBar = ({
   >
     <TextButton className="AuthBar-openButton" onClick={onOpenClick}>
       <div className="AuthBar-openButtonIcon" />
-      {isSignedIn ? email : "Sign Up or Log In"}
+      {isSignedIn ? authorizedEmail : "Sign Up or Log In"}
     </TextButton>
 
     <Dialog className="AuthBar-dialog" open={dialogIsOpen} onCancel={onCancel}>

@@ -6,7 +6,7 @@ import { AuthBar } from "../src/AuthBar"
 storiesOf("AuthBar", module)
   .add("signed out", () => <AuthBar isSignedIn={false} />)
   .add("signed in", () => (
-    <AuthBar isSignedIn={true} email="user@example.com" />
+    <AuthBar isSignedIn={true} authorizedEmail="user@example.com" />
   ))
   .add("dialog open", () => (
     <AuthBar

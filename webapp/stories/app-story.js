@@ -30,7 +30,7 @@ storiesOf("App", module)
           queue: []
         },
         auth: {
-          dialog: { isOpen: false, email: "user@example.com" },
+          dialog: { isOpen: false },
           token: "f32.43fd.se8eGE2"
         }
       })}
@@ -52,7 +52,7 @@ storiesOf("App", module)
           queue: []
         },
         auth: {
-          dialog: { isOpen: false, email: "user@example.com" },
+          dialog: { isOpen: false },
           token: "f32.43fd.se8eGE2"
         }
       })}
@@ -74,7 +74,7 @@ storiesOf("App", module)
           queue: []
         },
         auth: {
-          dialog: { isOpen: false, email: "user@example.com" },
+          dialog: { isOpen: false },
           token: "f32.43fd.se8eGE2"
         }
       })}
@@ -99,7 +99,7 @@ storiesOf("App", module)
           queue: []
         },
         auth: {
-          dialog: { isOpen: false, email: "user@example.com" },
+          dialog: { isOpen: false },
           token: "f32.43fd.se8eGE2"
         }
       })}
@@ -122,7 +122,7 @@ storiesOf("App", module)
           queue: []
         },
         auth: {
-          dialog: { isOpen: false, email: "user@example.com" },
+          dialog: { isOpen: false },
           token: "f32.43fd.se8eGE2"
         }
       })}
@@ -148,7 +148,7 @@ storiesOf("App", module)
           queue: []
         },
         auth: {
-          dialog: { isOpen: false, email: "user@example.com" },
+          dialog: { isOpen: false },
           token: "f32.43fd.se8eGE2"
         }
       })}
@@ -171,8 +171,30 @@ storiesOf("App", module)
           ]
         },
         auth: {
-          dialog: { isOpen: false, email: "user@example.com" },
+          dialog: { isOpen: false },
           token: "f32.43fd.se8eGE2"
+        }
+      })}
+    >
+      <App />
+    </Provider>
+  ))
+  .add("signed out", () => (
+    <Provider
+      store={createStore({
+        newTask: {
+          text: ""
+        },
+        tasks: {
+          status: "LOADED",
+          items: {}
+        },
+        toasts: {
+          queue: []
+        },
+        auth: {
+          dialog: { isOpen: false },
+          token: null
         }
       })}
     >
@@ -183,7 +205,7 @@ storiesOf("App", module)
     <Provider
       store={createStore({
         newTask: {
-          text: "Get coff"
+          text: ""
         },
         tasks: {
           status: "LOADED",

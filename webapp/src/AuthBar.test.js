@@ -195,7 +195,11 @@ describe("AuthBar", () => {
   it("displays their email when signed in", () => {
     expect(
       shallow(
-        <AuthBar Dialog={Dialog} isSignedIn={true} email="foo@bar.com" />
+        <AuthBar
+          Dialog={Dialog}
+          isSignedIn={true}
+          authorizedEmail="foo@bar.com"
+        />
       ).contains("foo@bar.com")
     ).toBe(true)
   })
