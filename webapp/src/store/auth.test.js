@@ -154,7 +154,8 @@ describe("signInEpic", () => {
     s: submitAuthDialog(),
     f: authSubmitFailed("Failed to fetch"),
     h: authSubmitFailed("HTTP Error: Server error (500)"),
-    r: receiveAuthToken("abc", date)
+    r: receiveAuthToken("abc", date),
+    x: closeAuthDialog()
   }
 
   it("calls fetch when the dialog is submitted", () => {
@@ -224,6 +225,32 @@ describe("signInEpic", () => {
       epic: signInEpic,
       inputted: "-s-------",
       expected: "------r--",
+      valueMap,
+      getState: () => ({
+        auth: { dialog: {} }
+      }),
+      getDependencies: scheduler => ({
+        fetch: () =>
+          createDelayedObservable(
+            observableOf({
+              ok: true,
+              json: () =>
+                observableOf({
+                  token: "abc",
+                  tokenExpiration: date
+                })
+            }),
+            scheduler
+          )
+      })
+    })
+  })
+
+  it("can be canceled", () => {
+    testEpic({
+      epic: signInEpic,
+      inputted: "-s--x----",
+      expected: "---------",
       valueMap,
       getState: () => ({
         auth: { dialog: {} }

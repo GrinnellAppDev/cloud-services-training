@@ -5,6 +5,8 @@ import { catchError } from "rxjs/operators/catchError"
 import { of as observableOf } from "rxjs/observable/of"
 import { map } from "rxjs/operators/map"
 import { combineEpics } from "redux-observable"
+import { race as raceObservables } from "rxjs/observable/race"
+import { filter } from "rxjs/operators/filter"
 
 // Selectors
 
@@ -109,16 +111,20 @@ export const encodeBasicAuth = (email, password) =>
 export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("SUBMIT_AUTH_DIALOG").pipe(
     mergeMap(() =>
-      observableFrom(
-        fetch("/api/auth/token", {
-          headers: {
-            Authorization: encodeBasicAuth(
-              getAuthDialog(getState()).email,
-              getAuthDialog(getState()).password
-            )
-          }
-        })
+      raceObservables(
+        actionsObservable.ofType("CLOSE_AUTH_DIALOG"),
+        observableFrom(
+          fetch("/api/auth/token", {
+            headers: {
+              Authorization: encodeBasicAuth(
+                getAuthDialog(getState()).email,
+                getAuthDialog(getState()).password
+              )
+            }
+          })
+        )
       ).pipe(
+        filter(value => value.type !== "CLOSE_AUTH_DIALOG"),
         mergeMap(response => {
           if (response.ok) return observableFrom(response.json())
           else
