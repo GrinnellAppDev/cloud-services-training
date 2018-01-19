@@ -164,7 +164,7 @@ describe("signInEpic", () => {
 
     expect(fetch).toBeCalledWith("/api/auth/token", {
       headers: {
-        Authorization: `Basic ${encodeBasicAuth("foo", "bar")}`
+        Authorization: encodeBasicAuth("foo", "bar")
       }
     })
   })

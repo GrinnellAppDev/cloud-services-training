@@ -104,7 +104,7 @@ export const authReducer = (
 // Epics
 
 export const encodeBasicAuth = (email, password) =>
-  base64.encode(`${email}:${password}`)
+  `Basic ${base64.encode(`${email}:${password}`)}`
 
 export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("SUBMIT_AUTH_DIALOG").pipe(
@@ -112,10 +112,10 @@ export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
       observableFrom(
         fetch("/api/auth/token", {
           headers: {
-            Authorization: `Basic ${encodeBasicAuth(
+            Authorization: encodeBasicAuth(
               getAuthDialog(getState()).email,
               getAuthDialog(getState()).password
-            )}`
+            )
           }
         })
       ).pipe(
