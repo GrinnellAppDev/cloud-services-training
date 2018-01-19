@@ -5,6 +5,7 @@
   "dependencies": {
     "base-64": "^0.1.0",
     "classnames": "^2.2.5",
+    "dialog-polyfill": "^0.4.9",
     "express": "^4.16.2",
     "express-http-proxy": "^1.1.0",
     "helmet": "^3.9.0",

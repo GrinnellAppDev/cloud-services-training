@@ -8,17 +8,18 @@ import { combineEpics } from "redux-observable"
 
 // Selectors
 
-export const getAuthPopup = state => state.auth.popup
+export const getAuthDialog = state => state.auth.dialog
+export const getAuthToken = state => state.auth.token
 
 // Action Creators
 
-export const openAuthPopup = () => ({ type: "OPEN_AUTH_POPUP" })
-export const closeAuthPopup = () => ({ type: "CLOSE_AUTH_POPUP" })
-export const changeAuthPopup = changes => ({
-  type: "CHANGE_AUTH_POPUP",
+export const openAuthDialog = () => ({ type: "OPEN_AUTH_DIALOG" })
+export const closeAuthDialog = () => ({ type: "CLOSE_AUTH_DIALOG" })
+export const changeAuthDialog = changes => ({
+  type: "CHANGE_AUTH_DIALOG",
   ...changes
 })
-export const submitAuthPopup = () => ({ type: "SUBMIT_AUTH_POPUP" })
+export const submitAuthDialog = () => ({ type: "SUBMIT_AUTH_DIALOG" })
 export const authSubmitFailed = errorMessage => ({
   type: "AUTH_SUBMIT_FAILED",
   errorMessage
@@ -33,28 +34,29 @@ export const receiveAuthToken = (token, expiration) => ({
 
 export const authReducer = (
   state = {
-    popup: {
+    dialog: {
       isOpen: false,
       isSubmitting: false,
       email: "",
       password: "",
       errorMessage: ""
     },
-    token: { status: "UNLOADED" }
+    token: null,
+    tokenExpiration: null
   },
   { type, ...payload }
 ) => {
   switch (type) {
-    case "OPEN_AUTH_POPUP":
+    case "OPEN_AUTH_DIALOG":
       return {
         ...state,
-        popup: { ...state.popup, isOpen: true }
+        dialog: { ...state.dialog, isOpen: true }
       }
-    case "CLOSE_AUTH_POPUP":
+    case "CLOSE_AUTH_DIALOG":
       return {
         ...state,
-        popup: {
-          ...state.popup,
+        dialog: {
+          ...state.dialog,
           isOpen: false,
           isSubmitting: false,
           email: "",
@@ -62,21 +64,21 @@ export const authReducer = (
           errorMessage: ""
         }
       }
-    case "CHANGE_AUTH_POPUP":
+    case "CHANGE_AUTH_DIALOG":
       return {
         ...state,
-        popup: { ...state.popup, ...payload }
+        dialog: { ...state.dialog, ...payload }
       }
-    case "SUBMIT_AUTH_POPUP":
+    case "SUBMIT_AUTH_DIALOG":
       return {
         ...state,
-        popup: { ...state.popup, isSubmitting: true }
+        dialog: { ...state.dialog, isSubmitting: true }
       }
     case "AUTH_SUBMIT_FAILED":
       return {
         ...state,
-        popup: {
-          ...state.popup,
+        dialog: {
+          ...state.dialog,
           isSubmitting: false,
           errorMessage: payload.errorMessage
         }
@@ -84,18 +86,15 @@ export const authReducer = (
     case "RECEIVE_AUTH_TOKEN":
       return {
         ...state,
-        popup: {
-          ...state.popup,
+        dialog: {
+          ...state.dialog,
           isOpen: false,
           isSubmitting: false,
           email: "",
           password: ""
         },
-        token: {
-          status: "LOADED",
-          value: payload.token,
-          expiration: payload.expiration
-        }
+        token: payload.token,
+        tokenExpiration: payload.expiration
       }
     default:
       return state
@@ -108,14 +107,14 @@ export const encodeBasicAuth = (email, password) =>
   base64.encode(`${email}:${password}`)
 
 export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
-  actionsObservable.ofType("SUBMIT_AUTH_POPUP").pipe(
+  actionsObservable.ofType("SUBMIT_AUTH_DIALOG").pipe(
     mergeMap(() =>
       observableFrom(
         fetch("/api/auth/token", {
           headers: {
             Authorization: `Basic ${encodeBasicAuth(
-              getAuthPopup(getState()).email,
-              getAuthPopup(getState()).password
+              getAuthDialog(getState()).email,
+              getAuthDialog(getState()).password
             )}`
           }
         })

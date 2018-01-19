@@ -28,6 +28,10 @@ storiesOf("App", module)
         },
         toasts: {
           queue: []
+        },
+        auth: {
+          dialog: { isOpen: false, email: "user@example.com" },
+          token: "f32.43fd.se8eGE2"
         }
       })}
     >
@@ -46,6 +50,10 @@ storiesOf("App", module)
         },
         toasts: {
           queue: []
+        },
+        auth: {
+          dialog: { isOpen: false, email: "user@example.com" },
+          token: "f32.43fd.se8eGE2"
         }
       })}
     >
@@ -64,6 +72,10 @@ storiesOf("App", module)
         },
         toasts: {
           queue: []
+        },
+        auth: {
+          dialog: { isOpen: false, email: "user@example.com" },
+          token: "f32.43fd.se8eGE2"
         }
       })}
     >
@@ -85,6 +97,10 @@ storiesOf("App", module)
         },
         toasts: {
           queue: []
+        },
+        auth: {
+          dialog: { isOpen: false, email: "user@example.com" },
+          token: "f32.43fd.se8eGE2"
         }
       })}
     >
@@ -104,6 +120,10 @@ storiesOf("App", module)
         },
         toasts: {
           queue: []
+        },
+        auth: {
+          dialog: { isOpen: false, email: "user@example.com" },
+          token: "f32.43fd.se8eGE2"
         }
       })}
     >
@@ -126,6 +146,10 @@ storiesOf("App", module)
         },
         toasts: {
           queue: []
+        },
+        auth: {
+          dialog: { isOpen: false, email: "user@example.com" },
+          token: "f32.43fd.se8eGE2"
         }
       })}
     >
@@ -145,6 +169,32 @@ storiesOf("App", module)
           queue: [
             { message: "Deleting...", buttonText: "Undo", useSpinner: true }
           ]
+        },
+        auth: {
+          dialog: { isOpen: false, email: "user@example.com" },
+          token: "f32.43fd.se8eGE2"
+        }
+      })}
+    >
+      <App />
+    </Provider>
+  ))
+  .add("signing in", () => (
+    <Provider
+      store={createStore({
+        newTask: {
+          text: "Get coff"
+        },
+        tasks: {
+          status: "LOADED",
+          items: {}
+        },
+        toasts: {
+          queue: []
+        },
+        auth: {
+          dialog: { isOpen: true, email: "", password: "" },
+          token: null
         }
       })}
     >

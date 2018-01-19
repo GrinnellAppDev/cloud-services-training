@@ -7,6 +7,7 @@ import { configureStore } from "./store"
 import { makeGetAnyToastIsSpinning } from "./store/toasts"
 import { Provider } from "react-redux"
 import { delay } from "rxjs/operators/delay"
+import { dialogRoot } from "./Dialog"
 
 const store = configureStore({ fetch, delay })
 
@@ -23,6 +24,7 @@ window.addEventListener("beforeunload", ev => {
   }
 })
 
+document.body.appendChild(dialogRoot)
 ReactDOM.render(
   <Provider store={store}>
     <App />

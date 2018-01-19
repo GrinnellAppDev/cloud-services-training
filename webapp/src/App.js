@@ -19,6 +19,7 @@ import LoadingSpinner from "./LoadingSpinner"
 import { getTempTaskId } from "./util"
 import FlipMove from "react-flip-move"
 import TextButton from "./TextButton"
+import AuthBar from "./AuthBar"
 
 export const withEnhancers = connect(
   () => {
@@ -73,10 +74,14 @@ export const App = ({
 }) => (
   <div className="App">
     <header className="App-header">
+      <AuthBar className="App-authBar" />
+
       <button className="App-refresh" onClick={onRefresh} title="Refresh">
         <h1 className="App-title">todo</h1>
       </button>
+    </header>
 
+    <main className="App-main">
       <input
         id="App-addTask"
         className="App-addTask"
@@ -88,9 +93,7 @@ export const App = ({
           if (ev.key === "Enter") onNewTaskSubmit()
         }}
       />
-    </header>
 
-    <main className="App-main">
       <InfiniteScroll
         className="App-taskListWrapper"
         loadMore={onLoadNextPage}

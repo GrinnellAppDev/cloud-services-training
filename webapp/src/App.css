@@ -22,7 +22,7 @@
 }
 
 .App-refresh {
-  margin: 40px 0;
+  margin: 10px 0 40px 0;
   font: inherit;
   border: none;
   border-radius: 2px;
@@ -85,6 +85,18 @@
   padding: 0;
 }
 
+.App-authBar {
+  margin: 10px 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 500px) {
+  .App-authBar {
+    margin: 10px;
+  }
+}
+
 .App-addTask {
   font-size: 20px;
   width: 100%;
@@ -104,12 +116,12 @@
 }
 
 .App-main {
-  overflow: auto;
   flex: 1;
 }
 
 .App-taskListWrapper {
-  padding-bottom: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .App-taskList {

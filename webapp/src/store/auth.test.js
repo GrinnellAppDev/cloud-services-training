@@ -1,10 +1,10 @@
 import {
   authReducer,
-  openAuthPopup,
-  closeAuthPopup,
+  openAuthDialog,
+  closeAuthDialog,
   receiveAuthToken,
-  changeAuthPopup,
-  submitAuthPopup,
+  changeAuthDialog,
+  submitAuthDialog,
   authSubmitFailed,
   signInEpic,
   encodeBasicAuth
@@ -15,14 +15,15 @@ import { of as observableOf } from "rxjs/observable/of"
 
 describe("authReducer", () => {
   const initialState = {
-    popup: {
+    dialog: {
       isOpen: false,
       isSubmitting: false,
       email: "",
       password: "",
       errorMessage: ""
     },
-    token: { status: "UNLOADED" }
+    token: null,
+    tokenExpiration: null
   }
 
   it("has a complete default state", () => {
@@ -33,20 +34,20 @@ describe("authReducer", () => {
     expect(authReducer(initialState, { type: "UNKNOWN" })).toBe(initialState)
   })
 
-  it("opens the popup", () => {
-    expect(authReducer(initialState, openAuthPopup())).toEqual({
+  it("opens the dialog", () => {
+    expect(authReducer(initialState, openAuthDialog())).toEqual({
       ...initialState,
-      popup: { ...initialState.popup, isOpen: true }
+      dialog: { ...initialState.dialog, isOpen: true }
     })
   })
 
-  it("closes the popup and clears it", () => {
+  it("closes the dialog and clears it", () => {
     expect(
       authReducer(
         {
           ...initialState,
-          popup: {
-            ...initialState.popup,
+          dialog: {
+            ...initialState.dialog,
             isOpen: true,
             isSubmitting: true,
             email: "foo",
@@ -54,12 +55,12 @@ describe("authReducer", () => {
             errorMessage: "baz"
           }
         },
-        closeAuthPopup()
+        closeAuthDialog()
       )
     ).toEqual({
       ...initialState,
-      popup: {
-        ...initialState.popup,
+      dialog: {
+        ...initialState.dialog,
         isOpen: false,
         isSubmitting: false,
         email: "",
@@ -69,49 +70,53 @@ describe("authReducer", () => {
     })
   })
 
-  it("changes the popup email", () => {
+  it("changes the dialog email", () => {
     expect(
-      authReducer(initialState, changeAuthPopup({ email: "foo" }))
+      authReducer(initialState, changeAuthDialog({ email: "foo" }))
     ).toEqual({
       ...initialState,
-      popup: { ...initialState.popup, email: "foo" }
+      dialog: { ...initialState.dialog, email: "foo" }
     })
   })
 
-  it("changes multiple popup options", () => {
+  it("changes multiple dialog options", () => {
     expect(
       authReducer(
         initialState,
-        changeAuthPopup({ email: "bar", password: "foo" })
+        changeAuthDialog({ email: "bar", password: "foo" })
       )
     ).toEqual({
       ...initialState,
-      popup: { ...initialState.popup, email: "bar", password: "foo" }
+      dialog: { ...initialState.dialog, email: "bar", password: "foo" }
     })
   })
 
-  it("submits the auth popup", () => {
-    expect(authReducer(initialState, submitAuthPopup())).toEqual({
+  it("submits the auth dialog", () => {
+    expect(authReducer(initialState, submitAuthDialog())).toEqual({
       ...initialState,
-      popup: { ...initialState.popup, isSubmitting: true }
+      dialog: { ...initialState.dialog, isSubmitting: true }
     })
   })
 
   it("handles auth errors", () => {
     expect(authReducer(initialState, authSubmitFailed("foo"))).toEqual({
       ...initialState,
-      popup: { ...initialState.popup, isSubmitting: false, errorMessage: "foo" }
+      dialog: {
+        ...initialState.dialog,
+        isSubmitting: false,
+        errorMessage: "foo"
+      }
     })
   })
 
-  it("when a token comes back, closes the popup and saves the token", () => {
+  it("when a token comes back, closes the dialog and saves the token", () => {
     const date = new Date().toISOString()
     expect(
       authReducer(
         {
           ...initialState,
-          popup: {
-            ...initialState.popup,
+          dialog: {
+            ...initialState.dialog,
             isOpen: true,
             isSubmitting: true,
             email: "foo",
@@ -122,14 +127,15 @@ describe("authReducer", () => {
       )
     ).toEqual({
       ...initialState,
-      popup: {
-        ...initialState.popup,
+      dialog: {
+        ...initialState.dialog,
         isOpen: false,
         isSubmitting: false,
         email: "",
         password: ""
       },
-      token: { status: "LOADED", value: "abc.def.ghi", expiration: date }
+      token: "abc.def.ghi",
+      tokenExpiration: date
     })
   })
 })
@@ -137,13 +143,13 @@ describe("authReducer", () => {
 describe("signInEpic", () => {
   const date = new Date().toISOString()
   const valueMap = {
-    s: submitAuthPopup(),
+    s: submitAuthDialog(),
     f: authSubmitFailed("Failed to fetch"),
     h: authSubmitFailed("HTTP Error: Server error (500)"),
     r: receiveAuthToken("abc", date)
   }
 
-  it("calls fetch when the popup is submitted", () => {
+  it("calls fetch when the dialog is submitted", () => {
     const fetch = jest.fn()
 
     testEpic({
@@ -151,7 +157,7 @@ describe("signInEpic", () => {
       inputted: "-s-------",
       valueMap,
       getState: () => ({
-        auth: { popup: { email: "foo", password: "bar" } }
+        auth: { dialog: { email: "foo", password: "bar" } }
       }),
       getDependencies: () => ({ fetch })
     })
@@ -170,7 +176,7 @@ describe("signInEpic", () => {
       expected: "------f--",
       valueMap,
       getState: () => ({
-        auth: { popup: {} }
+        auth: { dialog: {} }
       }),
       getDependencies: scheduler => ({
         fetch: () =>
@@ -189,7 +195,7 @@ describe("signInEpic", () => {
       expected: "------h--",
       valueMap,
       getState: () => ({
-        auth: { popup: {} }
+        auth: { dialog: {} }
       }),
       getDependencies: scheduler => ({
         fetch: () =>
@@ -212,7 +218,7 @@ describe("signInEpic", () => {
       expected: "------r--",
       valueMap,
       getState: () => ({
-        auth: { popup: {} }
+        auth: { dialog: {} }
       }),
       getDependencies: scheduler => ({
         fetch: () =>
