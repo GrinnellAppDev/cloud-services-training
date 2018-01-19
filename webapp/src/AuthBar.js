@@ -63,7 +63,7 @@ export const AuthBar = ({
 
     <Dialog
       className={classnames(
-        "AuthBar-dialog",
+        "AuthBar-dialog fixed",
         isSubmitting && "AuthBar-isSubmitting"
       )}
       open={dialogIsOpen}

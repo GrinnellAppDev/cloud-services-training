@@ -25,7 +25,6 @@
 }
 
 .AuthBar-dialog {
-  top: 60px;
   border: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -35,11 +34,8 @@
   max-width: 300px;
 }
 
-.AuthBar-dialog:not([open]) {
-  display: none;
-}
-
-.AuthBar-dialog::backdrop {
+.AuthBar-dialog::backdrop,
+.AuthBar-dialog + .backdrop {
   background: #eee;
 }
 

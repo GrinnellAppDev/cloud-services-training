@@ -1,6 +1,7 @@
 import React from "react"
 import { createPortal } from "react-dom"
 import { registerDialog } from "dialog-polyfill"
+import "dialog-polyfill/dialog-polyfill.css"
 
 export const dialogRoot = document.createElement("div")
 
@@ -22,6 +23,21 @@ export class Dialog extends React.PureComponent {
   el = null
   savedFocus = null
 
+  get backdropEl() {
+    const nextSibling = this.el.nextSibling
+    return nextSibling && nextSibling.className === "backdrop"
+      ? nextSibling
+      : null
+  }
+
+  setElProps({ open, children, ...props }) {
+    for (const prop in props) {
+      if (this.el[prop] !== props[prop])
+        if (/^on/.test(prop)) this.el[prop.toLowerCase()] = props[prop]
+        else this.el[prop] = props[prop]
+    }
+  }
+
   open() {
     this.savedFocus =
       document.activeElement === document ||
@@ -31,9 +47,15 @@ export class Dialog extends React.PureComponent {
         : document.activeElement
 
     this.el.showModal()
+
+    if (this.backdropEl)
+      this.backdropEl.addEventListener("click", this.props.onCancel)
   }
 
   close() {
+    if (this.backdropEl)
+      this.backdropEl.removeEventListener("click", this.props.onCancel)
+
     this.el.close()
 
     if (document.contains(this.savedFocus)) {
@@ -56,13 +78,8 @@ export class Dialog extends React.PureComponent {
     dialogRoot.appendChild(this.el)
     registerDialog(this.el)
 
-    const { open, children, ...props } = this.props
-    for (const prop in props) {
-      if (/^on/.test(prop)) this.el[prop.toLowerCase()] = props[prop]
-      else this.el[prop] = props[prop]
-    }
-
-    if (open) this.open()
+    this.setElProps(this.props)
+    if (this.props.open) this.open()
 
     this.el.addEventListener("cancel", ev => {
       ev.preventDefault()
@@ -71,23 +88,27 @@ export class Dialog extends React.PureComponent {
       const rect = this.el.getBoundingClientRect()
 
       if (
-        ev.clientX < rect.x ||
-        ev.clientX > rect.x + rect.width ||
-        ev.clientY < rect.y ||
-        ev.clientY > rect.y + rect.height
+        ev.target === this.el &&
+        (ev.clientX < rect.x ||
+          ev.clientX > rect.x + rect.width ||
+          ev.clientY < rect.y ||
+          ev.clientY > rect.y + rect.height)
       ) {
         this.props.onCancel(ev)
       }
     })
   }
 
-  componentWillReceiveProps({ open, children, ...nextProps }) {
-    for (const prop in nextProps) {
-      if (this.el[prop] !== nextProps[prop]) this.el[prop] = nextProps[prop]
+  componentWillReceiveProps(nextProps) {
+    this.setElProps(nextProps)
+
+    if (this.props.onCancel !== nextProps.onCancel && this.backdropEl) {
+      this.backdropEl.removeEventListener("click", this.props.onCancel)
+      this.backdropEl.addEventListener("click", nextProps.onCancel)
     }
 
-    if (this.props.open !== open) {
-      if (open) {
+    if (this.props.open !== nextProps.open) {
+      if (nextProps.open) {
         this.open()
       } else {
         this.close()
