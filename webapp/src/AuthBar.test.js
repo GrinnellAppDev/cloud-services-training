@@ -191,11 +191,9 @@ describe("withEnhancers", () => {
 })
 
 describe("AuthBar", () => {
-  const Dialog = props => <dialog {...props} />
-
   it("prompts to login or sign up when not signed in", () => {
     expect(
-      shallow(<AuthBar Dialog={Dialog} isSignedIn={false} />)
+      shallow(<AuthBar isSignedIn={false} />)
         .find(".AuthBar-openButton")
         .contains("Sign Up or Log In")
     ).toBe(true)
@@ -203,23 +201,23 @@ describe("AuthBar", () => {
 
   it("displays their name when signed in", () => {
     expect(
-      shallow(
-        <AuthBar Dialog={Dialog} isSignedIn={true} authorizedName="foo" />
-      ).contains("foo")
+      shallow(<AuthBar isSignedIn={true} authorizedName="foo" />).contains(
+        "foo"
+      )
     ).toBe(true)
   })
 
   it("opens the dialog", () => {
     expect(
-      shallow(<AuthBar Dialog={Dialog} dialogIsOpen={true} />)
-        .find(Dialog)
+      shallow(<AuthBar dialogIsOpen={true} />)
+        .find("Dialog")
         .prop("open")
     ).toBe(true)
   })
 
   it("shows their email in the email input", () => {
     expect(
-      shallow(<AuthBar Dialog={Dialog} dialogIsOpen={true} email="foo" />)
+      shallow(<AuthBar dialogIsOpen={true} email="foo" />)
         .find("input[type='email']")
         .prop("value")
     ).toBe("foo")
@@ -227,7 +225,7 @@ describe("AuthBar", () => {
 
   it("has their password in the password input", () => {
     expect(
-      shallow(<AuthBar Dialog={Dialog} dialogIsOpen={true} password="foo" />)
+      shallow(<AuthBar dialogIsOpen={true} password="foo" />)
         .find("input[type='password']")
         .prop("value")
     ).toBe("foo")
@@ -237,7 +235,6 @@ describe("AuthBar", () => {
     expect(
       shallow(
         <AuthBar
-          Dialog={Dialog}
           dialogIsOpen={true}
           email="foo"
           password="bar"
@@ -256,7 +253,6 @@ describe("AuthBar", () => {
 
     const wrapper = shallow(
       <AuthBar
-        Dialog={Dialog}
         dialogIsOpen={true}
         email="foo"
         password="bar"
@@ -290,7 +286,7 @@ describe("AuthBar", () => {
   it("handles clicks on the open button", () => {
     const handler = jest.fn()
 
-    shallow(<AuthBar Dialog={Dialog} onOpenClick={handler} />)
+    shallow(<AuthBar onOpenClick={handler} />)
       .find(".AuthBar-openButton")
       .simulate("click")
 
@@ -300,9 +296,7 @@ describe("AuthBar", () => {
   it("handles email change", () => {
     const handler = jest.fn()
 
-    shallow(
-      <AuthBar Dialog={Dialog} dialogIsOpen={true} onEmailChange={handler} />
-    )
+    shallow(<AuthBar dialogIsOpen={true} onEmailChange={handler} />)
       .find("input[type='email']")
       .simulate("change", { currentTarget: { value: "foo" } })
 
@@ -312,9 +306,7 @@ describe("AuthBar", () => {
   it("handles password change", () => {
     const handler = jest.fn()
 
-    shallow(
-      <AuthBar Dialog={Dialog} dialogIsOpen={true} onPasswordChange={handler} />
-    )
+    shallow(<AuthBar dialogIsOpen={true} onPasswordChange={handler} />)
       .find("input[type='password']")
       .simulate("change", { currentTarget: { value: "foo" } })
 
@@ -324,7 +316,7 @@ describe("AuthBar", () => {
   it("handles submit", () => {
     const handler = jest.fn()
 
-    shallow(<AuthBar Dialog={Dialog} dialogIsOpen={true} onSubmit={handler} />)
+    shallow(<AuthBar dialogIsOpen={true} onSubmit={handler} />)
       .find("[type='submit']")
       .simulate("click")
 
@@ -334,8 +326,8 @@ describe("AuthBar", () => {
   it("handles cancel from dialog", () => {
     const handler = jest.fn()
 
-    shallow(<AuthBar Dialog={Dialog} dialogIsOpen={true} onCancel={handler} />)
-      .find(Dialog)
+    shallow(<AuthBar dialogIsOpen={true} onCancel={handler} />)
+      .find("Dialog")
       .simulate("cancel")
 
     expect(handler).toBeCalled()
@@ -344,7 +336,7 @@ describe("AuthBar", () => {
   it("handles cancel from button", () => {
     const handler = jest.fn()
 
-    shallow(<AuthBar Dialog={Dialog} dialogIsOpen={true} onCancel={handler} />)
+    shallow(<AuthBar dialogIsOpen={true} onCancel={handler} />)
       .find("[type='reset']")
       .simulate("click")
 

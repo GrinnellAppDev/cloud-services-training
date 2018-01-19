@@ -1,6 +1,6 @@
 import React from "react"
 import { connect } from "react-redux"
-import DialogComponent from "./Dialog"
+import Dialog from "./Dialog"
 import TextButton from "./TextButton"
 import {
   getAuthToken,
@@ -35,7 +35,6 @@ export const withEnhancers = connect(
 )
 
 export const AuthBar = ({
-  Dialog = DialogComponent,
   isSignedIn,
   dialogIsOpen,
   isSubmitting,
