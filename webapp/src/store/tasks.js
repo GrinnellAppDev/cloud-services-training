@@ -243,7 +243,7 @@ export const reloadOnAuthEpic = actionsObservable =>
  * @param {string} currentToken auth token to use on first try
  * @param {boolean} tryReAuth whether it should try to re-authenticate
  * @returns {Observable<Action>}
- *   actions containing the fetched tasks and new auth details.
+ *   actions containing the fetched tasks and new auth details
  */
 export const fetchTasks = (fetch, getState, currentToken, tryReAuth) =>
   observableFrom(
