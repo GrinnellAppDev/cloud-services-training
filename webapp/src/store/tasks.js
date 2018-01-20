@@ -12,12 +12,9 @@ import { take } from "rxjs/operators/take"
 import { map } from "rxjs/operators/map"
 import { catchError } from "rxjs/operators/catchError"
 import { _throw as observableThrow } from "rxjs/observable/throw"
-import { forkJoin as forkJoinObservables } from "rxjs/observable/forkJoin"
 import { sendToast } from "./toasts"
 import { mapTo } from "rxjs/operators/mapTo"
 import { openAuthDialog, getAuthToken, receiveAuthToken } from "./auth"
-import { concat as concatObservables } from "rxjs/observable/concat"
-import { tap } from "rxjs/operators/tap"
 import { delayWhen } from "rxjs/operators/delayWhen"
 
 // Selectors
