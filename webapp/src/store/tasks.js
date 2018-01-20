@@ -238,18 +238,13 @@ export const reloadOnSignInEpic = actionsObservable =>
  * Fetch tasks and re-authenticate if necessary.
  * @param {function(string, *): Promise} fetch window.fetch function
  * @param {function(): any} getState redux state getter
+ * @param {string} currentToken auth token to use on first try
+ * @param {boolean} tryReAuth whether it should try to re-authenticate
  * @returns {Observable<Action>}
  *   actions containing the fetched tasks and new auth details.
  */
-export const fetchTasks = (
-  fetch,
-  getState,
-  currentToken,
-  currentTokenExpiration
-) => {
-  const isExpired = new Date(currentTokenExpiration).valueOf() < Date.now()
-
-  return observableFrom(
+export const fetchTasks = (fetch, getState, currentToken, tryReAuth) =>
+  observableFrom(
     fetch(getNextPageURI(getState()) || "/api/tasks", {
       headers: { Authorization: `Bearer ${currentToken}` }
     })
@@ -265,7 +260,7 @@ export const fetchTasks = (
         )
       } else if (response.status === 401) {
         if (!currentToken) return observableOf(tasksReceived([], null))
-        else if (!isExpired) throw Error("Couldn't authenticate.")
+        else if (!tryReAuth) throw Error("Couldn't authenticate.")
         else
           return observableFrom(
             fetch("/api/auth/token", {
@@ -285,7 +280,7 @@ export const fetchTasks = (
             mergeMap(({ token, tokenExpiration }) =>
               mergeObservables(
                 observableOf(receiveAuthToken(token, tokenExpiration)),
-                fetchTasks(fetch, getState, token, tokenExpiration)
+                fetchTasks(fetch, getState, token, false)
               )
             )
           )
@@ -295,7 +290,6 @@ export const fetchTasks = (
     }),
     catchError(err => observableOf(tasksLoadingFailed(err.message)))
   )
-}
 
 export const loadTasksEpic = (
   actionsObservable,
@@ -329,7 +323,7 @@ export const loadTasksEpic = (
             fetch,
             getState,
             getAuthToken(getState()),
-            getAuthTokenExpiration(getState())
+            new Date(getAuthTokenExpiration(getState())).valueOf() < Date.now()
           ).pipe(delayWhen(() => animationDelay))
         )
     })
