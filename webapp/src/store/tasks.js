@@ -231,6 +231,9 @@ export const signInFromToastEpic = actionsObservable =>
       mapTo(openAuthDialog())
     )
 
+export const reloadOnSignInEpic = actionsObservable =>
+  actionsObservable.ofType("AUTH_SUBMIT_SUCCESS").pipe(mapTo(reloadTasks()))
+
 /**
  * Fetch tasks and re-authenticate if necessary.
  * @param {function(string, *): Promise} fetch window.fetch function
@@ -457,6 +460,7 @@ export const deleteTaskEpic = (actionsObservable, { getState }, { fetch }) =>
 
 export const tasksEpic = combineEpics(
   signInFromToastEpic,
+  reloadOnSignInEpic,
   loadTasksEpic,
   newTaskEpic,
   editTaskEpic,

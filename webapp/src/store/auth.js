@@ -29,6 +29,7 @@ export const authSubmitFailed = errorMessage => ({
   type: "AUTH_SUBMIT_FAILED",
   errorMessage
 })
+export const authSubmitSuccess = () => ({ type: "AUTH_SUBMIT_SUCCESS" })
 export const receiveAuthToken = (token, expiration) => ({
   type: "RECEIVE_AUTH_TOKEN",
   token,
@@ -64,6 +65,7 @@ export const authReducer = (
         dialog: { ...state.dialog, isOpen: true }
       }
     case "CLOSE_AUTH_DIALOG":
+    case "AUTH_SUBMIT_SUCCESS":
       return {
         ...state,
         dialog: {
@@ -95,18 +97,6 @@ export const authReducer = (
         }
       }
     case "RECEIVE_AUTH_TOKEN":
-      return {
-        ...state,
-        dialog: {
-          ...state.dialog,
-          isOpen: false,
-          isSubmitting: false,
-          email: "",
-          password: ""
-        },
-        token: payload.token,
-        tokenExpiration: payload.expiration
-      }
     case "LOAD_AUTH_TOKEN":
       return {
         ...state,
@@ -153,7 +143,12 @@ export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
               `HTTP Error: ${response.statusText} (${response.status})`
             )
         }),
-        map(body => receiveAuthToken(body.token, body.tokenExpiration)),
+        mergeMap(body =>
+          observableOf(
+            receiveAuthToken(body.token, body.tokenExpiration),
+            authSubmitSuccess()
+          )
+        ),
         catchError(error => observableOf(authSubmitFailed(error.message)))
       )
     )

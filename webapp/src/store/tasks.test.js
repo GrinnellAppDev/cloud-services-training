@@ -23,14 +23,15 @@ import {
   taskDeleteSucceeded,
   newTaskReducer,
   tasksReducer,
-  signInFromToastEpic
+  signInFromToastEpic,
+  reloadOnSignInEpic
 } from "./tasks"
 import { sendToast, toastClosed } from "./toasts"
 import { of as observableOf } from "rxjs/observable/of"
 import { _throw as observableThrow } from "rxjs/observable/throw"
 import { getTempTaskId } from "../util"
 import { testEpic, createDelayedObservable } from "./testUtils"
-import { openAuthDialog, receiveAuthToken } from "./auth"
+import { openAuthDialog, receiveAuthToken, authSubmitSuccess } from "./auth"
 import { delay } from "rxjs/operators/delay"
 
 describe("selectors", () => {
@@ -387,6 +388,20 @@ describe("epics", () => {
         valueMap: {
           t: toastClosed("SIGN_IN", { withAction: true }),
           o: openAuthDialog()
+        }
+      })
+    })
+  })
+
+  describe("reloadOnSignInEpic", () => {
+    it("sends reload when it gets auth submit success", () => {
+      testEpic({
+        epic: reloadOnSignInEpic,
+        inputted: "-s------",
+        expected: "-r------",
+        valueMap: {
+          s: authSubmitSuccess(),
+          r: reloadTasks()
         }
       })
     })

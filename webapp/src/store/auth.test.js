@@ -10,7 +10,8 @@ import {
   encodeBasicAuth,
   clearAuthToken,
   loadAuthToken,
-  localStorageEpic
+  localStorageEpic,
+  authSubmitSuccess
 } from "./auth"
 import { testEpic, createDelayedObservable } from "./testUtils"
 import { _throw as observableThrow } from "rxjs/observable/throw"
@@ -120,8 +121,7 @@ describe("authReducer", () => {
     })
   })
 
-  it("when a token comes back, closes the dialog and saves the token", () => {
-    const date = new Date().toISOString()
+  it("closes the dialog on sign-in success", () => {
     expect(
       authReducer(
         {
@@ -134,7 +134,7 @@ describe("authReducer", () => {
             password: "bar"
           }
         },
-        receiveAuthToken("abc.def.ghi", date)
+        authSubmitSuccess()
       )
     ).toEqual({
       ...initialState,
@@ -144,7 +144,23 @@ describe("authReducer", () => {
         isSubmitting: false,
         email: "",
         password: ""
-      },
+      }
+    })
+  })
+
+  it("saves the token it receives", () => {
+    const date = new Date().toISOString()
+    expect(
+      authReducer(
+        {
+          ...initialState,
+          dialog: { ...initialState.dialog, isSubmitting: true }
+        },
+        receiveAuthToken("abc.def.ghi", date)
+      )
+    ).toEqual({
+      ...initialState,
+      dialog: { ...initialState.dialog, isSubmitting: true },
       token: "abc.def.ghi",
       tokenExpiration: date
     })
@@ -186,6 +202,7 @@ describe("signInEpic", () => {
     f: authSubmitFailed("Failed to fetch"),
     h: authSubmitFailed("HTTP Error: Server error (500)"),
     r: receiveAuthToken("abc", date),
+    d: authSubmitSuccess(),
     x: closeAuthDialog()
   }
 
@@ -254,8 +271,8 @@ describe("signInEpic", () => {
   it("receives the new auth token", () => {
     testEpic({
       epic: signInEpic,
-      inputted: "-s-------",
-      expected: "------r--",
+      inputted: "-s---------",
+      expected: "------(rd)-",
       valueMap,
       getState: () => ({
         auth: { dialog: {} }
