@@ -24,14 +24,19 @@ import {
   newTaskReducer,
   tasksReducer,
   signInFromToastEpic,
-  reloadOnSignInEpic
+  reloadOnAuthEpic
 } from "./tasks"
 import { sendToast, toastClosed } from "./toasts"
 import { of as observableOf } from "rxjs/observable/of"
 import { _throw as observableThrow } from "rxjs/observable/throw"
 import { getTempTaskId } from "../util"
 import { testEpic, createDelayedObservable } from "./testUtils"
-import { openAuthDialog, receiveAuthToken, authSubmitSuccess } from "./auth"
+import {
+  openAuthDialog,
+  receiveAuthToken,
+  authSubmitSuccess,
+  clearAuthToken
+} from "./auth"
 import { delay } from "rxjs/operators/delay"
 
 describe("selectors", () => {
@@ -393,14 +398,26 @@ describe("epics", () => {
     })
   })
 
-  describe("reloadOnSignInEpic", () => {
+  describe("reloadOnAuthEpic", () => {
     it("sends reload when it gets auth submit success", () => {
       testEpic({
-        epic: reloadOnSignInEpic,
+        epic: reloadOnAuthEpic,
         inputted: "-s------",
         expected: "-r------",
         valueMap: {
           s: authSubmitSuccess(),
+          r: reloadTasks()
+        }
+      })
+    })
+
+    it("sends reload when it gets clear auth token", () => {
+      testEpic({
+        epic: reloadOnAuthEpic,
+        inputted: "-c------",
+        expected: "-r------",
+        valueMap: {
+          c: clearAuthToken(),
           r: reloadTasks()
         }
       })
