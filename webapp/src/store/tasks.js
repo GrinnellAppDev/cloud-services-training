@@ -14,6 +14,8 @@ import { catchError } from "rxjs/operators/catchError"
 import { _throw as observableThrow } from "rxjs/observable/throw"
 import { forkJoin as forkJoinObservables } from "rxjs/observable/forkJoin"
 import { sendToast } from "./toasts"
+import { mapTo } from "rxjs/operators/mapTo"
+import { openAuthDialog } from "./auth"
 
 // Selectors
 
@@ -216,6 +218,14 @@ export const tasksReducer = (
 
 // Epics
 
+export const signInFromToastEpic = actionsObservable =>
+  actionsObservable
+    .ofType("TOAST_CLOSED")
+    .pipe(
+      filter(({ id, withAction }) => withAction && id === "SIGN_IN"),
+      mapTo(openAuthDialog())
+    )
+
 export const loadTasksEpic = (
   actionsObservable,
   { getState },
@@ -252,10 +262,13 @@ export const loadTasksEpic = (
                     return tasksReceived(body, next ? next.url : null)
                   })
                 )
-              } else
+              } else if (response.status === 401) {
+                return observableOf(tasksReceived([], null))
+              } else {
                 throw Error(
                   `HTTP Error: ${response.statusText} (${response.status})`
                 )
+              }
             }),
             catchError(err => observableOf(tasksLoadingFailed(err.message)))
           )
@@ -283,19 +296,25 @@ export const newTaskEpic = (actionsObservable, { getState }, { fetch }) =>
                   })
                 })
               ).pipe(
-                mergeMap(
-                  response =>
-                    response.ok
-                      ? observableFrom(response.json())
-                      : observableThrow(
-                          Error(
-                            `HTTP Error: ${response.statusText} (${
-                              response.status
-                            })`
-                          )
-                        )
-                ),
-                map(({ _id }) => taskCreated(temporaryId, _id)),
+                mergeMap(response => {
+                  if (response.ok)
+                    return observableFrom(response.json()).pipe(
+                      map(({ _id }) => taskCreated(temporaryId, _id))
+                    )
+                  else if (response.status === 401)
+                    return observableOf(
+                      taskCreateFailed(temporaryId, "Not signed in"),
+                      sendToast(
+                        "SIGN_IN",
+                        "You must sign in to create a task",
+                        "Sign In"
+                      )
+                    )
+                  else
+                    throw Error(
+                      `HTTP Error: ${response.statusText} (${response.status})`
+                    )
+                }),
                 catchError(err =>
                   observableOf(
                     taskCreateFailed(temporaryId, err.message),
@@ -329,7 +348,7 @@ export const editTaskEpic = (actionsObservable, { getState }, { fetch }) =>
         catchError(err =>
           observableOf(
             taskEditFailed(id, original, err.message),
-            sendToast("EDIT_TASK_FAILED", "Couldn't update task")
+            sendToast("EDIT_TASK_FAILED", "Couldn't modify task")
           )
         )
       )
@@ -381,6 +400,7 @@ export const deleteTaskEpic = (actionsObservable, { getState }, { fetch }) =>
   )
 
 export const tasksEpic = combineEpics(
+  signInFromToastEpic,
   loadTasksEpic,
   newTaskEpic,
   editTaskEpic,

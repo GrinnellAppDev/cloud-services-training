@@ -22,13 +22,15 @@ import {
   taskDeleteFailed,
   taskDeleteSucceeded,
   newTaskReducer,
-  tasksReducer
+  tasksReducer,
+  signInFromToastEpic
 } from "./tasks"
 import { sendToast, toastClosed } from "./toasts"
 import { of as observableOf } from "rxjs/observable/of"
 import { _throw as observableThrow } from "rxjs/observable/throw"
 import { getTempTaskId } from "../util"
 import { testEpic, createDelayedObservable } from "./testUtils"
+import { openAuthDialog } from "./auth"
 
 describe("selectors", () => {
   describe("getTaskById", () => {
@@ -353,6 +355,42 @@ describe("reducers", () => {
 })
 
 describe("epics", () => {
+  describe("signInFromToastEpic", () => {
+    it("ignores other toasts", () => {
+      testEpic({
+        epic: signInFromToastEpic,
+        inputted: "-t------",
+        expected: "--------",
+        valueMap: {
+          t: toastClosed("UNKNOWN", { withAction: true })
+        }
+      })
+    })
+
+    it("ignores the toast when there was no action", () => {
+      testEpic({
+        epic: signInFromToastEpic,
+        inputted: "-t------",
+        expected: "--------",
+        valueMap: {
+          t: toastClosed("SIGN_IN", { withAction: false })
+        }
+      })
+    })
+
+    it("handles the toast", () => {
+      testEpic({
+        epic: signInFromToastEpic,
+        inputted: "-t------",
+        expected: "-o------",
+        valueMap: {
+          t: toastClosed("SIGN_IN", { withAction: true }),
+          o: openAuthDialog()
+        }
+      })
+    })
+  })
+
   describe("loadTasksEpic", () => {
     // TODO: validate tasks against a schema and give helpful errors when it fails
 
@@ -510,6 +548,27 @@ describe("epics", () => {
       })
     })
 
+    it("ignores 401s when there is no auth", () => {
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----x",
+        valueMap,
+        getState: () => ({ tasks: {}, auth: { token: null } }),
+        getDependencies: scheduler => ({
+          fetch: () =>
+            createDelayedObservable(
+              observableOf({
+                ok: false,
+                status: 401,
+                statusText: "Unauthorized"
+              }),
+              scheduler
+            )
+        })
+      })
+    })
+
     it("handles 401s when there is auth")
 
     it("loads tasks and next page token", () => {
@@ -646,7 +705,7 @@ describe("epics", () => {
     it("handles http errors gracefully", () => {
       testEpic({
         epic: newTaskEpic,
-        inputted: "-n-----",
+        inputted: "-n--------",
         expected: "-l----(ht)",
         valueMap,
         getState: () => ({ newTask: { text: "foo" } }),
@@ -657,6 +716,38 @@ describe("epics", () => {
                 ok: false,
                 status: 500,
                 statusText: "Server error"
+              }),
+              scheduler
+            )
+        })
+      })
+    })
+
+    it("toasts when it gets a 401 and there is no token", () => {
+      testEpic({
+        epic: newTaskEpic,
+        inputted: "-n--------",
+        expected: "-l----(ft)",
+        valueMap: {
+          ...valueMap,
+          f: taskCreateFailed("abc", "Not signed in"),
+          t: sendToast(
+            "SIGN_IN",
+            "You must sign in to create a task",
+            "Sign In"
+          )
+        },
+        getState: () => ({
+          newTask: { text: "foo" },
+          auth: { token: null }
+        }),
+        getDependencies: scheduler => ({
+          fetch: () =>
+            createDelayedObservable(
+              observableOf({
+                ok: false,
+                status: 401,
+                statusText: "Unauthorized"
               }),
               scheduler
             )
@@ -707,7 +798,7 @@ describe("epics", () => {
         { isComplete: false, text: "bar" },
         "HTTP Error: Server error (500)"
       ),
-      t: sendToast("EDIT_TASK_FAILED", "Couldn't update task"),
+      t: sendToast("EDIT_TASK_FAILED", "Couldn't modify task"),
       s: taskEditSucceeded("a")
     }
 

@@ -1,11 +1,11 @@
-import { mergeMap } from "rxjs/operators/mergeMap"
-import { from as observableFrom } from "rxjs/observable/from"
 import base64 from "base-64"
-import { catchError } from "rxjs/operators/catchError"
-import { of as observableOf } from "rxjs/observable/of"
-import { map } from "rxjs/operators/map"
 import { combineEpics } from "redux-observable"
+import { from as observableFrom } from "rxjs/observable/from"
+import { of as observableOf } from "rxjs/observable/of"
 import { race as raceObservables } from "rxjs/observable/race"
+import { mergeMap } from "rxjs/operators/mergeMap"
+import { map } from "rxjs/operators/map"
+import { catchError } from "rxjs/operators/catchError"
 import { filter } from "rxjs/operators/filter"
 
 // Selectors
