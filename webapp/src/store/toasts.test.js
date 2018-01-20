@@ -244,16 +244,41 @@ describe("toastEpic", () => {
   })
 
   it("clears toast early when sent another toast", () => {
+    const getState = jest
+      .fn()
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }, { id: "b" }] } })
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }, { id: "b" }] } })
+
     testEpic({
       epic: toastEpic,
       inputted: "-a-b--------",
       expected: "------(cx)-s",
       valueMap,
-      getState: jest
-        .fn()
-        .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
-        .mockReturnValue({ toasts: { queue: [{ id: "a" }, { id: "b" }] } })
+      getState
     })
+
+    expect(getState.mock.calls).toHaveLength(4)
+  })
+
+  it("clears toast early when sent another toast in the second half of its life", () => {
+    const getState = jest
+      .fn()
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
+      .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }, { id: "b" }] } })
+
+    testEpic({
+      epic: toastEpic,
+      inputted: "-a-------b-----",
+      expected: "---------(cx)-s",
+      valueMap,
+      getState
+    })
+
+    expect(getState.mock.calls).toHaveLength(4)
   })
 
   it("clears toast early when toast has a spinner", () => {
@@ -265,10 +290,7 @@ describe("toastEpic", () => {
         ...valueMap,
         a: sendToast("a", "foo", "", { useSpinner: true })
       },
-      getState: jest
-        .fn()
-        .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
-        .mockReturnValue({ toasts: { queue: [{ id: "a" }, { id: "b" }] } })
+      getState: () => ({ toasts: { queue: [{ id: "a", useSpinner: true }] } })
     })
   })
 
