@@ -136,13 +136,16 @@ export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
         )
       ).pipe(
         filter(value => value.type !== "CLOSE_AUTH_DIALOG"),
-        mergeMap(response => {
-          if (response.ok) return observableFrom(response.json())
-          else
-            throw new Error(
-              `HTTP Error: ${response.statusText} (${response.status})`
-            )
-        }),
+        mergeMap(
+          response =>
+            response.ok
+              ? observableFrom(response.json())
+              : observableFrom(response.json()).pipe(
+                  map(({ message }) => {
+                    throw new Error(`Error (${response.status}): ${message}`)
+                  })
+                )
+        ),
         mergeMap(body =>
           observableOf(
             receiveAuthToken(body.token, body.tokenExpiration),

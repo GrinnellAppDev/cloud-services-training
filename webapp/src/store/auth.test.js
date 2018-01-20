@@ -200,7 +200,7 @@ describe("signInEpic", () => {
   const valueMap = {
     s: submitAuthDialog(),
     f: authSubmitFailed("Failed to fetch"),
-    h: authSubmitFailed("HTTP Error: Server error (500)"),
+    h: authSubmitFailed("Error (500): foo"),
     r: receiveAuthToken("abc", date),
     d: authSubmitSuccess(),
     x: closeAuthDialog()
@@ -260,7 +260,7 @@ describe("signInEpic", () => {
             observableOf({
               ok: false,
               status: 500,
-              statusText: "Server error"
+              json: () => observableOf({ message: "foo" })
             }),
             scheduler
           )
