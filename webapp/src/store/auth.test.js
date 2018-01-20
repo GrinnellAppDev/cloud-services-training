@@ -302,6 +302,8 @@ describe("signInEpic", () => {
       })
     })
   })
+
+  it("reloads tasks when they sign in")
 })
 
 describe("localStorageEpic", () => {
@@ -349,6 +351,7 @@ describe("localStorageEpic", () => {
     testEpic({
       epic: localStorageEpic,
       inputted: "-r-------",
+      expected: "---------",
       valueMap: {
         r: receiveAuthToken("foo", "bar")
       },
@@ -362,5 +365,26 @@ describe("localStorageEpic", () => {
 
     expect(setItem).toBeCalledWith("cst:authToken", "foo")
     expect(setItem).toBeCalledWith("cst:authTokenExpiration", "bar")
+  })
+
+  it("clears localStorage on sign out", () => {
+    const clear = jest.fn()
+
+    testEpic({
+      epic: localStorageEpic,
+      inputted: "-c-------",
+      expected: "---------",
+      valueMap: {
+        c: clearAuthToken()
+      },
+      getDependencies: () => ({
+        localStorage: {
+          getItem: key => null,
+          clear
+        }
+      })
+    })
+
+    expect(clear).toBeCalledWith()
   })
 })

@@ -178,6 +178,13 @@ export const localStorageEpic = (
 
         return emptyObservable()
       })
+    ),
+    actionsObservable.ofType("CLEAR_AUTH_TOKEN").pipe(
+      mergeMap(() => {
+        localStorage.clear()
+
+        return emptyObservable()
+      })
     )
   )
 }
