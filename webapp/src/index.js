@@ -8,8 +8,16 @@ import { makeGetAnyToastIsSpinning } from "./store/toasts"
 import { Provider } from "react-redux"
 import { delay } from "rxjs/operators/delay"
 import { dialogRoot } from "./Dialog"
+import { from as observableFrom } from "rxjs/observable/from"
 
-const store = configureStore({ fetch, delay })
+const store = configureStore({
+  fetch,
+  delay,
+  startHotTimer: duration =>
+    observableFrom(
+      new Promise(resolve => setTimeout(() => resolve(null), duration))
+    )
+})
 
 const anyToastIsSpinning = makeGetAnyToastIsSpinning()
 window.addEventListener("beforeunload", ev => {

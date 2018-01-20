@@ -15,7 +15,10 @@ import { _throw as observableThrow } from "rxjs/observable/throw"
 import { forkJoin as forkJoinObservables } from "rxjs/observable/forkJoin"
 import { sendToast } from "./toasts"
 import { mapTo } from "rxjs/operators/mapTo"
-import { openAuthDialog } from "./auth"
+import { openAuthDialog, getAuthToken, receiveAuthToken } from "./auth"
+import { concat as concatObservables } from "rxjs/observable/concat"
+import { tap } from "rxjs/operators/tap"
+import { delayWhen } from "rxjs/operators/delayWhen"
 
 // Selectors
 
@@ -226,14 +229,75 @@ export const signInFromToastEpic = actionsObservable =>
       mapTo(openAuthDialog())
     )
 
+/**
+ * Fetch tasks and re-authenticate if necessary.
+ * @param {function(string, *): Promise} fetch window.fetch function
+ * @param {function(): any} getState redux state getter
+ * @returns {Observable<Action>}
+ *   actions containing the fetched tasks and new auth details.
+ */
+export const fetchTasks = (fetch, getState, currentToken) =>
+  observableFrom(
+    fetch(getNextPageURI(getState()) || "/api/tasks", {
+      headers: { Authorization: `Bearer ${currentToken}` }
+    })
+  ).pipe(
+    mergeMap(response => {
+      if (response.ok) {
+        const { next } = parseLinkHeader(response.headers.get("Link")) || {}
+
+        return observableFrom(response.json()).pipe(
+          map(body => {
+            return tasksReceived(body, next ? next.url : null)
+          })
+        )
+      } else if (response.status === 401) {
+        if (!currentToken) return observableOf(tasksReceived([], null))
+        else {
+          const newTokenObservable = observableFrom(
+            fetch("/api/auth/token", {
+              headers: {
+                Authorization: `Bearer ${currentToken}`
+              }
+            })
+          ).pipe(
+            mergeMap(
+              response =>
+                response.ok
+                  ? observableFrom(response.json())
+                  : observableThrow(Error("Couldn't authenticate."))
+            )
+          )
+
+          return newTokenObservable.pipe(
+            mergeMap(({ token, tokenExpiration }) =>
+              mergeObservables(
+                observableOf(receiveAuthToken(token, tokenExpiration)),
+                fetchTasks(fetch, getState, token)
+              )
+            )
+          )
+        }
+      } else {
+        throw Error(`HTTP Error: ${response.statusText} (${response.status})`)
+      }
+    }),
+    catchError(err => observableOf(tasksLoadingFailed(err.message)))
+  )
+
 export const loadTasksEpic = (
   actionsObservable,
   { getState },
-  { fetch, delay }
+  { fetch, delay, startHotTimer }
 ) =>
   actionsObservable.ofType("RELOAD_TASKS", "LOAD_NEXT_TASKS").pipe(
     mergeMap(({ type }) => {
       const status = getTasksStatus(getState())
+
+      const animationDelay =
+        type === "RELOAD_TASKS" || status === "ERROR"
+          ? startHotTimer(500, null)
+          : observableOf(null)
 
       if (
         status === "LOADING" ||
@@ -246,31 +310,8 @@ export const loadTasksEpic = (
       else
         return mergeObservables(
           observableOf(tasksLoadingStarted()),
-          forkJoinObservables([
-            fetch(getNextPageURI(getState()) || "/api/tasks"),
-            type === "RELOAD_TASKS" || status === "ERROR"
-              ? observableOf(null).pipe(delay(500))
-              : observableOf(null)
-          ]).pipe(
-            mergeMap(([response]) => {
-              if (response.ok) {
-                const { next } =
-                  parseLinkHeader(response.headers.get("Link")) || {}
-
-                return observableFrom(response.json()).pipe(
-                  map(body => {
-                    return tasksReceived(body, next ? next.url : null)
-                  })
-                )
-              } else if (response.status === 401) {
-                return observableOf(tasksReceived([], null))
-              } else {
-                throw Error(
-                  `HTTP Error: ${response.statusText} (${response.status})`
-                )
-              }
-            }),
-            catchError(err => observableOf(tasksLoadingFailed(err.message)))
+          fetchTasks(fetch, getState, getAuthToken(getState())).pipe(
+            delayWhen(() => animationDelay)
           )
         )
     })

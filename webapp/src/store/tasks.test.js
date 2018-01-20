@@ -30,7 +30,8 @@ import { of as observableOf } from "rxjs/observable/of"
 import { _throw as observableThrow } from "rxjs/observable/throw"
 import { getTempTaskId } from "../util"
 import { testEpic, createDelayedObservable } from "./testUtils"
-import { openAuthDialog } from "./auth"
+import { openAuthDialog, receiveAuthToken } from "./auth"
+import { delay } from "rxjs/operators/delay"
 
 describe("selectors", () => {
   describe("getTaskById", () => {
@@ -410,11 +411,16 @@ describe("epics", () => {
         epic: loadTasksEpic,
         inputted: "-r-----",
         valueMap,
-        getState: () => ({ tasks: {} }),
+        getState: () => ({
+          tasks: {},
+          auth: { token: null }
+        }),
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks")
+      expect(fetch).toBeCalledWith("/api/tasks", {
+        headers: { Authorization: "Bearer null" }
+      })
     })
 
     it("doesn't call fetch and sends nothing when already loading", () => {
@@ -425,7 +431,10 @@ describe("epics", () => {
         inputted: "-r-----",
         expected: "-------",
         valueMap,
-        getState: () => ({ tasks: { status: "LOADING" } }),
+        getState: () => ({
+          tasks: { status: "LOADING" },
+          auth: { token: null }
+        }),
         getDependencies: () => ({ fetch })
       })
 
@@ -439,11 +448,16 @@ describe("epics", () => {
         epic: loadTasksEpic,
         inputted: "-n-----",
         valueMap,
-        getState: () => ({ tasks: { status: "ERROR", nextPageURI: null } }),
+        getState: () => ({
+          tasks: { status: "ERROR", nextPageURI: null },
+          auth: { token: null }
+        }),
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks")
+      expect(fetch).toBeCalledWith("/api/tasks", {
+        headers: { Authorization: "Bearer null" }
+      })
     })
 
     it("calls fetch when given a reload action with an error", () => {
@@ -454,12 +468,15 @@ describe("epics", () => {
         inputted: "-r-----",
         valueMap,
         getState: () => ({
-          tasks: { status: "ERROR", nextPageURI: null }
+          tasks: { status: "ERROR", nextPageURI: null },
+          auth: { token: null }
         }),
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks")
+      expect(fetch).toBeCalledWith("/api/tasks", {
+        headers: { Authorization: "Bearer null" }
+      })
     })
 
     it("calls fetch when given a load page action if tasks are unloaded", () => {
@@ -470,12 +487,15 @@ describe("epics", () => {
         inputted: "-n-----",
         valueMap,
         getState: () => ({
-          tasks: { status: "UNLOADED", nextPageURI: null }
+          tasks: { status: "UNLOADED", nextPageURI: null },
+          auth: { token: null }
         }),
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks")
+      expect(fetch).toBeCalledWith("/api/tasks", {
+        headers: { Authorization: "Bearer null" }
+      })
     })
 
     it("does not call fetch when given a load page action if tasks are loaded and there is no next page URI", () => {
@@ -486,7 +506,8 @@ describe("epics", () => {
         inputted: "-n-----",
         valueMap,
         getState: () => ({
-          tasks: { nextPageURI: null }
+          tasks: { nextPageURI: null },
+          auth: { token: null }
         }),
         getDependencies: () => ({ fetch })
       })
@@ -502,12 +523,15 @@ describe("epics", () => {
         inputted: "-n-----",
         valueMap,
         getState: () => ({
-          tasks: { nextPageURI: "/api/tasks?pageToken=abc" }
+          tasks: { nextPageURI: "/api/tasks?pageToken=abc" },
+          auth: { token: null }
         }),
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks?pageToken=abc")
+      expect(fetch).toBeCalledWith("/api/tasks?pageToken=abc", {
+        headers: { Authorization: "Bearer null" }
+      })
     })
 
     it("handles fetch errors gracefully", () => {
@@ -516,7 +540,7 @@ describe("epics", () => {
         inputted: "-r-----",
         expected: "-s----f",
         valueMap,
-        getState: () => ({ tasks: {} }),
+        getState: () => ({ tasks: {}, auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -533,7 +557,7 @@ describe("epics", () => {
         inputted: "-r-----",
         expected: "-s----h",
         valueMap,
-        getState: () => ({ tasks: {} }),
+        getState: () => ({ tasks: {}, auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -569,16 +593,14 @@ describe("epics", () => {
       })
     })
 
-    it("handles 401s when there is auth")
-
     it("loads tasks and next page token", () => {
       testEpic({
         epic: loadTasksEpic,
         inputted: "-r-----",
-        expected: "-s----d",
+        expected: "-s----x",
         valueMap: {
           ...valueMap,
-          d: tasksReceived(
+          x: tasksReceived(
             [
               { _id: "a", isComplete: false, text: "foo" },
               { _id: "b", isComplete: true, text: "bar" }
@@ -586,7 +608,7 @@ describe("epics", () => {
             "/api/tasks?pageToken=abc"
           )
         },
-        getState: () => ({ tasks: {} }),
+        getState: () => ({ tasks: {}, auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -616,7 +638,7 @@ describe("epics", () => {
         inputted: "-r-----",
         expected: "-s----x",
         valueMap,
-        getState: () => ({ tasks: {} }),
+        getState: () => ({ tasks: {}, auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -634,6 +656,74 @@ describe("epics", () => {
             )
         })
       })
+    })
+
+    it("fails out of a 401 if the token isn't expired")
+
+    it("recovers if there is a 401 and a saved token and all else goes well", () => {
+      let fetch
+
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r---------------",
+        expected: "-s---------k----x",
+        valueMap: {
+          ...valueMap,
+          x: tasksReceived(
+            [
+              { _id: "a", isComplete: false, text: "foo" },
+              { _id: "b", isComplete: true, text: "bar" }
+            ],
+            null
+          ),
+          k: receiveAuthToken("def", "123")
+        },
+        getState: () => ({ tasks: {}, auth: { token: "abc" } }),
+        getDependencies: scheduler => {
+          fetch = jest
+            .fn()
+            .mockImplementationOnce(() =>
+              observableOf({
+                ok: false,
+                status: 401,
+                statusText: "Unauthorized"
+              }).pipe(delay(50, scheduler))
+            )
+            .mockImplementationOnce(() =>
+              observableOf({
+                ok: true,
+                json: () =>
+                  observableOf({
+                    token: "def",
+                    tokenExpiration: "123"
+                  })
+              }).pipe(delay(50, scheduler))
+            )
+            .mockImplementationOnce(() =>
+              observableOf({
+                ok: true,
+                json: () =>
+                  observableOf([
+                    { _id: "a", isComplete: false, text: "foo" },
+                    { _id: "b", isComplete: true, text: "bar" }
+                  ]),
+                headers: { get: () => null }
+              }).pipe(delay(50, scheduler))
+            )
+
+          return { fetch }
+        }
+      })
+
+      expect(fetch.mock.calls[1]).toEqual([
+        "/api/auth/token",
+        {
+          headers: {
+            Authorization: "Bearer abc"
+          }
+        }
+      ])
+      expect(fetch.mock.calls[2][1].headers.Authorization).toEqual("Bearer def")
     })
   })
 

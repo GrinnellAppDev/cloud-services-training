@@ -1,8 +1,9 @@
 import { TestScheduler } from "rxjs"
 import { ActionsObservable } from "redux-observable"
-import { delay as delayObservable } from "rxjs/operators/delay"
+import { delay as delayOperator } from "rxjs/operators/delay"
 import { of as observableOf } from "rxjs/observable/of"
 import { mergeMap } from "rxjs/operators/mergeMap"
+import { empty as emptyObservable } from "rxjs/observable/empty"
 
 export const testEpic = ({
   epic,
@@ -23,7 +24,8 @@ export const testEpic = ({
     ActionsObservable.from(scheduler.createHotObservable(inputted, valueMap)),
     { getState },
     {
-      delay: () => delayObservable(50, scheduler),
+      delay: () => delayOperator(50, scheduler),
+      startHotTimer: () => observableOf(null),
       ...getDependencies(scheduler)
     }
   )
@@ -40,6 +42,6 @@ export const createDelayedObservable = (
   delayTime = 50
 ) =>
   observableOf(null).pipe(
-    delayObservable(50, scheduler),
+    delayOperator(50, scheduler),
     mergeMap(() => observable)
   )
