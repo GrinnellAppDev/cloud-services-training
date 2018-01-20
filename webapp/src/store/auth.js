@@ -32,6 +32,7 @@ export const receiveAuthToken = (token, expiration) => ({
   token,
   expiration
 })
+export const clearAuthToken = () => ({ type: "CLEAR_AUTH_TOKEN" })
 
 // Reducers
 
@@ -99,6 +100,12 @@ export const authReducer = (
         token: payload.token,
         tokenExpiration: payload.expiration
       }
+    case "CLEAR_AUTH_TOKEN":
+      return {
+        ...state,
+        token: null,
+        tokenExpiration: null
+      }
     default:
       return state
   }
@@ -109,7 +116,7 @@ export const authReducer = (
 export const encodeBasicAuth = (email, password) =>
   `Basic ${base64.encode(`${email}:${password}`)}`
 
-export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
+export const authEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("SUBMIT_AUTH_DIALOG").pipe(
     mergeMap(() =>
       raceObservables(
@@ -138,5 +145,3 @@ export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
       )
     )
   )
-
-export const authEpic = combineEpics(signInEpic)

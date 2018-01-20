@@ -6,8 +6,9 @@ import {
   changeAuthDialog,
   submitAuthDialog,
   authSubmitFailed,
-  signInEpic,
-  encodeBasicAuth
+  authEpic,
+  encodeBasicAuth,
+  clearAuthToken
 } from "./auth"
 import { testEpic, createDelayedObservable } from "./testUtils"
 import { _throw as observableThrow } from "rxjs/observable/throw"
@@ -146,6 +147,23 @@ describe("authReducer", () => {
       tokenExpiration: date
     })
   })
+
+  it("signs out", () => {
+    expect(
+      authReducer(
+        {
+          ...initialState,
+          token: "foo",
+          tokenExpiration: "bar"
+        },
+        clearAuthToken()
+      )
+    ).toEqual({
+      ...initialState,
+      token: null,
+      tokenExpiration: null
+    })
+  })
 })
 
 describe("signInEpic", () => {
@@ -162,7 +180,7 @@ describe("signInEpic", () => {
     const fetch = jest.fn()
 
     testEpic({
-      epic: signInEpic,
+      epic: authEpic,
       inputted: "-s-------",
       valueMap,
       getState: () => ({
@@ -180,7 +198,7 @@ describe("signInEpic", () => {
 
   it("handles fetch errors", () => {
     testEpic({
-      epic: signInEpic,
+      epic: authEpic,
       inputted: "-s-------",
       expected: "------f--",
       valueMap,
@@ -199,7 +217,7 @@ describe("signInEpic", () => {
 
   it("handles HTTP errors", () => {
     testEpic({
-      epic: signInEpic,
+      epic: authEpic,
       inputted: "-s-------",
       expected: "------h--",
       valueMap,
@@ -222,7 +240,7 @@ describe("signInEpic", () => {
 
   it("receives the new auth token", () => {
     testEpic({
-      epic: signInEpic,
+      epic: authEpic,
       inputted: "-s-------",
       expected: "------r--",
       valueMap,
@@ -248,7 +266,7 @@ describe("signInEpic", () => {
 
   it("can be canceled", () => {
     testEpic({
-      epic: signInEpic,
+      epic: authEpic,
       inputted: "-s--x----",
       expected: "---------",
       valueMap,

@@ -4,9 +4,18 @@ import { action } from "@storybook/addon-actions"
 import { AuthBar } from "../src/AuthBar"
 
 storiesOf("AuthBar", module)
-  .add("signed out", () => <AuthBar isSignedIn={false} />)
+  .add("signed out", () => (
+    <AuthBar isSignedIn={false} onOpenClick={action("open")} />
+  ))
+  .add("signed in no name", () => (
+    <AuthBar isSignedIn={true} onSignOut={action("sign out")} />
+  ))
   .add("signed in", () => (
-    <AuthBar isSignedIn={true} authorizedName="Johanna Smith" />
+    <AuthBar
+      isSignedIn={true}
+      displayName="Johanna Smith"
+      onSignOut={action("sign out")}
+    />
   ))
   .add("dialog open", () => (
     <AuthBar

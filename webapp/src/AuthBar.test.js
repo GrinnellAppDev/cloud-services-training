@@ -8,7 +8,8 @@ import {
   openAuthDialog,
   changeAuthDialog,
   submitAuthDialog,
-  closeAuthDialog
+  closeAuthDialog,
+  clearAuthToken
 } from "./store/auth"
 import LoadingSpinner from "./LoadingSpinner"
 
@@ -188,22 +189,50 @@ describe("withEnhancers", () => {
     expect(Component).toBeCalled()
     expect(store.getActions()).toEqual([closeAuthDialog()])
   })
+
+  it("handles sign out", () => {
+    const store = createMockStore({
+      auth: { dialog: {} }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onSignOut({})
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component).toBeCalled()
+    expect(store.getActions()).toEqual([clearAuthToken()])
+  })
 })
 
 describe("AuthBar", () => {
   it("prompts to login or sign up when not signed in", () => {
     expect(
       shallow(<AuthBar isSignedIn={false} />)
-        .find(".AuthBar-openButton")
+        .find(".AuthBar-mainButton")
         .contains("Sign Up or Log In")
+    ).toBe(true)
+  })
+
+  it("prompts to sign out when signed in", () => {
+    expect(
+      shallow(<AuthBar isSignedIn={true} />)
+        .find(".AuthBar-mainButton")
+        .contains("Sign Out")
     ).toBe(true)
   })
 
   it("displays their name when signed in", () => {
     expect(
-      shallow(<AuthBar isSignedIn={true} authorizedName="foo" />).contains(
-        "foo"
-      )
+      shallow(<AuthBar isSignedIn={true} displayName="foo" />).contains("foo")
     ).toBe(true)
   })
 
@@ -286,8 +315,18 @@ describe("AuthBar", () => {
   it("handles clicks on the open button", () => {
     const handler = jest.fn()
 
-    shallow(<AuthBar onOpenClick={handler} />)
-      .find(".AuthBar-openButton")
+    shallow(<AuthBar isSignedIn={false} onOpenClick={handler} />)
+      .find(".AuthBar-mainButton")
+      .simulate("click")
+
+    expect(handler).toBeCalled()
+  })
+
+  it("handles clicks on the sign out button", () => {
+    const handler = jest.fn()
+
+    shallow(<AuthBar isSignedIn={true} onSignOut={handler} />)
+      .find(".AuthBar-mainButton")
       .simulate("click")
 
     expect(handler).toBeCalled()

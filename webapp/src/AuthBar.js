@@ -8,7 +8,8 @@ import {
   openAuthDialog,
   changeAuthDialog,
   submitAuthDialog,
-  closeAuthDialog
+  closeAuthDialog,
+  clearAuthToken
 } from "./store/auth"
 import "./AuthBar.css"
 import classnames from "classnames"
@@ -30,7 +31,8 @@ export const withEnhancers = connect(
     onEmailChange: email => changeAuthDialog({ email }),
     onPasswordChange: password => changeAuthDialog({ password }),
     onSubmit: submitAuthDialog,
-    onCancel: closeAuthDialog
+    onCancel: closeAuthDialog,
+    onSignOut: clearAuthToken
   }
 )
 
@@ -39,12 +41,13 @@ export const AuthBar = ({
   dialogIsOpen,
   isSubmitting,
   email,
-  authorizedName,
+  displayName,
   password,
   onOpenClick,
   onEmailChange,
   onPasswordChange,
   onSubmit,
+  onSignOut,
   className,
   onCancel
 }) => (
@@ -55,9 +58,13 @@ export const AuthBar = ({
       isSignedIn && "AuthBar-signedIn"
     )}
   >
-    <TextButton className="AuthBar-openButton" onClick={onOpenClick}>
-      <div className="AuthBar-openButtonIcon" />
-      {isSignedIn ? authorizedName : "Sign Up or Log In"}
+    {isSignedIn &&
+      displayName && <span className="AuthBar-displayName">{displayName}</span>}
+    <TextButton
+      className="AuthBar-mainButton"
+      onClick={isSignedIn ? onSignOut : onOpenClick}
+    >
+      {isSignedIn ? "Sign Out" : "Sign Up or Log In"}
     </TextButton>
 
     <Dialog
