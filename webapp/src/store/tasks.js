@@ -294,6 +294,9 @@ export const loadTasksEpic = (
     mergeMap(({ type }) => {
       const status = getTasksStatus(getState())
 
+      // Load should take at least 500 ms so the animation can play correctly.
+      // It has to be a hot timer though, so we don't delay the data any more
+      // than necessary.
       const animationDelay =
         type === "RELOAD_TASKS" || status === "ERROR"
           ? startHotTimer(500, null)
