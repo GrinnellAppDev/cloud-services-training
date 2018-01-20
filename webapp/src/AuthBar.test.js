@@ -59,7 +59,8 @@ describe("withEnhancers", () => {
           isOpen: true,
           isSubmitting: false,
           email: "foo",
-          password: "bar"
+          password: "bar",
+          errorMessage: "baz"
         }
       }
     })
@@ -78,6 +79,7 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].email).toBe("foo")
     expect(Component.mock.calls[0][0].password).toBe("bar")
     expect(Component.mock.calls[0][0].isSubmitting).toBe(false)
+    expect(Component.mock.calls[0][0].errorMessage).toBe("baz")
   })
 
   it("handles open click", () => {
@@ -258,6 +260,14 @@ describe("AuthBar", () => {
         .find("input[type='password']")
         .prop("value")
     ).toBe("foo")
+  })
+
+  it("shows errors", () => {
+    expect(
+      shallow(<AuthBar dialogIsOpen={true} errorMessage="foo" />).contains(
+        "foo"
+      )
+    ).toBe(true)
   })
 
   it("doesn't show loading spinner when not submitting", () => {

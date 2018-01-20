@@ -66,3 +66,16 @@ storiesOf("AuthBar", module)
       onCancel={action("cancel")}
     />
   ))
+  .add("dialog with error", () => (
+    <AuthBar
+      isSignedIn={false}
+      dialogIsOpen={true}
+      email="user@example.com"
+      password="string password"
+      errorMessage="Couldn't sign in. Server error."
+      onEmailChange={action("email change")}
+      onPasswordChange={action("password change")}
+      onSubmit={action("submit")}
+      onCancel={action("cancel")}
+    />
+  ))

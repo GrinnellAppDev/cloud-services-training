@@ -70,6 +70,13 @@
   border-bottom: 2px solid #af5b5e;
 }
 
+.AuthBar-errorMessage {
+  margin: 10px;
+  font-size: 13px;
+  font-style: italic;
+  color: #af5b5e;
+}
+
 .AuthBar-controls {
   display: flex;
   align-items: center;

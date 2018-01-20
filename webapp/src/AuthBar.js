@@ -17,13 +17,21 @@ import LoadingSpinner from "./LoadingSpinner"
 
 export const withEnhancers = connect(
   state => {
-    const { isOpen, isSubmitting, email, password } = getAuthDialog(state)
+    const {
+      isOpen,
+      isSubmitting,
+      email,
+      password,
+      errorMessage
+    } = getAuthDialog(state)
+
     return {
       isSignedIn: !!getAuthToken(state),
       dialogIsOpen: isOpen,
       isSubmitting,
       email,
-      password
+      password,
+      errorMessage
     }
   },
   {
@@ -43,6 +51,7 @@ export const AuthBar = ({
   email,
   displayName,
   password,
+  errorMessage,
   onOpenClick,
   onEmailChange,
   onPasswordChange,
@@ -91,6 +100,10 @@ export const AuthBar = ({
         onChange={ev => onPasswordChange(ev.currentTarget.value)}
         disabled={isSubmitting}
       />
+
+      {errorMessage && (
+        <div className="AuthBar-errorMessage">{errorMessage}</div>
+      )}
 
       <div className="AuthBar-controls">
         <TextButton className="AuthBar-cancel" type="reset" onClick={onCancel}>
