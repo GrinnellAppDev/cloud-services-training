@@ -365,7 +365,7 @@ describe("epics", () => {
       x: tasksReceived([], null)
     }
 
-    it("calls fetch when given a reload action", async () => {
+    it("calls fetch when given a reload action", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -379,7 +379,7 @@ describe("epics", () => {
       expect(fetch).toBeCalledWith("/api/tasks")
     })
 
-    it("doesn't call fetch and sends nothing when already loading", async () => {
+    it("doesn't call fetch and sends nothing when already loading", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -394,7 +394,7 @@ describe("epics", () => {
       expect(fetch).not.toBeCalled()
     })
 
-    it("calls fetch when asked to load next with an error", async () => {
+    it("calls fetch when asked to load next with an error", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -408,7 +408,7 @@ describe("epics", () => {
       expect(fetch).toBeCalledWith("/api/tasks")
     })
 
-    it("calls fetch when given a reload action with an error", async () => {
+    it("calls fetch when given a reload action with an error", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -424,7 +424,7 @@ describe("epics", () => {
       expect(fetch).toBeCalledWith("/api/tasks")
     })
 
-    it("calls fetch when given a load page action if tasks are unloaded", async () => {
+    it("calls fetch when given a load page action if tasks are unloaded", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -440,7 +440,7 @@ describe("epics", () => {
       expect(fetch).toBeCalledWith("/api/tasks")
     })
 
-    it("does not call fetch when given a load page action if tasks are loaded and there is no next page URI", async () => {
+    it("does not call fetch when given a load page action if tasks are loaded and there is no next page URI", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -456,7 +456,7 @@ describe("epics", () => {
       expect(fetch).not.toBeCalled()
     })
 
-    it("calls fetch when given a load page action with the next page URI", async () => {
+    it("calls fetch when given a load page action with the next page URI", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -472,7 +472,7 @@ describe("epics", () => {
       expect(fetch).toBeCalledWith("/api/tasks?pageToken=abc")
     })
 
-    it("handles fetch errors gracefully", async () => {
+    it("handles fetch errors gracefully", () => {
       testEpic({
         epic: loadTasksEpic,
         inputted: "-r-----",
@@ -489,7 +489,7 @@ describe("epics", () => {
       })
     })
 
-    it("handles http errors gracefully", async () => {
+    it("handles http errors gracefully", () => {
       testEpic({
         epic: loadTasksEpic,
         inputted: "-r-----",
@@ -510,7 +510,9 @@ describe("epics", () => {
       })
     })
 
-    it("loads tasks and next page token", async () => {
+    it("handles 401s when there is auth")
+
+    it("loads tasks and next page token", () => {
       testEpic({
         epic: loadTasksEpic,
         inputted: "-r-----",
@@ -549,7 +551,7 @@ describe("epics", () => {
       })
     })
 
-    it("handles empty tasks and null next page token", async () => {
+    it("handles empty tasks and null next page token", () => {
       testEpic({
         epic: loadTasksEpic,
         inputted: "-r-----",
@@ -586,7 +588,7 @@ describe("epics", () => {
       t: sendToast("CREATE_TASK_FAILED", "Couldn't create task")
     }
 
-    it("calls fetch when it gets a create action", async () => {
+    it("calls fetch when it gets a create action", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -609,7 +611,7 @@ describe("epics", () => {
       })
     })
 
-    it("does nothing when it gets a create action without text", async () => {
+    it("does nothing when it gets a create action without text", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -624,7 +626,7 @@ describe("epics", () => {
       expect(fetch).not.toBeCalled()
     })
 
-    it("handles fetch errors gracefully", async () => {
+    it("handles fetch errors gracefully", () => {
       testEpic({
         epic: newTaskEpic,
         inputted: "-n--------",
@@ -641,7 +643,7 @@ describe("epics", () => {
       })
     })
 
-    it("handles http errors gracefully", async () => {
+    it("handles http errors gracefully", () => {
       testEpic({
         epic: newTaskEpic,
         inputted: "-n-----",
@@ -662,7 +664,7 @@ describe("epics", () => {
       })
     })
 
-    it("indicates success with a new id", async () => {
+    it("indicates success with a new id", () => {
       testEpic({
         epic: newTaskEpic,
         inputted: "-n-----",
@@ -709,7 +711,7 @@ describe("epics", () => {
       s: taskEditSucceeded("a")
     }
 
-    it("calls fetch when it gets an edit action", async () => {
+    it("calls fetch when it gets an edit action", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -728,7 +730,7 @@ describe("epics", () => {
       })
     })
 
-    it("handles fetch errors gracefully", async () => {
+    it("handles fetch errors gracefully", () => {
       testEpic({
         epic: editTaskEpic,
         inputted: "-e--------",
@@ -744,7 +746,7 @@ describe("epics", () => {
       })
     })
 
-    it("handles http errors gracefully", async () => {
+    it("handles http errors gracefully", () => {
       testEpic({
         epic: editTaskEpic,
         inputted: "-e--------",
@@ -764,7 +766,7 @@ describe("epics", () => {
       })
     })
 
-    it("indicates success when the request goes through", async () => {
+    it("indicates success when the request goes through", () => {
       testEpic({
         epic: editTaskEpic,
         inputted: "-e-----",
@@ -803,7 +805,7 @@ describe("epics", () => {
       s: taskDeleteSucceeded("a")
     }
 
-    it("calls fetch when it gets a delete action", async () => {
+    it("calls fetch when it gets a delete action", () => {
       const fetch = jest.fn().mockReturnValue(observableOf())
 
       testEpic({
@@ -818,7 +820,7 @@ describe("epics", () => {
       })
     })
 
-    it("does nothing when it gets a delete action with a temp id", async () => {
+    it("does nothing when it gets a delete action with a temp id", () => {
       const fetch = jest
         .fn()
         .mockReturnValue(observableThrow(TypeError("Failed to fetch")))
@@ -834,7 +836,7 @@ describe("epics", () => {
       expect(fetch).not.toBeCalled()
     })
 
-    it("does nothing if the toast isn't closed", async () => {
+    it("does nothing if the toast isn't closed", () => {
       const fetch = jest
         .fn()
         .mockReturnValue(observableThrow(TypeError("Failed to fetch")))
@@ -850,7 +852,7 @@ describe("epics", () => {
       expect(fetch).not.toBeCalled()
     })
 
-    it("can send multiple toasts", async () => {
+    it("can send multiple toasts", () => {
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-d-b-c-",
@@ -870,7 +872,7 @@ describe("epics", () => {
       })
     })
 
-    it("can delete multiple tasks with one toast", async () => {
+    it("can delete multiple tasks with one toast", () => {
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-d-b-c----x---------",
@@ -889,7 +891,7 @@ describe("epics", () => {
       })
     })
 
-    it("handles undo and doesn't fetch", async () => {
+    it("handles undo and doesn't fetch", () => {
       const fetch = jest.fn().mockReturnValue(observableOf({ ok: true }))
 
       testEpic({
@@ -903,7 +905,7 @@ describe("epics", () => {
       expect(fetch).not.toBeCalled()
     })
 
-    it("handles fetch errors gracefully", async () => {
+    it("handles fetch errors gracefully", () => {
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-d--x--------",
@@ -919,7 +921,7 @@ describe("epics", () => {
       })
     })
 
-    it("handles http errors gracefully", async () => {
+    it("handles http errors gracefully", () => {
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-d--x--------",
@@ -939,7 +941,7 @@ describe("epics", () => {
       })
     })
 
-    it("indicates success when the request goes through", async () => {
+    it("indicates success when the request goes through", () => {
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-d--x-----",
@@ -952,7 +954,7 @@ describe("epics", () => {
       })
     })
 
-    it("ignores multiple close actions", async () => {
+    it("ignores multiple close actions", () => {
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-d--x-x---",
