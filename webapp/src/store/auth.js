@@ -12,6 +12,7 @@ import { filter } from "rxjs/operators/filter"
 
 export const getAuthDialog = state => state.auth.dialog
 export const getAuthToken = state => state.auth.token
+export const getAuthTokenExpiration = state => state.auth.tokenExpiration
 
 // Action Creators
 

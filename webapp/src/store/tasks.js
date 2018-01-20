@@ -14,7 +14,12 @@ import { catchError } from "rxjs/operators/catchError"
 import { _throw as observableThrow } from "rxjs/observable/throw"
 import { sendToast } from "./toasts"
 import { mapTo } from "rxjs/operators/mapTo"
-import { openAuthDialog, getAuthToken, receiveAuthToken } from "./auth"
+import {
+  openAuthDialog,
+  getAuthToken,
+  receiveAuthToken,
+  getAuthTokenExpiration
+} from "./auth"
 import { delayWhen } from "rxjs/operators/delayWhen"
 
 // Selectors
@@ -233,8 +238,15 @@ export const signInFromToastEpic = actionsObservable =>
  * @returns {Observable<Action>}
  *   actions containing the fetched tasks and new auth details.
  */
-export const fetchTasks = (fetch, getState, currentToken) =>
-  observableFrom(
+export const fetchTasks = (
+  fetch,
+  getState,
+  currentToken,
+  currentTokenExpiration
+) => {
+  const isExpired = new Date(currentTokenExpiration).valueOf() < Date.now()
+
+  return observableFrom(
     fetch(getNextPageURI(getState()) || "/api/tasks", {
       headers: { Authorization: `Bearer ${currentToken}` }
     })
@@ -251,7 +263,9 @@ export const fetchTasks = (fetch, getState, currentToken) =>
       } else if (response.status === 401) {
         if (!currentToken) return observableOf(tasksReceived([], null))
         else {
-          const newTokenObservable = observableFrom(
+          if (!isExpired) throw Error("Couldn't authenticate.")
+
+          return observableFrom(
             fetch("/api/auth/token", {
               headers: {
                 Authorization: `Bearer ${currentToken}`
@@ -262,15 +276,14 @@ export const fetchTasks = (fetch, getState, currentToken) =>
               response =>
                 response.ok
                   ? observableFrom(response.json())
-                  : observableThrow(Error("Couldn't authenticate."))
-            )
-          )
-
-          return newTokenObservable.pipe(
+                  : observableThrow(
+                      Error("Couldn't authenticate. Please sign in again.")
+                    )
+            ),
             mergeMap(({ token, tokenExpiration }) =>
               mergeObservables(
                 observableOf(receiveAuthToken(token, tokenExpiration)),
-                fetchTasks(fetch, getState, token)
+                fetchTasks(fetch, getState, token, tokenExpiration)
               )
             )
           )
@@ -281,6 +294,7 @@ export const fetchTasks = (fetch, getState, currentToken) =>
     }),
     catchError(err => observableOf(tasksLoadingFailed(err.message)))
   )
+}
 
 export const loadTasksEpic = (
   actionsObservable,
@@ -310,9 +324,12 @@ export const loadTasksEpic = (
       else
         return mergeObservables(
           observableOf(tasksLoadingStarted()),
-          fetchTasks(fetch, getState, getAuthToken(getState())).pipe(
-            delayWhen(() => animationDelay)
-          )
+          fetchTasks(
+            fetch,
+            getState,
+            getAuthToken(getState()),
+            getAuthTokenExpiration(getState())
+          ).pipe(delayWhen(() => animationDelay))
         )
     })
   )

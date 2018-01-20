@@ -593,6 +593,36 @@ describe("epics", () => {
       })
     })
 
+    it("fails out of a 401 if the token isn't expired", () => {
+      testEpic({
+        epic: loadTasksEpic,
+        inputted: "-r-----",
+        expected: "-s----f",
+        valueMap: {
+          ...valueMap,
+          f: tasksLoadingFailed("Couldn't authenticate.")
+        },
+        getState: () => ({
+          tasks: {},
+          auth: {
+            token: "abc",
+            tokenExpiration: new Date(Date.now() + 100000).toISOString()
+          }
+        }),
+        getDependencies: scheduler => ({
+          fetch: () =>
+            createDelayedObservable(
+              observableOf({
+                ok: false,
+                status: 401,
+                statusText: "Unauthorized"
+              }),
+              scheduler
+            )
+        })
+      })
+    })
+
     it("loads tasks and next page token", () => {
       testEpic({
         epic: loadTasksEpic,
@@ -658,8 +688,6 @@ describe("epics", () => {
       })
     })
 
-    it("fails out of a 401 if the token isn't expired")
-
     it("recovers if there is a 401 and a saved token and all else goes well", () => {
       let fetch
 
@@ -678,7 +706,10 @@ describe("epics", () => {
           ),
           k: receiveAuthToken("def", "123")
         },
-        getState: () => ({ tasks: {}, auth: { token: "abc" } }),
+        getState: () => ({
+          tasks: {},
+          auth: { token: "abc", tokenExpiration: new Date(0).toISOString() }
+        }),
         getDependencies: scheduler => {
           fetch = jest
             .fn()
