@@ -256,6 +256,22 @@ describe("toastEpic", () => {
     })
   })
 
+  it("clears toast early when toast has a spinner", () => {
+    testEpic({
+      epic: toastEpic,
+      inputted: "-a----------",
+      expected: "------(cx)-s",
+      valueMap: {
+        ...valueMap,
+        a: sendToast("a", "foo", "", { useSpinner: true })
+      },
+      getState: jest
+        .fn()
+        .mockReturnValueOnce({ toasts: { queue: [{ id: "a" }] } })
+        .mockReturnValue({ toasts: { queue: [{ id: "a" }, { id: "b" }] } })
+    })
+  })
+
   it("extends a toast's lifetime when updated", () => {
     testEpic({
       epic: toastEpic,

@@ -96,27 +96,22 @@ export const toastsReducer = (state = { queue: [] }, { type, ...payload }) => {
 
 export const toastEpic = (actionsObservable, { getState }, { delay }) =>
   actionsObservable.pipe(
-    filter(
-      ({ type }) =>
-        (type === "SEND_TOAST" && getToastsQueueLength(getState()) <= 1) ||
-        (type === "SHIFT_TOASTS" && getToastsQueueLength(getState()) > 0)
-    ),
-    map(() => getTopToast(getState()).id),
-    mergeMap(id =>
+    filter(({ type }) => {
+      const queueLength = getToastsQueueLength(getState())
+      return (
+        (type === "SEND_TOAST" && queueLength <= 1) ||
+        (type === "SHIFT_TOASTS" && queueLength > 0)
+      )
+    }),
+    map(() => getTopToast(getState())),
+    mergeMap(({ id, useSpinner }) =>
       observableOf(null).pipe(
         delay(3000),
         mergeMap(
           () =>
-            getToastsQueueLength(getState()) > 1
+            getToastsQueueLength(getState()) > 1 || useSpinner
               ? observableOf(null)
-              : observableOf(null).pipe(
-                  delay(1000),
-                  race(
-                    actionsObservable
-                      .ofType("SEND_TOAST")
-                      .pipe(take(1), mapTo(null))
-                  )
-                )
+              : observableOf(null).pipe(delay(3000))
         ),
         mapTo({ signal: "TIMEOUT" }),
         race(
