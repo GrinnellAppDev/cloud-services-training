@@ -262,9 +262,8 @@ export const fetchTasks = (
         )
       } else if (response.status === 401) {
         if (!currentToken) return observableOf(tasksReceived([], null))
-        else {
-          if (!isExpired) throw Error("Couldn't authenticate.")
-
+        else if (!isExpired) throw Error("Couldn't authenticate.")
+        else
           return observableFrom(
             fetch("/api/auth/token", {
               headers: {
@@ -287,7 +286,6 @@ export const fetchTasks = (
               )
             )
           )
-        }
       } else {
         throw Error(`HTTP Error: ${response.statusText} (${response.status})`)
       }
