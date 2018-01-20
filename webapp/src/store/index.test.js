@@ -21,13 +21,16 @@ describe("rootEpic", () => {
       expected: "-------",
       valueMap: {
         u: { type: "UNKNOWN" }
-      }
+      },
+      getDependencies: () => ({ localStorage: { getItem: () => null } })
     })
   })
 })
 
 describe("configureStore", () => {
   it("makes a store without a default state", () => {
-    expect(configureStore({}).getState()).toBeTruthy()
+    expect(
+      configureStore({ localStorage: { getItem: () => null } }).getState()
+    ).toBeTruthy()
   })
 })

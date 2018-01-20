@@ -12,6 +12,7 @@ import { from as observableFrom } from "rxjs/observable/from"
 
 const store = configureStore({
   fetch,
+  localStorage,
   delay,
   startHotTimer: duration =>
     observableFrom(

@@ -6,9 +6,11 @@ import {
   changeAuthDialog,
   submitAuthDialog,
   authSubmitFailed,
-  authEpic,
+  signInEpic,
   encodeBasicAuth,
-  clearAuthToken
+  clearAuthToken,
+  loadAuthToken,
+  localStorageEpic
 } from "./auth"
 import { testEpic, createDelayedObservable } from "./testUtils"
 import { _throw as observableThrow } from "rxjs/observable/throw"
@@ -148,6 +150,17 @@ describe("authReducer", () => {
     })
   })
 
+  it("loads a token from storage", () => {
+    const date = new Date().toISOString()
+    expect(
+      authReducer(initialState, loadAuthToken("abc.def.ghi", date))
+    ).toEqual({
+      ...initialState,
+      token: "abc.def.ghi",
+      tokenExpiration: date
+    })
+  })
+
   it("signs out", () => {
     expect(
       authReducer(
@@ -180,7 +193,7 @@ describe("signInEpic", () => {
     const fetch = jest.fn()
 
     testEpic({
-      epic: authEpic,
+      epic: signInEpic,
       inputted: "-s-------",
       valueMap,
       getState: () => ({
@@ -198,7 +211,7 @@ describe("signInEpic", () => {
 
   it("handles fetch errors", () => {
     testEpic({
-      epic: authEpic,
+      epic: signInEpic,
       inputted: "-s-------",
       expected: "------f--",
       valueMap,
@@ -217,7 +230,7 @@ describe("signInEpic", () => {
 
   it("handles HTTP errors", () => {
     testEpic({
-      epic: authEpic,
+      epic: signInEpic,
       inputted: "-s-------",
       expected: "------h--",
       valueMap,
@@ -240,7 +253,7 @@ describe("signInEpic", () => {
 
   it("receives the new auth token", () => {
     testEpic({
-      epic: authEpic,
+      epic: signInEpic,
       inputted: "-s-------",
       expected: "------r--",
       valueMap,
@@ -266,7 +279,7 @@ describe("signInEpic", () => {
 
   it("can be canceled", () => {
     testEpic({
-      epic: authEpic,
+      epic: signInEpic,
       inputted: "-s--x----",
       expected: "---------",
       valueMap,
@@ -288,5 +301,66 @@ describe("signInEpic", () => {
           )
       })
     })
+  })
+})
+
+describe("localStorageEpic", () => {
+  it("calls localStorage.getItem when the dialog is submitted", () => {
+    testEpic({
+      epic: localStorageEpic,
+      inputted: "---------",
+      expected: "l--------",
+      valueMap: {
+        l: loadAuthToken("foo", "bar")
+      },
+      getDependencies: () => ({
+        localStorage: {
+          getItem: key =>
+            ({
+              "cst:authToken": "foo",
+              "cst:authTokenExpiration": "bar"
+            }[key])
+        }
+      })
+    })
+  })
+
+  it("does nothing when there is no token in localStorage", () => {
+    testEpic({
+      epic: localStorageEpic,
+      inputted: "---------",
+      expected: "---------",
+      valueMap: {},
+      getDependencies: () => ({
+        localStorage: {
+          getItem: key =>
+            ({
+              "cst:authToken": null,
+              "cst:authTokenExpiration": "bar"
+            }[key])
+        }
+      })
+    })
+  })
+
+  it("saves to localStorage", () => {
+    const setItem = jest.fn()
+
+    testEpic({
+      epic: localStorageEpic,
+      inputted: "-r-------",
+      valueMap: {
+        r: receiveAuthToken("foo", "bar")
+      },
+      getDependencies: () => ({
+        localStorage: {
+          getItem: key => null,
+          setItem
+        }
+      })
+    })
+
+    expect(setItem).toBeCalledWith("cst:authToken", "foo")
+    expect(setItem).toBeCalledWith("cst:authTokenExpiration", "bar")
   })
 })

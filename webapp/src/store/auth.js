@@ -7,6 +7,8 @@ import { mergeMap } from "rxjs/operators/mergeMap"
 import { map } from "rxjs/operators/map"
 import { catchError } from "rxjs/operators/catchError"
 import { filter } from "rxjs/operators/filter"
+import { merge as mergeObservables } from "rxjs/observable/merge"
+import { empty as emptyObservable } from "rxjs/observable/empty"
 
 // Selectors
 
@@ -29,6 +31,11 @@ export const authSubmitFailed = errorMessage => ({
 })
 export const receiveAuthToken = (token, expiration) => ({
   type: "RECEIVE_AUTH_TOKEN",
+  token,
+  expiration
+})
+export const loadAuthToken = (token, expiration) => ({
+  type: "LOAD_AUTH_TOKEN",
   token,
   expiration
 })
@@ -100,6 +107,12 @@ export const authReducer = (
         token: payload.token,
         tokenExpiration: payload.expiration
       }
+    case "LOAD_AUTH_TOKEN":
+      return {
+        ...state,
+        token: payload.token,
+        tokenExpiration: payload.expiration
+      }
     case "CLEAR_AUTH_TOKEN":
       return {
         ...state,
@@ -116,7 +129,7 @@ export const authReducer = (
 export const encodeBasicAuth = (email, password) =>
   `Basic ${base64.encode(`${email}:${password}`)}`
 
-export const authEpic = (actionsObservable, { getState }, { fetch }) =>
+export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("SUBMIT_AUTH_DIALOG").pipe(
     mergeMap(() =>
       raceObservables(
@@ -145,3 +158,28 @@ export const authEpic = (actionsObservable, { getState }, { fetch }) =>
       )
     )
   )
+
+export const localStorageEpic = (
+  actionsObservable,
+  { getState },
+  { localStorage }
+) => {
+  const savedToken = localStorage.getItem("cst:authToken")
+  const savedExpiration = localStorage.getItem("cst:authTokenExpiration")
+
+  return mergeObservables(
+    savedToken
+      ? observableOf(loadAuthToken(savedToken, savedExpiration))
+      : emptyObservable(),
+    actionsObservable.ofType("RECEIVE_AUTH_TOKEN").pipe(
+      mergeMap(({ token, expiration }) => {
+        localStorage.setItem("cst:authToken", token)
+        localStorage.setItem("cst:authTokenExpiration", expiration)
+
+        return emptyObservable()
+      })
+    )
+  )
+}
+
+export const authEpic = combineEpics(signInEpic, localStorageEpic)
