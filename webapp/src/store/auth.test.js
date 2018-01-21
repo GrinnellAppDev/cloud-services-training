@@ -219,7 +219,7 @@ describe("signInEpic", () => {
     x: closeAuthDialog()
   }
 
-  it("calls fetch when the dialog is submitted", () => {
+  it("fetches from /token when the dialog is submitted with hasAccount", () => {
     const fetch = jest.fn()
 
     testEpic({
@@ -227,7 +227,7 @@ describe("signInEpic", () => {
       inputted: "-s-------",
       valueMap,
       getState: () => ({
-        auth: { dialog: { email: "foo", password: "bar" } }
+        auth: { dialog: { email: "foo", password: "bar", hasAccount: true } }
       }),
       getDependencies: () => ({ fetch })
     })
@@ -236,6 +236,39 @@ describe("signInEpic", () => {
       headers: {
         Authorization: encodeBasicAuth("foo", "bar")
       }
+    })
+  })
+
+  it("fetches from /users when the dialog is submitted with not hasAccount", () => {
+    const fetch = jest.fn()
+
+    testEpic({
+      epic: signInEpic,
+      inputted: "-s-------",
+      valueMap,
+      getState: () => ({
+        auth: {
+          dialog: {
+            name: "zing",
+            email: "foo",
+            password: "bar",
+            hasAccount: false
+          }
+        }
+      }),
+      getDependencies: () => ({ fetch })
+    })
+
+    expect(fetch).toBeCalledWith("/api/auth/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: "zing",
+        email: "foo",
+        password: "bar"
+      })
     })
   })
 

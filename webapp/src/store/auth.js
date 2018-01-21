@@ -123,18 +123,24 @@ export const encodeBasicAuth = (email, password) =>
 
 export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("SUBMIT_AUTH_DIALOG").pipe(
-    mergeMap(() =>
-      raceObservables(
+    mergeMap(() => {
+      const { name, email, password } = getAuthDialog(getState())
+      return raceObservables(
         actionsObservable.ofType("CLOSE_AUTH_DIALOG"),
         observableFrom(
-          fetch("/api/auth/token", {
-            headers: {
-              Authorization: encodeBasicAuth(
-                getAuthDialog(getState()).email,
-                getAuthDialog(getState()).password
-              )
-            }
-          })
+          getAuthDialog(getState()).hasAccount
+            ? fetch("/api/auth/token", {
+                headers: {
+                  Authorization: encodeBasicAuth(email, password)
+                }
+              })
+            : fetch("/api/auth/users", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name, email, password })
+              })
         )
       ).pipe(
         filter(value => value.type !== "CLOSE_AUTH_DIALOG"),
@@ -156,7 +162,7 @@ export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
         ),
         catchError(error => observableOf(authSubmitFailed(error.message)))
       )
-    )
+    })
   )
 
 export const localStorageEpic = (
