@@ -49,6 +49,8 @@ export const authReducer = (
     dialog: {
       isOpen: false,
       isSubmitting: false,
+      hasAccount: false,
+      name: "",
       email: "",
       password: "",
       errorMessage: ""

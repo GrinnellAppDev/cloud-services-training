@@ -58,6 +58,7 @@ describe("withEnhancers", () => {
         dialog: {
           isOpen: true,
           isSubmitting: false,
+          hasAccount: false,
           email: "foo",
           password: "bar",
           errorMessage: "baz"
@@ -79,6 +80,7 @@ describe("withEnhancers", () => {
     expect(Component.mock.calls[0][0].email).toBe("foo")
     expect(Component.mock.calls[0][0].password).toBe("bar")
     expect(Component.mock.calls[0][0].isSubmitting).toBe(false)
+    expect(Component.mock.calls[0][0].hasAccount).toBe(false)
     expect(Component.mock.calls[0][0].errorMessage).toBe("baz")
   })
 
@@ -102,6 +104,28 @@ describe("withEnhancers", () => {
 
     expect(Component).toBeCalled()
     expect(store.getActions()).toEqual([openAuthDialog()])
+  })
+
+  it("handles name change", () => {
+    const store = createMockStore({
+      auth: { dialog: {} }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onNameChange("foo")
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component).toBeCalled()
+    expect(store.getActions()).toEqual([changeAuthDialog({ name: "foo" })])
   })
 
   it("handles email change", () => {
@@ -146,6 +170,28 @@ describe("withEnhancers", () => {
 
     expect(Component).toBeCalled()
     expect(store.getActions()).toEqual([changeAuthDialog({ password: "foo" })])
+  })
+
+  it("handles hasAccount change", () => {
+    const store = createMockStore({
+      auth: { dialog: {} }
+    })
+
+    const Component = jest.fn().mockImplementation(props => {
+      props.onHasAccountChange(true)
+      return <div />
+    })
+    const Wrapped = withEnhancers(Component)
+
+    render(
+      <Provider store={store}>
+        <Wrapped />
+      </Provider>,
+      document.createElement("div")
+    )
+
+    expect(Component).toBeCalled()
+    expect(store.getActions()).toEqual([changeAuthDialog({ hasAccount: true })])
   })
 
   it("handles submit", () => {
@@ -246,6 +292,22 @@ describe("AuthBar", () => {
     ).toBe(true)
   })
 
+  it("shows their name in the name input when not hasAccount", () => {
+    expect(
+      shallow(<AuthBar dialogIsOpen={true} name="foo" hasAccount={false} />)
+        .find("input[type='text']")
+        .prop("value")
+    ).toBe("foo")
+  })
+
+  it("doesn't show name input when hasAccount", () => {
+    expect(
+      shallow(<AuthBar dialogIsOpen={true} name="foo" hasAccount={true} />)
+        .find("input[type='text']")
+        .exists()
+    ).toBe(false)
+  })
+
   it("shows their email in the email input", () => {
     expect(
       shallow(<AuthBar dialogIsOpen={true} email="foo" />)
@@ -260,6 +322,30 @@ describe("AuthBar", () => {
         .find("input[type='password']")
         .prop("value")
     ).toBe("foo")
+  })
+
+  it("has a checkbox for has account", () => {
+    expect(
+      shallow(<AuthBar dialogIsOpen={true} hasAccount={true} />)
+        .find("input[type='checkbox']")
+        .prop("checked")
+    ).toBe(true)
+  })
+
+  it("prompts to sign up when not hasAccount", () => {
+    expect(
+      shallow(<AuthBar dialogIsOpen={true} hasAccount={false} />).contains(
+        "Sign Up"
+      )
+    ).toBe(true)
+  })
+
+  it("prompts to sign in when hasAccount", () => {
+    expect(
+      shallow(<AuthBar dialogIsOpen={true} hasAccount={true} />).contains(
+        "Sign In"
+      )
+    ).toBe(true)
   })
 
   it("shows errors", () => {
@@ -342,6 +428,18 @@ describe("AuthBar", () => {
     expect(handler).toBeCalled()
   })
 
+  it("handles name change", () => {
+    const handler = jest.fn()
+
+    shallow(
+      <AuthBar dialogIsOpen={true} hasAccount={false} onNameChange={handler} />
+    )
+      .find("input[type='text']")
+      .simulate("change", { currentTarget: { value: "foo" } })
+
+    expect(handler).toBeCalledWith("foo")
+  })
+
   it("handles email change", () => {
     const handler = jest.fn()
 
@@ -360,6 +458,16 @@ describe("AuthBar", () => {
       .simulate("change", { currentTarget: { value: "foo" } })
 
     expect(handler).toBeCalledWith("foo")
+  })
+
+  it("handles account checkbox change", () => {
+    const handler = jest.fn()
+
+    shallow(<AuthBar dialogIsOpen={true} onHasAccountChange={handler} />)
+      .find("input[type='checkbox']")
+      .simulate("change", { currentTarget: { checked: true } })
+
+    expect(handler).toBeCalledWith(true)
   })
 
   it("handles submit", () => {

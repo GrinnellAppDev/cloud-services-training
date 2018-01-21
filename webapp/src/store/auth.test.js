@@ -22,6 +22,8 @@ describe("authReducer", () => {
     dialog: {
       isOpen: false,
       isSubmitting: false,
+      hasAccount: false,
+      name: "",
       email: "",
       password: "",
       errorMessage: ""
@@ -87,11 +89,22 @@ describe("authReducer", () => {
     expect(
       authReducer(
         initialState,
-        changeAuthDialog({ email: "bar", password: "foo" })
+        changeAuthDialog({
+          name: "baz",
+          email: "bar",
+          password: "foo",
+          hasAccount: true
+        })
       )
     ).toEqual({
       ...initialState,
-      dialog: { ...initialState.dialog, email: "bar", password: "foo" }
+      dialog: {
+        ...initialState.dialog,
+        name: "baz",
+        email: "bar",
+        password: "foo",
+        hasAccount: true
+      }
     })
   })
 
@@ -319,8 +332,6 @@ describe("signInEpic", () => {
       })
     })
   })
-
-  it("reloads tasks when they sign in")
 })
 
 describe("localStorageEpic", () => {

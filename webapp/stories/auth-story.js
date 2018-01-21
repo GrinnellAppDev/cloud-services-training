@@ -17,34 +17,34 @@ storiesOf("AuthBar", module)
       onSignOut={action("sign out")}
     />
   ))
-  .add("dialog open", () => (
+  .add("dialog new user", () => (
     <AuthBar
       isSignedIn={false}
       dialogIsOpen={true}
-      email=""
-      password=""
+      hasAccount={false}
       onEmailChange={action("email change")}
       onPasswordChange={action("password change")}
       onSubmit={action("submit")}
       onCancel={action("cancel")}
     />
   ))
-  .add("dialog with partial text", () => (
+  .add("dialog sign in", () => (
     <AuthBar
       isSignedIn={false}
       dialogIsOpen={true}
-      email="user@"
-      password="string pa"
+      hasAccount={true}
       onEmailChange={action("email change")}
       onPasswordChange={action("password change")}
       onSubmit={action("submit")}
       onCancel={action("cancel")}
     />
   ))
-  .add("dialog with text", () => (
+  .add("dialog new user submitting", () => (
     <AuthBar
       isSignedIn={false}
       dialogIsOpen={true}
+      hasAccount={false}
+      isSubmitting={true}
       email="user@example.com"
       password="string password"
       onEmailChange={action("email change")}
@@ -53,10 +53,11 @@ storiesOf("AuthBar", module)
       onCancel={action("cancel")}
     />
   ))
-  .add("dialog submitting", () => (
+  .add("dialog signing in", () => (
     <AuthBar
       isSignedIn={false}
       dialogIsOpen={true}
+      hasAccount={true}
       isSubmitting={true}
       email="user@example.com"
       password="string password"
@@ -70,8 +71,7 @@ storiesOf("AuthBar", module)
     <AuthBar
       isSignedIn={false}
       dialogIsOpen={true}
-      email="user@example.com"
-      password="string password"
+      hasAccount={true}
       errorMessage="Couldn't sign in. Server error."
       onEmailChange={action("email change")}
       onPasswordChange={action("password change")}

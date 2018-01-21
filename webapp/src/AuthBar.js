@@ -20,6 +20,7 @@ export const withEnhancers = connect(
     const {
       isOpen,
       isSubmitting,
+      hasAccount,
       email,
       password,
       errorMessage
@@ -29,6 +30,7 @@ export const withEnhancers = connect(
       isSignedIn: !!getAuthToken(state),
       dialogIsOpen: isOpen,
       isSubmitting,
+      hasAccount,
       email,
       password,
       errorMessage
@@ -36,8 +38,10 @@ export const withEnhancers = connect(
   },
   {
     onOpenClick: openAuthDialog,
+    onNameChange: name => changeAuthDialog({ name }),
     onEmailChange: email => changeAuthDialog({ email }),
     onPasswordChange: password => changeAuthDialog({ password }),
+    onHasAccountChange: hasAccount => changeAuthDialog({ hasAccount }),
     onSubmit: submitAuthDialog,
     onCancel: closeAuthDialog,
     onSignOut: clearAuthToken
@@ -48,13 +52,17 @@ export const AuthBar = ({
   isSignedIn,
   dialogIsOpen,
   isSubmitting,
-  email,
+  hasAccount,
   displayName,
+  name,
+  email,
   password,
   errorMessage,
   onOpenClick,
+  onNameChange,
   onEmailChange,
   onPasswordChange,
+  onHasAccountChange,
   onSubmit,
   onSignOut,
   className,
@@ -78,15 +86,29 @@ export const AuthBar = ({
 
     <Dialog
       className={classnames(
-        "AuthBar-dialog fixed",
+        "AuthBar-dialog",
         isSubmitting && "AuthBar-isSubmitting"
       )}
       open={dialogIsOpen}
       onCancel={onCancel}
     >
+      {errorMessage && (
+        <div className="AuthBar-errorMessage">{errorMessage}</div>
+      )}
+
+      {!hasAccount && (
+        <input
+          type="text"
+          className="AuthBar-nameInput AuthBar-input"
+          value={name}
+          placeholder="Name (Optional)"
+          onChange={ev => onNameChange(ev.currentTarget.value)}
+          disabled={isSubmitting}
+        />
+      )}
       <input
         type="email"
-        className="AuthBar-emailInput"
+        className="AuthBar-emailInput AuthBar-input"
         value={email}
         placeholder="Email"
         onChange={ev => onEmailChange(ev.currentTarget.value)}
@@ -94,16 +116,23 @@ export const AuthBar = ({
       />
       <input
         type="password"
-        className="AuthBar-passwordInput"
+        className="AuthBar-passwordInput AuthBar-input"
         value={password}
         placeholder="Password"
         onChange={ev => onPasswordChange(ev.currentTarget.value)}
         disabled={isSubmitting}
       />
 
-      {errorMessage && (
-        <div className="AuthBar-errorMessage">{errorMessage}</div>
-      )}
+      <label className="AuthBar-hasAccount">
+        <input
+          type="checkbox"
+          className="AuthBar-hasAccountCheckbox"
+          checked={hasAccount}
+          onChange={ev => onHasAccountChange(ev.currentTarget.checked)}
+          disabled={isSubmitting}
+        />
+        <span>I already have an account</span>
+      </label>
 
       <div className="AuthBar-controls">
         <TextButton className="AuthBar-cancel" type="reset" onClick={onCancel}>
@@ -117,7 +146,7 @@ export const AuthBar = ({
           disabled={isSubmitting}
           onClick={onSubmit}
         >
-          Sign In
+          {hasAccount ? "Sign In" : "Sign Up"}
         </TextButton>
       </div>
     </Dialog>

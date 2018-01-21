@@ -37,6 +37,8 @@
   align-items: stretch;
   width: 90%;
   max-width: 300px;
+  position: fixed;
+  bottom: calc(50% - 150px);
 }
 
 .AuthBar-dialog::backdrop,
@@ -44,7 +46,27 @@
   background: #eee;
 }
 
-.AuthBar-dialog input {
+.AuthBar-hasAccount {
+  margin: 10px;
+  margin-bottom: 0;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.AuthBar-hasAccountCheckbox {
+  margin: 0 10px 0 2px;
+}
+
+.AuthBar-hasAccountCheckbox:focus {
+  outline: solid 2px #ccc;
+}
+
+.AuthBar-hasAccountCheckbox:disabled ~ span {
+  color: #999;
+}
+
+.AuthBar-input {
   display: block;
   font: inherit;
   font-size: 16px;
@@ -58,15 +80,16 @@
   transition: border 200ms;
 }
 
-.AuthBar-dialog input:focus {
+.AuthBar-input:focus {
   border-bottom: 2px solid #ccc;
 }
 
-.AuthBar-dialog input:disabled {
+.AuthBar-input:disabled,
+.AuthBar-input::placeholder {
   color: #999;
 }
 
-.AuthBar-dialog input:invalid {
+.AuthBar-input:invalid {
   border-bottom: 2px solid #af5b5e;
 }
 
