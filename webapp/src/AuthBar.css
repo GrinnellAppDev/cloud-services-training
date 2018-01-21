@@ -38,7 +38,7 @@
   width: 90%;
   max-width: 300px;
   position: fixed;
-  bottom: calc(50% - 150px);
+  bottom: calc(50% - 140px);
 }
 
 .AuthBar-dialog::backdrop,
