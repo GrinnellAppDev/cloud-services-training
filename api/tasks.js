@@ -32,6 +32,12 @@ module.exports = Router()
    *      responses:
    *        200:
    *          description: An array of tasks
+   *          headers:
+   *            Link:
+   *              schema:
+   *                type: string
+   *              description: >
+   *                Standard HTTP Link header. All URIs relative to the /tasks endpoint.
    *          content:
    *            application/json:
    *              schema:
