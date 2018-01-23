@@ -87,7 +87,7 @@ express()
         const insertResult = await usersCollection.insertOne({
           email,
           passwordHash,
-          name
+          name: name || null
         })
 
         if (!insertResult.result.ok) {
@@ -96,6 +96,50 @@ express()
           response.status(201).send(getCredentials(insertResult.insertedId))
         }
       }
+    })
+  )
+
+  /**
+   * @swagger
+   *  /auth/users/me:
+   *    get:
+   *      summary: Get the details of the current user.
+   *      security:
+   *        - BearerAuth: []
+   *      responses:
+   *        200:
+   *          description: Successfully retrieved user.
+   *          content:
+   *            application/json:
+   *              schema:
+   *                $ref: "#/components/schemas/User"
+   *        401:
+   *          $ref: "#/components/responses/Unauthorized"
+   */
+  .get("/users/me", (request, response) =>
+    runWithDB(async db => {
+      let token
+      try {
+        const auth = authHeader.parse(request.header("Authorization"))
+        if (auth.scheme !== "Bearer") {
+          throw new Error()
+        }
+
+        token = jwt.verify(auth.token, JWT_PUBLIC)
+      } catch (error) {
+        response.header("WWW-Authenticate", "Bearer")
+        throw new HTTPError(401, "Invalid token.")
+      }
+
+      const userId = new ObjectId(token.sub)
+
+      const usersCollection = db.collection("users")
+      const user = await usersCollection.findOne({ _id: userId })
+
+      response.status(200).send({
+        name: user.name || undefined,
+        email: user.email
+      })
     })
   )
 

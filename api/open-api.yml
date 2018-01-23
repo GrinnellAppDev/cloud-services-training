@@ -17,6 +17,13 @@ components:
       type: boolean
       description: Whether the task has been checked off.
 
+    UserEmail:
+      type: string
+      format: email
+    UserName:
+      type: string
+      description: The user's preferred name.
+
   schemas:
     TaskCreate:
       type: object
@@ -54,18 +61,27 @@ components:
     UserCreate:
       type: object
       properties:
+        name:
+          $ref: "#/components/propSchemas/UserName"
         email:
-          type: string
-          format: email
+          $ref: "#/components/propSchemas/UserEmail"
         password:
           type: string
           minLength: 15
-        name:
-          type: string
-          description: The user's preferred name.
       required:
         - email
         - password
+      additionalProperties: false
+
+    User:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/propSchemas/UserName"
+        email:
+          $ref: "#/components/propSchemas/UserEmail"
+      required:
+        - email
       additionalProperties: false
 
     JwtCredentials:
