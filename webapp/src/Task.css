@@ -18,7 +18,8 @@
 }
 
 .Task-checkbox {
-  appearance: none;
+  -webkit-appearance: none;
+  border: none;
   outline: none;
   width: 40px;
   height: 40px;
