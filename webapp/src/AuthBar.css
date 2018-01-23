@@ -20,6 +20,7 @@
 
 .AuthBar-mainButton {
   border-color: #fff;
+  background-color: #fff;
   color: #5dc2af;
   text-transform: none;
   display: flex;
@@ -41,14 +42,26 @@
   bottom: calc(50% - 140px);
 }
 
+@media (max-height: 300px) {
+  .AuthBar-dialog {
+    height: 100%;
+    bottom: 0;
+    overflow: auto;
+  }
+}
+
 .AuthBar-dialog::backdrop,
 .AuthBar-dialog + .backdrop {
+  position: fixed;
   background: #eee;
+}
+
+.AuthBar-dialog > * {
+  flex-shrink: 0;
 }
 
 .AuthBar-hasAccount {
   margin: 10px;
-  margin-bottom: 0;
   font-size: 14px;
   display: flex;
   align-items: center;
