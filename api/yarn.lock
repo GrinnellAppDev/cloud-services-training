@@ -1608,6 +1608,10 @@ nopt@~1.0.10:
   dependencies:
     abbrev "1"
 
+normalize-email@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/normalize-email/-/normalize-email-1.1.0.tgz#2daf3f890d3e0b25ba858b106c2467576bdece96"
+
 normalize-path@^2.0.0, normalize-path@^2.0.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/normalize-path/-/normalize-path-2.1.1.tgz#1ab28b556e198363a8c1a6f7e6fa20137fe6aed9"

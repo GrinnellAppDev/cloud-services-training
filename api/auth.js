@@ -7,6 +7,7 @@ const authHeader = require("auth-header")
 const { Buffer } = require("buffer")
 const { ObjectId } = require("mongodb")
 const helmet = require("helmet")
+const normalizeEmail = require("normalize-email")
 
 require("express-async-errors")
 
@@ -71,7 +72,8 @@ express()
         bodySchema: schemas.UserCreate
       })
 
-      const { email, password, name } = request.body
+      const email = normalizeEmail(request.body.email)
+      const { password, name } = request.body
 
       const usersCollection = db.collection("users")
       const numEmailMatches = await usersCollection.find({ email }).count()
@@ -203,7 +205,9 @@ express()
 
           await runWithDB(async db => {
             const usersCollection = db.collection("users")
-            const user = await usersCollection.find({ email }).next()
+            const user = await usersCollection
+              .find({ email: normalizeEmail(email) })
+              .next()
 
             if (!user) {
               throw new HTTPError(401, "Incorrect email.")

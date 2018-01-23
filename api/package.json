@@ -17,6 +17,7 @@
     "jsonwebtoken": "^8.1.0",
     "mongodb": "^2.2.33",
     "ms": "^2.1.1",
+    "normalize-email": "^1.1.0",
     "read-yaml": "^1.1.0",
     "swagger-jsdoc": "^1.9.7",
     "swagger-ui-express": "^2.0.14",
