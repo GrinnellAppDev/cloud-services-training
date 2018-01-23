@@ -807,17 +807,17 @@ describe("epics", () => {
         epic: newTaskEpic,
         inputted: "-n-----",
         valueMap,
-        getState: () => ({ newTask: { text: "foo" } }),
+        getState: () => ({ newTask: { text: "foo" }, auth: { token: "abc" } }),
         getDependencies: () => ({ fetch })
       })
 
       expect(fetch).toBeCalledWith("/api/tasks", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Authorization: "Bearer abc"
         },
         body: JSON.stringify({
-          isComplete: false,
           text: "foo"
         })
       })
@@ -844,7 +844,7 @@ describe("epics", () => {
         inputted: "-n--------",
         expected: "-l----(ft)",
         valueMap,
-        getState: () => ({ newTask: { text: "foo" } }),
+        getState: () => ({ newTask: { text: "foo" }, auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -861,7 +861,7 @@ describe("epics", () => {
         inputted: "-n--------",
         expected: "-l----(ht)",
         valueMap,
-        getState: () => ({ newTask: { text: "foo" } }),
+        getState: () => ({ newTask: { text: "foo" }, auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -917,7 +917,7 @@ describe("epics", () => {
           ...valueMap,
           s: taskCreated("abc", "def")
         },
-        getState: () => ({ newTask: { text: "foo" } }),
+        getState: () => ({ newTask: { text: "foo" }, auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -962,13 +962,15 @@ describe("epics", () => {
         epic: editTaskEpic,
         inputted: "-e-----",
         valueMap,
+        getState: () => ({ auth: { token: "abc" } }),
         getDependencies: () => ({ fetch })
       })
 
       expect(fetch).toBeCalledWith("/api/tasks/a", {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Authorization: "Bearer abc"
         },
         body: JSON.stringify(valueMap.e.edits)
       })
@@ -980,6 +982,7 @@ describe("epics", () => {
         inputted: "-e--------",
         expected: "------(ft)",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -996,6 +999,7 @@ describe("epics", () => {
         inputted: "-e--------",
         expected: "------(ht)",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -1016,6 +1020,7 @@ describe("epics", () => {
         inputted: "-e-----",
         expected: "------s",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(observableOf({ ok: true }), scheduler)
@@ -1056,24 +1061,27 @@ describe("epics", () => {
         epic: deleteTaskEpic,
         inputted: "-d-x-",
         valueMap,
+        getState: () => ({ auth: { token: "abc" } }),
         getDependencies: () => ({ fetch })
       })
 
       expect(fetch).toBeCalledWith("/api/tasks/a", {
-        method: "DELETE"
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer abc"
+        }
       })
     })
 
     it("does nothing when it gets a delete action with a temp id", () => {
-      const fetch = jest
-        .fn()
-        .mockReturnValue(observableThrow(TypeError("Failed to fetch")))
+      const fetch = jest.fn()
 
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-e-x-",
         expected: "-----",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: () => ({ fetch })
       })
 
@@ -1081,15 +1089,14 @@ describe("epics", () => {
     })
 
     it("does nothing if the toast isn't closed", () => {
-      const fetch = jest
-        .fn()
-        .mockReturnValue(observableThrow(TypeError("Failed to fetch")))
+      const fetch = jest.fn()
 
       testEpic({
         epic: deleteTaskEpic,
         inputted: "-d-",
         expected: "-t-",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: () => ({ fetch })
       })
 
@@ -1106,6 +1113,7 @@ describe("epics", () => {
           b: deleteTask("b", { isComplete: false, text: "foo b" }),
           c: deleteTask("c", { isComplete: true, text: "foo c" })
         },
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -1128,6 +1136,7 @@ describe("epics", () => {
           q: taskDeleteSucceeded("b"),
           r: taskDeleteSucceeded("c")
         },
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(observableOf({ ok: true }), scheduler)
@@ -1143,6 +1152,7 @@ describe("epics", () => {
         inputted: "-d--u-",
         expected: "-t--j-",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: () => ({ fetch })
       })
 
@@ -1155,6 +1165,7 @@ describe("epics", () => {
         inputted: "-d--x--------",
         expected: "-t-------(fg)",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -1171,6 +1182,7 @@ describe("epics", () => {
         inputted: "-d--x--------",
         expected: "-t-------(hi)",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(
@@ -1191,6 +1203,7 @@ describe("epics", () => {
         inputted: "-d--x-----",
         expected: "-t-------s",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(observableOf({ ok: true }), scheduler)
@@ -1204,6 +1217,7 @@ describe("epics", () => {
         inputted: "-d--x-x---",
         expected: "-t-------s",
         valueMap,
+        getState: () => ({ auth: {} }),
         getDependencies: scheduler => ({
           fetch: () =>
             createDelayedObservable(observableOf({ ok: true }), scheduler)

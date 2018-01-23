@@ -343,10 +343,10 @@ export const newTaskEpic = (actionsObservable, { getState }, { fetch }) =>
                 fetch("/api/tasks", {
                   method: "POST",
                   headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${getAuthToken(getState())}`
                   },
                   body: JSON.stringify({
-                    isComplete: false,
                     text: getNewTaskText(getState())
                   })
                 })
@@ -388,7 +388,8 @@ export const editTaskEpic = (actionsObservable, { getState }, { fetch }) =>
         fetch(`/api/tasks/${id}`, {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAuthToken(getState())}`
           },
           body: JSON.stringify(edits)
         })
@@ -429,7 +430,10 @@ export const deleteTaskEpic = (actionsObservable, { getState }, { fetch }) =>
                 ? observableOf(taskDeleteFailed(id, original, "Undo"))
                 : observableFrom(
                     fetch(`/api/tasks/${id}`, {
-                      method: "DELETE"
+                      method: "DELETE",
+                      headers: {
+                        Authorization: `Bearer ${getAuthToken(getState())}`
+                      }
                     })
                   ).pipe(
                     map(response => {
