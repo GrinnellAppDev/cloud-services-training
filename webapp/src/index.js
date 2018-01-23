@@ -27,9 +27,6 @@ window.addEventListener("beforeunload", ev => {
     // TODO: close all toasts
     ev.returnValue = "You have unsaved changes!"
     return ev.returnValue
-  } else {
-    ev.preventDefault()
-    return null
   }
 })
 
