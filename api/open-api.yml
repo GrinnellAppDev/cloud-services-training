@@ -87,9 +87,6 @@ components:
     JwtCredentials:
       type: object
       properties:
-        userId:
-          type: string
-          format: objectId
         token:
           type: string
           description: A short-lived token used to authenticate API endpoints.

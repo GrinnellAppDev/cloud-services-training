@@ -18,16 +18,14 @@ const JWT_PUBLIC = fs.readFileSync("./jwt.key.pub")
 
 /**
  * Sign a JWT token and build a response.
- * @param {ObjectId} userIdObject
+ * @param {ObjectId} userId
  */
-const getCredentials = userIdObject => {
-  const userId = userIdObject.toString()
+const getCredentials = userId => {
   const expiresIn = "15 mins"
 
   return {
-    userId,
     tokenExpiration: new Date(Date.now() + ms(expiresIn)).toISOString(),
-    token: jwt.sign({ sub: userId }, JWT_SECRET, {
+    token: jwt.sign({ sub: userId.toString() }, JWT_SECRET, {
       algorithm: "RS256",
       expiresIn
     })
