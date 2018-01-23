@@ -213,7 +213,7 @@
 }
 
 .App-topToast[aria-hidden="true"] {
-  transform: translateY(calc(100% + 6px));
+  transform: translateY(150px);
 }
 
 .App-topToastBody {
@@ -246,7 +246,7 @@
   padding: 0;
   font-size: 35px;
   line-height: 30px;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   border: none;
   background: none;
   font-weight: 100;
@@ -256,6 +256,7 @@
   outline: none;
   position: relative;
   color: #fff;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .App-topToastClose::before {
