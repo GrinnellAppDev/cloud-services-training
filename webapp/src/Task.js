@@ -5,6 +5,7 @@ import { connect } from "react-redux"
 import { getTaskById, editTask, deleteTask } from "./store/tasks"
 import LoadingSpinner from "./LoadingSpinner"
 import { isTempTaskId } from "./util"
+import CloseButton from "./CloseButton"
 
 export const withEnhancers = connect(
   (state, { id }) => ({
@@ -51,14 +52,12 @@ export const Task = ({
       disabled={isCreating}
     />
 
-    <button
+    <CloseButton
       className="Task-delete"
       onClick={() => onDelete({ text, isComplete })}
       title="Delete"
       disabled={isCreating}
-    >
-      ×
-    </button>
+    />
   </article>
 )
 

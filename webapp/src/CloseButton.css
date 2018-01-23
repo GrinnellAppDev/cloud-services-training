@@ -1,0 +1,59 @@
+.CloseButton {
+  margin: 0;
+  padding: 0;
+  font-size: 35px;
+  line-height: 30px;
+  padding-bottom: 8px;
+  border: none;
+  background: none;
+  font-weight: 100;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  outline: none;
+  position: relative;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.CloseButton::before {
+  content: "";
+  display: block;
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: scale(0.1);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: transform 200ms, opacity 200ms;
+}
+
+.CloseButton:active::before {
+  transform: scale(1);
+  opacity: 0.2;
+}
+
+.CloseButton::after {
+  position: absolute;
+  display: block;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+  transition: opacity 200ms;
+  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -10 120 120"><circle cx="50" cy="50" r="50" fill="none" stroke="rgba(150, 150, 150, 0.5)" stroke-width="6"/></svg>');
+}
+
+.CloseButton:focus::after {
+  opacity: 1;
+}
+
+.CloseButton:active::after {
+  opacity: 0;
+}

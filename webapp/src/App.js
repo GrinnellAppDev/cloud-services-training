@@ -20,6 +20,7 @@ import { getTempTaskId } from "./util"
 import FlipMove from "react-flip-move"
 import TextButton from "./TextButton"
 import AuthBar from "./AuthBar"
+import CloseButton from "./CloseButton"
 
 export const withEnhancers = connect(
   () => {
@@ -170,9 +171,7 @@ export const App = ({
             {topToast.buttonText}
           </TextButton>
         )}
-        <button className="App-topToastClose" onClick={onTopToastCancel}>
-          ×
-        </button>
+        <CloseButton className="App-topToastClose" onClick={onTopToastCancel} />
       </section>
     </aside>
   </div>
