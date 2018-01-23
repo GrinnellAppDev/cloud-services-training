@@ -47,16 +47,11 @@ express()
       const nextPageFirstTask = readTasks[pageSize]
 
       if (nextPageFirstTask) {
-        const protocol = request.protocol
-        const host = request.get("host")
-        const path = request.baseUrl + request.path
-        const query = querystring.stringify({
-          ...request.query,
-          pageToken: idToBase64(nextPageFirstTask._id)
-        })
-
         response.links({
-          next: `${protocol}://${host}${path}?${query}`
+          next: `tasks?${querystring.stringify({
+            ...request.query,
+            pageToken: idToBase64(nextPageFirstTask._id)
+          })}`
         })
       }
 
