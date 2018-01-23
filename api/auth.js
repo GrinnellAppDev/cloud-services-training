@@ -113,11 +113,15 @@ express()
    *            application/json:
    *              schema:
    *                $ref: "#/components/schemas/User"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
    *        401:
    *          $ref: "#/components/responses/Unauthorized"
    */
   .get("/users/me", (request, response) =>
     runWithDB(async db => {
+      validateRequest(request, {})
+
       let token
       try {
         const auth = authHeader.parse(request.header("Authorization"))
@@ -164,6 +168,8 @@ express()
    *            application/json:
    *              schema:
    *                $ref: "#/components/schemas/JwtCredentials"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
    *        401:
    *          description: >
    *            The email or password is incorrect or the authorization is otherwise
@@ -178,6 +184,8 @@ express()
   .get(
     "/token",
     async (request, response) => {
+      validateRequest(request, {})
+
       const authHeaderValue = request.header("Authorization")
 
       if (!authHeaderValue) {
