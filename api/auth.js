@@ -7,6 +7,7 @@ const authHeader = require("auth-header")
 const { Buffer } = require("buffer")
 const { ObjectId } = require("mongodb")
 const helmet = require("helmet")
+const normalizeEmail = require("normalize-email")
 
 require("express-async-errors")
 
@@ -18,16 +19,14 @@ const JWT_PUBLIC = fs.readFileSync("./jwt.key.pub")
 
 /**
  * Sign a JWT token and build a response.
- * @param {ObjectId} userIdObject
+ * @param {ObjectId} userId
  */
-const getCredentials = userIdObject => {
-  const userId = userIdObject.toString()
+const getCredentials = userId => {
   const expiresIn = "15 mins"
 
   return {
-    userId,
     tokenExpiration: new Date(Date.now() + ms(expiresIn)).toISOString(),
-    token: jwt.sign({ sub: userId }, JWT_SECRET, {
+    token: jwt.sign({ sub: userId.toString() }, JWT_SECRET, {
       algorithm: "RS256",
       expiresIn
     })
@@ -73,7 +72,8 @@ express()
         bodySchema: schemas.UserCreate
       })
 
-      const { email, password, name } = request.body
+      const email = normalizeEmail(request.body.email)
+      const { password, name } = request.body
 
       const usersCollection = db.collection("users")
       const numEmailMatches = await usersCollection.find({ email }).count()
@@ -87,7 +87,7 @@ express()
         const insertResult = await usersCollection.insertOne({
           email,
           passwordHash,
-          name
+          name: name || null
         })
 
         if (!insertResult.result.ok) {
@@ -96,6 +96,54 @@ express()
           response.status(201).send(getCredentials(insertResult.insertedId))
         }
       }
+    })
+  )
+
+  /**
+   * @swagger
+   *  /auth/users/me:
+   *    get:
+   *      summary: Get the details of the current user.
+   *      security:
+   *        - BearerAuth: []
+   *      responses:
+   *        200:
+   *          description: Successfully retrieved user.
+   *          content:
+   *            application/json:
+   *              schema:
+   *                $ref: "#/components/schemas/User"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
+   *        401:
+   *          $ref: "#/components/responses/Unauthorized"
+   */
+  .get("/users/me", (request, response) =>
+    runWithDB(async db => {
+      validateRequest(request, {})
+
+      let token
+      try {
+        const auth = authHeader.parse(request.header("Authorization"))
+        if (auth.scheme !== "Bearer") {
+          throw new Error()
+        }
+
+        token = jwt.verify(auth.token, JWT_PUBLIC)
+      } catch (error) {
+        response.header("WWW-Authenticate", "Bearer")
+        throw new HTTPError(401, "Invalid token.")
+      }
+
+      const userId = new ObjectId(token.sub)
+
+      const usersCollection = db.collection("users")
+      const user = await usersCollection.findOne({ _id: userId })
+
+      response.status(200).send({
+        name: user.name || undefined,
+        email: user.email
+      })
     })
   )
 
@@ -120,6 +168,8 @@ express()
    *            application/json:
    *              schema:
    *                $ref: "#/components/schemas/JwtCredentials"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
    *        401:
    *          description: >
    *            The email or password is incorrect or the authorization is otherwise
@@ -134,6 +184,8 @@ express()
   .get(
     "/token",
     async (request, response) => {
+      validateRequest(request, {})
+
       const authHeaderValue = request.header("Authorization")
 
       if (!authHeaderValue) {
@@ -153,7 +205,9 @@ express()
 
           await runWithDB(async db => {
             const usersCollection = db.collection("users")
-            const user = await usersCollection.find({ email }).next()
+            const user = await usersCollection
+              .find({ email: normalizeEmail(email) })
+              .next()
 
             if (!user) {
               throw new HTTPError(401, "Incorrect email.")

@@ -57,6 +57,12 @@ module.exports = Router()
    *      responses:
    *        200:
    *          description: An array of tasks
+   *          headers:
+   *            Link:
+   *              schema:
+   *                type: string
+   *              description: >
+   *                Standard HTTP Link header. All URIs relative to the /tasks endpoint.
    *          content:
    *            application/json:
    *              schema:
@@ -112,16 +118,11 @@ module.exports = Router()
 
       const nextPageFirstTask = readTasks[pageSize]
       if (nextPageFirstTask) {
-        const protocol = request.protocol
-        const host = request.get("host")
-        const path = request.baseUrl + request.path
-        const query = querystring.stringify({
-          ...request.query,
-          pageToken: idToBase64(nextPageFirstTask._id)
-        })
-
         response.links({
-          next: `${protocol}://${host}${path}?${query}`
+          next: `tasks?${querystring.stringify({
+            ...request.query,
+            pageToken: idToBase64(nextPageFirstTask._id)
+          })}`
         })
       }
 
