@@ -38,6 +38,7 @@ import {
   clearAuthToken
 } from "./auth"
 import { delay } from "rxjs/operators/delay"
+import url from "url"
 
 describe("selectors", () => {
   describe("getTaskById", () => {
@@ -450,9 +451,12 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks", {
-        headers: { Authorization: "Bearer null" }
-      })
+      expect(fetch).toBeCalledWith(
+        url.resolve(window.location.href, "/api/tasks"),
+        {
+          headers: { Authorization: "Bearer null" }
+        }
+      )
     })
 
     it("doesn't call fetch and sends nothing when already loading", () => {
@@ -487,9 +491,12 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks", {
-        headers: { Authorization: "Bearer null" }
-      })
+      expect(fetch).toBeCalledWith(
+        url.resolve(window.location.href, "/api/tasks"),
+        {
+          headers: { Authorization: "Bearer null" }
+        }
+      )
     })
 
     it("calls fetch when given a reload action with an error", () => {
@@ -506,9 +513,12 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks", {
-        headers: { Authorization: "Bearer null" }
-      })
+      expect(fetch).toBeCalledWith(
+        url.resolve(window.location.href, "/api/tasks"),
+        {
+          headers: { Authorization: "Bearer null" }
+        }
+      )
     })
 
     it("calls fetch when given a load page action if tasks are unloaded", () => {
@@ -525,9 +535,12 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks", {
-        headers: { Authorization: "Bearer null" }
-      })
+      expect(fetch).toBeCalledWith(
+        url.resolve(window.location.href, "/api/tasks"),
+        {
+          headers: { Authorization: "Bearer null" }
+        }
+      )
     })
 
     it("does not call fetch when given a load page action if tasks are loaded and there is no next page URI", () => {
@@ -561,9 +574,12 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks?pageToken=abc", {
-        headers: { Authorization: "Bearer null" }
-      })
+      expect(fetch).toBeCalledWith(
+        url.resolve(window.location.href, "/api/tasks?pageToken=abc"),
+        {
+          headers: { Authorization: "Bearer null" }
+        }
+      )
     })
 
     it("handles fetch errors gracefully", () => {
@@ -667,7 +683,7 @@ describe("epics", () => {
               { _id: "a", isComplete: false, text: "foo" },
               { _id: "b", isComplete: true, text: "bar" }
             ],
-            "/api/tasks?pageToken=abc"
+            "tasks?pageToken=abc"
           )
         },
         getState: () => ({ tasks: {}, auth: {} }),
@@ -684,7 +700,7 @@ describe("epics", () => {
                 headers: {
                   get: name => {
                     expect(name.toLowerCase()).toBe("link")
-                    return '</api/tasks?pageToken=abc>; rel="next"'
+                    return '<tasks?pageToken=abc>; rel="next"'
                   }
                 }
               }),

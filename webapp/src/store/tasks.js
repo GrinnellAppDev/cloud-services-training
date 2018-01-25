@@ -21,6 +21,7 @@ import {
   getAuthTokenExpiration
 } from "./auth"
 import { delayWhen } from "rxjs/operators/delayWhen"
+import resolveURL from "resolve-url"
 
 // Selectors
 
@@ -247,7 +248,7 @@ export const reloadOnAuthEpic = actionsObservable =>
  */
 export const fetchTasks = (fetch, getState, currentToken, tryReAuth) =>
   observableFrom(
-    fetch(getNextPageURI(getState()) || "/api/tasks", {
+    fetch(resolveURL("/api/tasks", getNextPageURI(getState()) || ""), {
       headers: { Authorization: `Bearer ${currentToken}` }
     })
   ).pipe(
