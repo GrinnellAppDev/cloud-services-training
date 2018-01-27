@@ -6,6 +6,7 @@ import { getTaskById, editTask, deleteTask } from "./store/tasks"
 import LoadingSpinner from "./LoadingSpinner"
 import { isTempTaskId } from "./util"
 import CloseButton from "./CloseButton"
+import Checkbox from "./Checkbox"
 
 export const withEnhancers = connect(
   (state, { id }) => ({
@@ -36,9 +37,7 @@ export const Task = ({
       </div>
     )}
 
-    <input
-      className="Task-checkbox"
-      type="checkbox"
+    <Checkbox
       onChange={() => onIsCompleteChange(!isComplete, isComplete)}
       checked={isComplete}
       disabled={isCreating}

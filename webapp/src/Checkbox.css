@@ -1,0 +1,72 @@
+.Checkbox {
+  border: none;
+  outline: none;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  margin-right: 10px;
+  position: relative;
+}
+
+.Checkbox-input {
+  opacity: 0;
+}
+
+.Checkbox-svg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.Checkbox-borderRing,
+.Checkbox-focusRing {
+  stroke: #ededed;
+  fill: none;
+}
+
+.Checkbox-input:checked ~ .Checkbox-svg .Checkbox-borderRing,
+.Checkbox-input:checked ~ .Checkbox-svg .Checkbox-focusRing {
+  stroke: #bddad5;
+}
+
+.Checkbox-borderRing {
+  stroke-width: 3px;
+}
+
+.Checkbox-focusRing {
+  stroke-width: 10px;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.Checkbox-input:focus ~ .Checkbox-svg .Checkbox-focusRing {
+  opacity: 1;
+}
+
+.Checkbox-check {
+  fill: #5dc2af;
+}
+
+.Checkbox-input:not(:checked) ~ .Checkbox-svg .Checkbox-check {
+  display: none;
+}
+
+.Checkbox-ripple {
+  fill: #ededed;
+  transform: translate(50%, 50%) scale(0.001);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: transform 200ms, opacity 200ms;
+}
+
+.Checkbox-input:active ~ .Checkbox-svg .Checkbox-ripple {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.Checkbox-input:checked ~ .Checkbox-svg .Checkbox-ripple {
+  fill: #bddad5;
+}
