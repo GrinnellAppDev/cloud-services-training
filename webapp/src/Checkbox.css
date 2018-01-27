@@ -55,7 +55,7 @@
 }
 
 .Checkbox-ripple {
-  fill: #ededed;
+  fill: #bddad5;
   transform: translate(50%, 50%) scale(0.001);
   opacity: 0;
   will-change: transform, opacity;
@@ -68,5 +68,5 @@
 }
 
 .Checkbox-input:checked ~ .Checkbox-svg .Checkbox-ripple {
-  fill: #bddad5;
+  fill: #ededed;
 }
