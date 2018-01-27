@@ -37,8 +37,11 @@
 }
 
 .CloseButton::after {
+  content: "";
   position: absolute;
   display: block;
+  border: 2px solid rgba(150, 150, 150, 0.5);
+  border-radius: 50%;
   top: 0;
   right: 0;
   bottom: 0;
@@ -47,7 +50,6 @@
   opacity: 0;
   will-change: opacity;
   transition: opacity 200ms;
-  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -10 120 120"><circle cx="50" cy="50" r="50" fill="none" stroke="rgba(150, 150, 150, 0.5)" stroke-width="6"/></svg>');
 }
 
 .CloseButton:focus::after {
