@@ -124,7 +124,7 @@ export const App = ({
       {!hasTasks && (
         <section className="App-taskListTail App-noTasks">
           <p className="App-taskListTailMessage">You have no tasks!</p>
-          <button
+          <TextButton
             className="App-taskListTailButton App-noTasksCreate"
             onClick={() => {
               const input = document.getElementById("App-addTask")
@@ -136,7 +136,7 @@ export const App = ({
             }}
           >
             Create a Task
-          </button>
+          </TextButton>
         </section>
       )}
 
@@ -146,12 +146,12 @@ export const App = ({
             Oops! There was a problem loading your tasks.
           </h2>
           <p className="App-taskListTailMessage">{lastTasksErrorMessage}</p>
-          <button
+          <TextButton
             className="App-taskListTailButton App-tasksErrorTryAgain"
             onClick={onLoadNextPage}
           >
             Try again
-          </button>
+          </TextButton>
         </section>
       )}
     </main>

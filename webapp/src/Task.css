@@ -59,3 +59,7 @@
 .Task-delete:disabled {
   opacity: 0;
 }
+
+.Task-delete::after {
+  border-color: #ededed;
+}

@@ -24,14 +24,13 @@
 }
 
 .AuthBar-mainButton {
-  border-color: #fff;
   background-color: #fff;
   color: #5dc2af;
   text-transform: none;
   display: flex;
 }
 
-.AuthBar-mainButton:focus {
+.AuthBar-mainButton::after {
   border-color: #bddad5;
 }
 
@@ -126,7 +125,10 @@
 
 .AuthBar-cancel {
   background-color: #eee;
-  border-color: #eee;
+}
+
+.AuthBar-cancel::after {
+  border-color: #ccc;
 }
 
 .AuthBar-controls > span {
@@ -140,10 +142,9 @@
 .AuthBar-submit {
   color: #5dc2af;
   background-color: #eee;
-  border-color: #eee;
 }
 
-.AuthBar-submit:focus {
+.AuthBar-submit::after {
   border-color: #bddad5;
 }
 

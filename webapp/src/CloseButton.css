@@ -40,12 +40,13 @@
   content: "";
   position: absolute;
   display: block;
-  border: 2px solid rgba(150, 150, 150, 0.5);
+  border-width: 2px;
+  border-style: solid;
   border-radius: 50%;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  top: 2px;
+  right: 2px;
+  bottom: 2px;
+  left: 2px;
   pointer-events: none;
   opacity: 0;
   will-change: opacity;

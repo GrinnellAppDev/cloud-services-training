@@ -159,45 +159,12 @@
 }
 
 .App-taskListTailButton {
-  border: 2px solid #fff;
-  border-radius: 2px;
-  padding: 6px 10px;
   background: #fff;
-  overflow: hidden;
-  position: relative;
-  font-size: 14px;
-  text-transform: uppercase;
-  outline: none;
-  transition: border 200ms, box-shadow 200ms;
+  color: #333;
 }
 
-.App-taskListTailButton:focus {
-  border: 2px solid #ededed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.App-taskListTailButton:active {
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-}
-
-.App-taskListTailButton::before {
-  content: "";
-  display: block;
-  position: absolute;
-  top: 50%;
-  right: -10%;
-  left: -10%;
-  padding-bottom: 120%;
-  border-radius: 50%;
-  background: #000;
-  transform: translateY(-50%) scale(0.1);
-  opacity: 0;
-  transition: transform 200ms, opacity 200ms;
-}
-
-.App-taskListTailButton:active::before {
-  transform: translateY(-50%) scale(1);
-  opacity: 0.2;
+.App-taskListTailButton::after {
+  border-color: #ededed;
 }
 
 .App-topToast {
@@ -235,12 +202,13 @@
   padding: 0 5px;
 }
 
-.App .App-topToastAction {
-  color: #fff;
-  background: none;
-  border-color: rgba(0, 0, 0, 0);
-}
-
+.App-topToastAction,
 .App-topToastClose {
   color: #fff;
+  background: none;
+}
+
+.App-topToastAction::after,
+.App-topToastClose::after {
+  border-color: #888;
 }
