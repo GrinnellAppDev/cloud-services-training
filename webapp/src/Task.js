@@ -38,6 +38,7 @@ export const Task = ({
     )}
 
     <Checkbox
+      className="Task-checkbox"
       onChange={() => onIsCompleteChange(!isComplete, isComplete)}
       checked={isComplete}
       disabled={isCreating}
