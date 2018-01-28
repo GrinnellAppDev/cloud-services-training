@@ -1,8 +1,6 @@
 .Checkbox {
   border: none;
   outline: none;
-  width: 40px;
-  height: 40px;
   margin: 0;
   padding: 0;
   margin-right: 10px;
@@ -69,4 +67,8 @@
 
 .Checkbox-input:checked ~ .Checkbox-svg .Checkbox-ripple {
   fill: #ededed;
+}
+
+.Checkbox-input:disabled ~ .Checkbox-svg .Checkbox-ripple {
+  display: none;
 }
