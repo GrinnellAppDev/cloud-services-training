@@ -14,6 +14,7 @@ import {
 import "./AuthBar.css"
 import classnames from "classnames"
 import LoadingSpinner from "./LoadingSpinner"
+import Checkbox from "./Checkbox"
 
 export const withEnhancers = connect(
   state => {
@@ -131,14 +132,20 @@ export const AuthBar = ({
       />
 
       <label className="AuthBar-hasAccount">
-        <input
-          type="checkbox"
+        <Checkbox
           className="AuthBar-hasAccountCheckbox"
           checked={hasAccount}
           onChange={ev => onHasAccountChange(ev.currentTarget.checked)}
           disabled={isSubmitting}
         />
-        <span>I already have an account</span>
+        <span
+          className={classnames(
+            "AuthBar-hasAccountLabel",
+            isSubmitting && "AuthBar-disabled"
+          )}
+        >
+          I already have an account
+        </span>
       </label>
 
       <div className="AuthBar-controls">

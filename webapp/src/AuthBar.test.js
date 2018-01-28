@@ -327,7 +327,7 @@ describe("AuthBar", () => {
   it("has a checkbox for has account", () => {
     expect(
       shallow(<AuthBar dialogIsOpen={true} hasAccount={true} />)
-        .find("input[type='checkbox']")
+        .find("Checkbox")
         .prop("checked")
     ).toBe(true)
   })
@@ -388,6 +388,7 @@ describe("AuthBar", () => {
 
     it("locks all inputs", () => {
       expect(wrapper.find("Dialog input").every("[disabled]")).toBe(true)
+      expect(wrapper.find("Dialog Checkbox").every("[disabled]")).toBe(true)
     })
 
     it("locks submit button", () => {
@@ -464,7 +465,7 @@ describe("AuthBar", () => {
     const handler = jest.fn()
 
     shallow(<AuthBar dialogIsOpen={true} onHasAccountChange={handler} />)
-      .find("input[type='checkbox']")
+      .find("Checkbox")
       .simulate("change", { currentTarget: { checked: true } })
 
     expect(handler).toBeCalledWith(true)

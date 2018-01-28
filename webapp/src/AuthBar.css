@@ -73,13 +73,11 @@
 
 .AuthBar-hasAccountCheckbox {
   margin: 0 10px 0 2px;
+  width: 20px;
+  height: 20px;
 }
 
-.AuthBar-hasAccountCheckbox:focus {
-  outline: solid 2px #ccc;
-}
-
-.AuthBar-hasAccountCheckbox:disabled ~ span {
+.AuthBar-hasAccountLabel.AuthBar-disabled {
   color: #999;
 }
 

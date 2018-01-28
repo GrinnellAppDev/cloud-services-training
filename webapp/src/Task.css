@@ -17,6 +17,11 @@
   pointer-events: none;
 }
 
+.Task-checkbox {
+  width: 40px;
+  height: 40px;
+}
+
 .Task-text {
   font: inherit;
   font-size: 16px;
