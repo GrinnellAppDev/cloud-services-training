@@ -6,18 +6,18 @@ express()
   .get("/tasks", (request, response) => {
     response.status(200).send([
       {
-        id: "3l2ei3hf3iw",
-        title: "Collect underpants",
+        _id: "3l2ei3hf3iw",
+        text: "Collect underpants",
         isComplete: false
       },
       {
-        id: "2l2ei323xze",
-        title: "???",
+        _id: "2l2ei323xze",
+        text: "???",
         isComplete: false
       },
       {
-        id: "1z2ei32cx7e",
-        title: "Profit!",
+        _id: "1z2ei32cx7e",
+        text: "Profit!",
         isComplete: false
       }
     ])

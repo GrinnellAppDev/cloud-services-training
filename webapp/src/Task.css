@@ -1,0 +1,70 @@
+.Task {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: white;
+  padding: 10px;
+  position: relative;
+  contain: paint;
+}
+
+.Task-loading {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  padding: 6px;
+  pointer-events: none;
+}
+
+.Task-checkbox {
+  width: 40px;
+  height: 40px;
+}
+
+.Task-text {
+  font: inherit;
+  font-size: 16px;
+  margin: 0;
+  flex: 1;
+  color: inherit;
+  padding: 0;
+  outline: none;
+  border: none;
+  border-top: 2px solid rgba(0, 0, 0, 0);
+  border-bottom: 2px solid rgba(0, 0, 0, 0);
+  transition: border 200ms;
+  min-width: 0px;
+}
+
+.Task-text:focus {
+  border-bottom: 2px solid #ededed;
+}
+
+.Task-text:disabled {
+  color: #999;
+}
+
+.Task-isComplete .Task-text {
+  color: #999;
+  text-decoration: line-through;
+}
+
+.Task-delete {
+  opacity: 0;
+  color: #af5b5e;
+  transition: opacity 200ms;
+}
+
+.Task-delete:focus,
+.Task-delete:hover {
+  opacity: 1;
+}
+
+.Task-delete:disabled {
+  opacity: 0;
+}
+
+.Task-delete::after {
+  border-color: #ededed;
+}
