@@ -12,10 +12,10 @@ from our api, and allow users to modify that data to add or check off tasks.
 
 ## Table of Contents
 
-* [**Introduction**][intro]
+* [Introduction][intro]
 * [Day 1][day1]
 * [Day 2][day2]
-* [Day 3][day3]
+* [**Day 3**][day3]
 * [Day 4][day4]
 * [Day 5][day5]
 * [Day 6][day6]
