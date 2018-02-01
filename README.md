@@ -14,9 +14,9 @@ familiarize you with some of the concepts and terminology.
 
 ## Table of Contents
 
-* [**Introduction**][intro]
+* [Introduction][intro]
 * [Day 1][day1]
-* [Day 2][day2]
+* [**Day 2**][day2]
 * [Day 3][day3]
 * [Day 4][day4]
 * [Day 5][day5]
