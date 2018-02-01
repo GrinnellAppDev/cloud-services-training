@@ -6,7 +6,7 @@ It's authentication day.
 
 ## Table of Contents
 
-* [**Introduction**][intro]
+* [Introduction][intro]
 * [Day 1][day1]
 * [Day 2][day2]
 * [Day 3][day3]
@@ -15,7 +15,7 @@ It's authentication day.
 * [Day 6][day6]
 * [Day 7][day7]
 * [Day 8][day8]
-* [Day 9][day9]
+* [**Day 9**][day9]
 * [Day 10][day10]
 
 [intro]: https://github.com/GrinnellAppDev/cloud-services-training
