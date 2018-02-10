@@ -9,8 +9,6 @@ services:
       - API_HOST=api
     depends_on:
       - api
-    ports:
-      - "443:80"
 
   api:
     container_name: cst-api-prod
