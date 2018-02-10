@@ -8,3 +8,5 @@ services:
 
   api:
     restart: unless-stopped
+  apidb:
+    restart: unless-stopped
