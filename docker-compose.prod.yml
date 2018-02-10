@@ -10,3 +10,8 @@ services:
     restart: unless-stopped
   apidb:
     restart: unless-stopped
+
+  auth:
+    restart: unless-stopped
+  authdb:
+    restart: unless-stopped
