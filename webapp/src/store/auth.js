@@ -129,12 +129,12 @@ export const signInEpic = (actionsObservable, { getState }, { fetch }) =>
         actionsObservable.ofType("CLOSE_AUTH_DIALOG"),
         observableFrom(
           getAuthDialog(getState()).hasAccount
-            ? fetch("/api/auth/token", {
+            ? fetch("./api/auth/token", {
                 headers: {
                   Authorization: encodeBasicAuth(email, password)
                 }
               })
-            : fetch("/api/auth/users", {
+            : fetch("./api/auth/users", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json"
