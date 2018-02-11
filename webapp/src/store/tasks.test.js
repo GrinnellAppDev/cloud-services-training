@@ -181,7 +181,7 @@ describe("reducers", () => {
       items: {
         a: { _id: "a", isComplete: false, text: "foo" }
       },
-      nextPageURI: "/api/tasks?pageToken=abc"
+      nextPageURI: "./api/tasks?pageToken=abc"
     }
 
     it("ignores unknown actions", () => {
@@ -199,7 +199,7 @@ describe("reducers", () => {
     it("adds items on load", () => {
       const itemA = { _id: "a", isComplete: false, text: "foo" }
       const itemB = { _id: "b", isComplete: true, text: "bar" }
-      const pageURI1 = "/api/tasks?pageToken=abc"
+      const pageURI1 = "./api/tasks?pageToken=abc"
       const pageURI2 = null
       const stateAfterPage1 = {
         ...initialTasksState,
@@ -452,7 +452,7 @@ describe("epics", () => {
       })
 
       expect(fetch).toBeCalledWith(
-        url.resolve(window.location.href, "/api/tasks"),
+        url.resolve(window.location.href, "./api/tasks"),
         {
           headers: { Authorization: "Bearer null" }
         }
@@ -492,7 +492,7 @@ describe("epics", () => {
       })
 
       expect(fetch).toBeCalledWith(
-        url.resolve(window.location.href, "/api/tasks"),
+        url.resolve(window.location.href, "./api/tasks"),
         {
           headers: { Authorization: "Bearer null" }
         }
@@ -514,7 +514,7 @@ describe("epics", () => {
       })
 
       expect(fetch).toBeCalledWith(
-        url.resolve(window.location.href, "/api/tasks"),
+        url.resolve(window.location.href, "./api/tasks"),
         {
           headers: { Authorization: "Bearer null" }
         }
@@ -536,7 +536,7 @@ describe("epics", () => {
       })
 
       expect(fetch).toBeCalledWith(
-        url.resolve(window.location.href, "/api/tasks"),
+        url.resolve(window.location.href, "./api/tasks"),
         {
           headers: { Authorization: "Bearer null" }
         }
@@ -568,14 +568,14 @@ describe("epics", () => {
         inputted: "-n-----",
         valueMap,
         getState: () => ({
-          tasks: { nextPageURI: "/api/tasks?pageToken=abc" },
+          tasks: { nextPageURI: "tasks?pageToken=abc" },
           auth: { token: null }
         }),
         getDependencies: () => ({ fetch })
       })
 
       expect(fetch).toBeCalledWith(
-        url.resolve(window.location.href, "/api/tasks?pageToken=abc"),
+        url.resolve(window.location.href, "./api/tasks?pageToken=abc"),
         {
           headers: { Authorization: "Bearer null" }
         }
@@ -795,7 +795,7 @@ describe("epics", () => {
       })
 
       expect(fetch.mock.calls[1]).toEqual([
-        "/api/auth/token",
+        "./api/auth/token",
         {
           headers: {
             Authorization: "Bearer abc"
@@ -827,7 +827,7 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks", {
+      expect(fetch).toBeCalledWith("./api/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -982,7 +982,7 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks/a", {
+      expect(fetch).toBeCalledWith("./api/tasks/a", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -1081,7 +1081,7 @@ describe("epics", () => {
         getDependencies: () => ({ fetch })
       })
 
-      expect(fetch).toBeCalledWith("/api/tasks/a", {
+      expect(fetch).toBeCalledWith("./api/tasks/a", {
         method: "DELETE",
         headers: {
           Authorization: "Bearer abc"
