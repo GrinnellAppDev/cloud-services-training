@@ -248,7 +248,7 @@ export const reloadOnAuthEpic = actionsObservable =>
  */
 export const fetchTasks = (fetch, getState, currentToken, tryReAuth) =>
   observableFrom(
-    fetch(resolveURL("/api/tasks", getNextPageURI(getState()) || ""), {
+    fetch(resolveURL("./api/tasks", getNextPageURI(getState()) || ""), {
       headers: { Authorization: `Bearer ${currentToken}` }
     })
   ).pipe(
@@ -266,7 +266,7 @@ export const fetchTasks = (fetch, getState, currentToken, tryReAuth) =>
         else if (!tryReAuth) throw Error("Couldn't authenticate.")
         else
           return observableFrom(
-            fetch("/api/auth/token", {
+            fetch("./api/auth/token", {
               headers: {
                 Authorization: `Bearer ${currentToken}`
               }
@@ -341,7 +341,7 @@ export const newTaskEpic = (actionsObservable, { getState }, { fetch }) =>
           : mergeObservables(
               observableOf(clearNewTask()),
               observableFrom(
-                fetch("/api/tasks", {
+                fetch("./api/tasks", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
@@ -386,7 +386,7 @@ export const editTaskEpic = (actionsObservable, { getState }, { fetch }) =>
   actionsObservable.ofType("EDIT_TASK").pipe(
     mergeMap(({ id, edits, original }) =>
       observableFrom(
-        fetch(`/api/tasks/${id}`, {
+        fetch(`./api/tasks/${id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -430,7 +430,7 @@ export const deleteTaskEpic = (actionsObservable, { getState }, { fetch }) =>
               withAction
                 ? observableOf(taskDeleteFailed(id, original, "Undo"))
                 : observableFrom(
-                    fetch(`/api/tasks/${id}`, {
+                    fetch(`./api/tasks/${id}`, {
                       method: "DELETE",
                       headers: {
                         Authorization: `Bearer ${getAuthToken(getState())}`
