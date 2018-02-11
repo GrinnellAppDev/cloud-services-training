@@ -232,7 +232,7 @@ describe("signInEpic", () => {
       getDependencies: () => ({ fetch })
     })
 
-    expect(fetch).toBeCalledWith("/api/auth/token", {
+    expect(fetch).toBeCalledWith("./api/auth/token", {
       headers: {
         Authorization: encodeBasicAuth("foo", "bar")
       }
@@ -259,7 +259,7 @@ describe("signInEpic", () => {
       getDependencies: () => ({ fetch })
     })
 
-    expect(fetch).toBeCalledWith("/api/auth/users", {
+    expect(fetch).toBeCalledWith("./api/auth/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

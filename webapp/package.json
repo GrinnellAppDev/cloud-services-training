@@ -2,6 +2,7 @@
   "name": "webapp",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "base-64": "^0.1.0",
     "classnames": "^2.2.5",
