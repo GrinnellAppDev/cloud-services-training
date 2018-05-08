@@ -1,5 +1,7 @@
 # AppDev Cloud Services Training
 
+**The Final Project is Out!** Go to the [final-project-2018-spring branch](https://github.com/GrinnellAppDev/cloud-services-training/tree/final-project-2018-spring) for details.
+
 Welcome to AppDev training! We are excited that you chose to learn about cloud
 services, and we hope you enjoy the training. Please read through these
 instructions to get an idea of how this course works, and don't hesitate to
