@@ -142,7 +142,7 @@ module.exports = Router()
   /**
    * @swagger
    *  /tasks/{taskId}:
-   *    search:
+   *    get:
    *      summary: Get a single task that is requested via Id
    *      parameters:
    *        - name: taskId
@@ -163,7 +163,7 @@ module.exports = Router()
    *        404:
    *          $ref: "#/components/responses/NotFound"
    */
-  .search("/:taskId", (request, response) =>
+  .get("/:taskId", (request, response) =>
     runWithDB(async db => {
       validateRequest(request, {
         paramSchemaProps: {
@@ -173,21 +173,12 @@ module.exports = Router()
 
       const tasksCollection = db.collection("tasks")
 
-      let taskIdValue = null
-      if (taskId) {
-        try {
-          taskIdValue = base64ToId(taskId)
-        } catch (error) {
-          throw new HTTPError(400, 'Invalid request: Path Params.taskId does not match the format "objectId"')
-        }
-      }
-
       const { taskId } = request.params
       const searchResult = await tasksCollection.findOne(
         { _id: new ObjectId(taskId) }
       )
 
-      if (!searchResult.value) {
+      if (!searchResult) {
         throw new HTTPError(404, `No task with id "${taskId}"`)
       } else {
         response.status(200).send(searchResult)
