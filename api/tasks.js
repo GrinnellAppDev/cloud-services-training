@@ -142,6 +142,68 @@ module.exports = Router()
   /**
    * @swagger
    *  /tasks/{taskId}:
+   *    search:
+   *      summary: Get a single task that is requrested via Id
+   *      parameters:
+   *        - name: taskId
+   *          in: path
+   *          description: The unique ID of a task.
+   *          schema:
+   *            type: string
+   *            format: objectId
+   *      responses:
+   *        200:
+   *          description: A task
+   *          headers:
+   *            Link:
+   *              schema:
+   *                type: string
+   *              description: >
+   *                Standard HTTP Link header. All URIs relative to the /tasks endpoint.
+   *          content:
+   *            application/json:
+   *              schema:
+   *                  $ref: "#/components/schemas/Task"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
+   *        404:
+   *          $ref: "#/components/responses/NotFound"
+   */
+  .search("/:taskId", (request, response) =>
+    runWithDB(async db => {
+      validateRequest(request, {
+        paramSchemaProps: {
+          taskId: { type: "string", format: "objectId" }
+        }
+      })
+
+      const tasksCollection = db.collection("tasks")
+
+      let taskIdValue = null
+      if (taskId) {
+        try {
+          taskIdValue = base64ToId(taskId)
+        } catch (error) {
+          throw new HTTPError(400, 'Invalid request: Path Params.taskId does not match the format "objectId"')
+        }
+      }
+
+      const { taskId } = request.params
+      const searchResult = await tasksCollection.findOne(
+        { _id: new ObjectId(taskId) }
+      )
+
+      if (!searchResult.value) {
+        throw new HTTPError(404, `No task with id "${taskId}"`)
+      } else {
+        response.status(200).send(searchResult)
+      }
+    })
+  )
+
+  /**
+   * @swagger
+   *  /tasks/{taskId}:
    *    patch:
    *      summary: Update a task's fields.
    *      requestBody:
