@@ -142,6 +142,53 @@ module.exports = Router()
   /**
    * @swagger
    *  /tasks/{taskId}:
+   *    get:
+   *      summary: Get a single task that is requested via Id
+   *      parameters:
+   *        - name: taskId
+   *          in: path
+   *          description: The unique ID of a task.
+   *          schema:
+   *            type: string
+   *            format: objectId
+   *      responses:
+   *        200:
+   *          description: A task
+   *          content:
+   *            application/json:
+   *              schema:
+   *                $ref: "#/components/schemas/Task"
+   *        400:
+   *          $ref: "#/components/responses/BadRequest"
+   *        404:
+   *          $ref: "#/components/responses/NotFound"
+   */
+  .get("/:taskId", (request, response) =>
+    runWithDB(async db => {
+      validateRequest(request, {
+        paramSchemaProps: {
+          taskId: { type: "string", format: "objectId" }
+        }
+      })
+
+      const tasksCollection = db.collection("tasks")
+
+      const { taskId } = request.params
+      const searchResult = await tasksCollection.findOne(
+        { _id: new ObjectId(taskId) }
+      )
+
+      if (!searchResult) {
+        throw new HTTPError(404, `No task with id "${taskId}"`)
+      } else {
+        response.status(200).send(searchResult)
+      }
+    })
+  )
+
+  /**
+   * @swagger
+   *  /tasks/{taskId}:
    *    patch:
    *      summary: Update a task's fields.
    *      requestBody:
