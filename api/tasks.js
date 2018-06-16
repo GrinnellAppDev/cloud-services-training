@@ -143,7 +143,7 @@ module.exports = Router()
    * @swagger
    *  /tasks/{taskId}:
    *    search:
-   *      summary: Get a single task that is requrested via Id
+   *      summary: Get a single task that is requested via Id
    *      parameters:
    *        - name: taskId
    *          in: path
@@ -154,16 +154,10 @@ module.exports = Router()
    *      responses:
    *        200:
    *          description: A task
-   *          headers:
-   *            Link:
-   *              schema:
-   *                type: string
-   *              description: >
-   *                Standard HTTP Link header. All URIs relative to the /tasks endpoint.
    *          content:
    *            application/json:
    *              schema:
-   *                  $ref: "#/components/schemas/Task"
+   *                $ref: "#/components/schemas/Task"
    *        400:
    *          $ref: "#/components/responses/BadRequest"
    *        404:
