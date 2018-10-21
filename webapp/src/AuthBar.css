@@ -1,0 +1,151 @@
+.AuthBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.AuthBar-displayName {
+  color: #5dc2af;
+  display: flex;
+  align-items: center;
+  margin: 0 20px;
+}
+
+.AuthBar-displayNameIcon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  padding-bottom: 1px;
+  margin-right: 10px;
+}
+
+.AuthBar-displayNameIcon path {
+  fill: currentColor;
+}
+
+.AuthBar-mainButton {
+  background-color: #fff;
+  color: #5dc2af;
+  text-transform: none;
+  display: flex;
+}
+
+.AuthBar-mainButton::after {
+  border-color: #bddad5;
+}
+
+.AuthBar-dialog {
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 90%;
+  max-width: 300px;
+  position: fixed;
+  bottom: calc(50% - 140px);
+}
+
+@media (max-height: 300px) {
+  .AuthBar-dialog {
+    height: 100%;
+    bottom: 0;
+    overflow: auto;
+  }
+}
+
+.AuthBar-dialog::backdrop,
+.AuthBar-dialog + .backdrop {
+  position: fixed;
+  background: #eee;
+}
+
+.AuthBar-dialog > * {
+  flex-shrink: 0;
+}
+
+.AuthBar-hasAccount {
+  margin: 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.AuthBar-hasAccountCheckbox {
+  margin: 0 10px 0 2px;
+  width: 20px;
+  height: 20px;
+}
+
+.AuthBar-hasAccountLabel.AuthBar-disabled {
+  color: #999;
+}
+
+.AuthBar-input {
+  display: block;
+  font: inherit;
+  font-size: 16px;
+  margin: 15px 10px;
+  color: inherit;
+  padding: 0;
+  outline: none;
+  border: none;
+  border-top: 2px solid rgba(0, 0, 0, 0);
+  border-bottom: 2px solid #eee;
+  transition: border 200ms;
+}
+
+.AuthBar-input:focus {
+  border-bottom: 2px solid #ccc;
+}
+
+.AuthBar-input:disabled,
+.AuthBar-input::placeholder {
+  color: #999;
+}
+
+.AuthBar-input:invalid {
+  border-bottom: 2px solid #af5b5e;
+}
+
+.AuthBar-errorMessage {
+  margin: 10px;
+  font-size: 13px;
+  font-style: italic;
+  color: #af5b5e;
+}
+
+.AuthBar-controls {
+  display: flex;
+  align-items: center;
+  margin: 10px;
+}
+
+.AuthBar-cancel {
+  background-color: #eee;
+}
+
+.AuthBar-cancel::after {
+  border-color: #ccc;
+}
+
+.AuthBar-controls > span {
+  flex: 1;
+}
+
+.AuthBar-loading {
+  margin: -10px 5px -10px 5px;
+}
+
+.AuthBar-submit {
+  color: #5dc2af;
+  background-color: #eee;
+}
+
+.AuthBar-submit::after {
+  border-color: #bddad5;
+}
+
+.AuthBar-isSubmitting .AuthBar-submit {
+  color: #bddad5;
+}

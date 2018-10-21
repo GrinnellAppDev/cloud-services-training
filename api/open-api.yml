@@ -1,0 +1,76 @@
+openapi: 3.0.0
+
+info:
+  title: Cloud Services Training API
+  version: 1.0.0
+
+components:
+  propSchemas:
+    TaskId:
+      type: string
+      description: The unique ID of the task.
+      format: objectId
+    TaskText:
+      type: string
+      description: The text content of the task.
+    TaskIsComplete:
+      type: boolean
+      description: Whether the task has been checked off.
+
+  schemas:
+    TaskCreate:
+      type: object
+      properties:
+        text:
+          $ref: "#/components/propSchemas/TaskText"
+      required:
+        - text
+      additionalProperties: false
+
+    TaskEdit:
+      type: object
+      properties:
+        text:
+          $ref: "#/components/propSchemas/TaskText"
+        isComplete:
+          $ref: "#/components/propSchemas/TaskIsComplete"
+      additionalProperties: false
+
+    Task:
+      type: object
+      properties:
+        _id:
+          $ref: "#/components/propSchemas/TaskId"
+        text:
+          $ref: "#/components/propSchemas/TaskText"
+        isComplete:
+          $ref: "#/components/propSchemas/TaskIsComplete"
+      required:
+        - _id
+        - text
+        - isComplete
+      additionalProperties: false
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+      additionalProperties: false
+
+  responses:
+    BadRequest:
+      description: The request is incorrectly formatted.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: The requested resource could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  webapp:
+    restart: unless-stopped
+    ports:
+      - "8001:80"
+
+  api:
+    restart: unless-stopped
+  apidb:
+    restart: unless-stopped

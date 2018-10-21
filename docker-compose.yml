@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  webapp:
+    container_name: cst-webapp-prod
+    image: cst-webapp
+    build: ./webapp
+    environment:
+      - API_HOST=api
+    depends_on:
+      - api
+
+  api:
+    container_name: cst-api-prod
+    image: cst-api
+    build: ./api
+    depends_on:
+      - apidb
+    environment:
+      - MONGO_URL=mongodb://apidb/
+
+  apidb:
+    container_name: cst-apidb
+    image: mongo:3.4
+    volumes:
+      - apidb-data:/data/db
+
+volumes:
+  apidb-data:

@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  webapp:
+    container_name: cst-webapp-dev
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "2000:80"
+
+  api:
+    container_name: cst-api-dev
+    volumes:
+      - ./api:/var/api
+    environment:
+      - NODE_ENV=development
+    command: yarn start
+    ports:
+      - "2001:80"
+      - "9222:9222"
