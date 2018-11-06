@@ -2,7 +2,7 @@ const express = require("express")
 const proxy = require("express-http-proxy")
 const helmet = require("helmet")
 
-const PORT = process.env.PORT || 80
+const PORT = process.env.PORT || 2000
 
 express()
   .use(
